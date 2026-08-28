@@ -8,11 +8,18 @@ from typing import Any
 import yaml
 
 from .api import ApiSettings
+from .catalog import generated_method_catalog
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
-    payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-    return payload or {}
+    source = Path(path)
+    payload = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
+    if source.name == "methods.yaml":
+        generated = generated_method_catalog()
+        configured = payload.get("methods", {}) or {}
+        generated.update(configured)
+        payload["methods"] = generated
+    return payload
 
 
 def load_json(path: str | Path) -> dict[str, Any]:
