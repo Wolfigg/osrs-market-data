@@ -3,20 +3,29 @@ import pytest
 from osrs_market.publisher import validate_site, write_json
 
 
-def test_validate_site_accepts_required_schema_and_market(tmp_path):
+def seed_required(tmp_path, market_items=None, afk_results=None):
     generated = 123
-    write_json(tmp_path / "index.json", {"schemaVersion": 1, "generatedAt": generated})
-    write_json(tmp_path / "health.json", {"schemaVersion": 1, "generatedAt": generated})
-    write_json(tmp_path / "market.json", {"schemaVersion": 1, "generatedAt": generated, "items": [{"item": {"id": 1}}]})
-    write_json(tmp_path / "alchemy.json", {"schemaVersion": 1, "generatedAt": generated})
-    write_json(tmp_path / "opportunities.json", {"schemaVersion": 1, "generatedAt": generated})
-    write_json(tmp_path / "methods.json", {"schemaVersion": 1, "generatedAt": generated})
+    write_json(tmp_path / "index.json", {"schemaVersion": 2, "generatedAt": generated})
+    write_json(tmp_path / "health.json", {"schemaVersion": 2, "generatedAt": generated})
+    write_json(tmp_path / "market" / "summary.json", {"schemaVersion": 2, "generatedAt": generated, "items": market_items if market_items is not None else [{"item": {"id": 1}}]})
+    write_json(tmp_path / "afk" / "methods.json", {"schemaVersion": 2, "generatedAt": generated, "results": afk_results if afk_results is not None else [{"methodId": "m"}]})
+    write_json(tmp_path / "afk" / "rankings.json", {"schemaVersion": 2, "generatedAt": generated, "rankings": []})
+    write_json(tmp_path / "alchemy" / "candidates.json", {"schemaVersion": 2, "generatedAt": generated, "candidates": []})
+    write_json(tmp_path / "alchemy" / "rankings.json", {"schemaVersion": 2, "generatedAt": generated, "candidates": []})
+
+
+def test_validate_site_accepts_v2_structure(tmp_path):
+    seed_required(tmp_path)
     validate_site(tmp_path)
 
 
 def test_validate_site_rejects_empty_market(tmp_path):
-    for name in ("index", "health", "alchemy", "opportunities", "methods"):
-        write_json(tmp_path / f"{name}.json", {"schemaVersion": 1, "generatedAt": 123})
-    write_json(tmp_path / "market.json", {"schemaVersion": 1, "generatedAt": 123, "items": []})
+    seed_required(tmp_path, market_items=[])
+    with pytest.raises(ValueError):
+        validate_site(tmp_path)
+
+
+def test_validate_site_rejects_no_afk_methods(tmp_path):
+    seed_required(tmp_path, afk_results=[])
     with pytest.raises(ValueError):
         validate_site(tmp_path)

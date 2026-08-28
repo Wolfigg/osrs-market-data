@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "osrs-market-data"
-version = "0.1.0"
-description = "Deterministic OSRS market data, profitability, and High Level Alchemy engine"
+version = "0.2.0"
+description = "OSRS real-time market, AFK money-maker, and High Level Alchemy analysis engine"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}

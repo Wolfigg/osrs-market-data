@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      OSRS_MARKET_USER_AGENT: "osrs-market-data/1.0 - github.com/${{ github.repository }}"
+      OSRS_MARKET_USER_AGENT: "osrs-market-data/0.2 - github.com/${{ github.repository }}"
 
     steps:
       - name: Checkout
@@ -48,6 +48,8 @@ jobs:
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
+        with:
+          enablement: true
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
@@ -57,11 +59,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Deploy GitHub Pages
         id: deployment

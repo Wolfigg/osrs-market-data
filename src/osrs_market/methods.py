@@ -40,55 +40,34 @@ def _output_price(record: dict[str, Any], scenario: str) -> float | None:
     return record["windows"].get(window, {}).get("lowVwap") if window else None
 
 
-def _rune_price(record: dict[str, Any] | None, scenario: str) -> float | None:
-    if record is None:
-        return None
-    if scenario.startswith("HISTORICAL_INSTANT_"):
-        window = _window_key_for_scenario(scenario)
-        return record["windows"].get(window, {}).get("highVwap") if window else None
-    return record["current"].get("high")
-
-
-def _alchemy_rune_cost(item_records: dict[int, dict[str, Any]], scenario: str, settings: dict[str, Any], nature_id: int) -> dict[str, float | None]:
-    nature_price = _rune_price(item_records.get(nature_id), scenario)
-    use_fire_staff = bool(settings.get("alchemy", {}).get("use_fire_staff", True))
-    fire_price = None
-    fire_cost = 0.0
-    if not use_fire_staff:
-        fire_id = int(settings.get("alchemy", {}).get("fire_rune_item_id", 554))
-        fire_price = _rune_price(item_records.get(fire_id), scenario)
-        if fire_price is not None:
-            fire_cost = float(fire_price) * int(settings.get("alchemy", {}).get("fire_runes_per_cast", 5))
-    total = None if nature_price is None or (not use_fire_staff and fire_price is None) else float(nature_price) + fire_cost
-    return {"naturePrice": nature_price, "firePrice": fire_price, "totalPerCast": total}
-
-
 def evaluate_method(
     method_id: str,
     method: dict[str, Any],
     item_records: dict[int, dict[str, Any]],
     exempt_item_ids: set[int],
     settings: dict[str, Any],
-    nature_rune_item_id: int,
     generated_at: int,
 ) -> list[dict[str, Any]]:
+    """Evaluate one AFK processing method under each market-execution scenario.
+
+    AFK methods always exit through the Grand Exchange. High Level Alchemy is a
+    separate application branch and is intentionally not available as a method
+    output strategy here.
+    """
     if method.get("enabled", True) is False:
         return []
-    results = []
-    for scenario in SCENARIOS:
-        results.append(
-            _evaluate_scenario(
-                method_id,
-                method,
-                scenario,
-                item_records,
-                exempt_item_ids,
-                settings,
-                nature_rune_item_id,
-                generated_at,
-            )
+    return [
+        _evaluate_scenario(
+            method_id,
+            method,
+            scenario,
+            item_records,
+            exempt_item_ids,
+            settings,
+            generated_at,
         )
-    return results
+        for scenario in SCENARIOS
+    ]
 
 
 def _evaluate_scenario(
@@ -98,14 +77,31 @@ def _evaluate_scenario(
     item_records: dict[int, dict[str, Any]],
     exempt_item_ids: set[int],
     settings: dict[str, Any],
-    nature_rune_item_id: int,
     generated_at: int,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     missing: list[str] = []
+
     mechanical_cph = float(method.get("cycles_per_hour", 0))
+    theoretical_cph = method.get("theoretical_cycles_per_hour")
+    theoretical_cph = float(theoretical_cph) if theoretical_cph is not None else None
     fixed_cost = float(method.get("fixed_cost_gp_per_cycle", 0))
-    planned_hours = float(method.get("planned_hours_per_day", settings.get("methods", {}).get("default_planned_hours_per_day", 1)))
+    planned_hours = float(
+        method.get(
+            "planned_hours_per_day",
+            settings.get("methods", {}).get("default_planned_hours_per_day", 1),
+        )
+    )
+
+    afk_config = method.get("afk", {}) or {}
+    afk_interval_seconds = afk_config.get("interval_seconds")
+    afk_interval_seconds = float(afk_interval_seconds) if afk_interval_seconds is not None else None
+    interaction_windows_per_hour = afk_config.get("interaction_windows_per_hour")
+    if interaction_windows_per_hour is None and afk_interval_seconds and afk_interval_seconds > 0:
+        interaction_windows_per_hour = 3600.0 / afk_interval_seconds
+    elif interaction_windows_per_hour is not None:
+        interaction_windows_per_hour = float(interaction_windows_per_hour)
+
     input_cost = 0.0
     input_details: list[dict[str, Any]] = []
     output_gross = 0.0
@@ -113,10 +109,6 @@ def _evaluate_scenario(
     output_net = 0.0
     output_details: list[dict[str, Any]] = []
     buy_limit_cycle_caps: list[float] = []
-    alch_units_per_cycle = 0.0
-    rune_cost = _alchemy_rune_cost(item_records, scenario, settings, nature_rune_item_id)
-    nature_price = rune_cost["naturePrice"]
-    alchemy_rune_cost = rune_cost["totalPerCast"]
 
     for entry in method.get("inputs", []):
         item_id = int(entry["item_id"])
@@ -125,10 +117,12 @@ def _evaluate_scenario(
         if record is None:
             missing.append(f"MISSING_ITEM_{item_id}")
             continue
+
         price = _input_price(record, scenario)
         if price is None:
             missing.append(f"MISSING_INPUT_PRICE_{item_id}")
             continue
+
         subtotal = quantity * float(price)
         input_cost += subtotal
         limit = record["item"].get("limit")
@@ -137,6 +131,7 @@ def _evaluate_scenario(
         if buy_via_ge and limit is not None and quantity > 0:
             cap = (float(limit) / 4.0) / quantity
             buy_limit_cycle_caps.append(cap)
+
         input_details.append(
             {
                 "itemId": item_id,
@@ -160,46 +155,19 @@ def _evaluate_scenario(
         if record is None:
             missing.append(f"MISSING_ITEM_{item_id}")
             continue
+
         ge_price = _output_price(record, scenario)
         if ge_price is None:
             missing.append(f"MISSING_OUTPUT_PRICE_{item_id}")
             continue
+
         ge_price_rounded = max(math.floor(float(ge_price)), 0)
         tax_each = ge_tax_per_item(ge_price_rounded, item_id, exempt_item_ids)
         ge_net_each = float(ge_price) - tax_each
-        alch_value = record["item"].get("highalch")
-        alch_net_each = None
-        if alch_value is not None and alchemy_rune_cost is not None:
-            alch_net_each = float(alch_value) - float(alchemy_rune_cost)
-
-        exit_strategy = str(entry.get("exit", "ge")).lower()
-        chosen_exit = "GE"
-        chosen_net_each = ge_net_each
-        if exit_strategy == "high_alch":
-            if alch_net_each is None:
-                missing.append(f"MISSING_ALCH_EXIT_{item_id}")
-            else:
-                chosen_exit = "HIGH_ALCH"
-                chosen_net_each = alch_net_each
-                alch_units_per_cycle += quantity
-        elif exit_strategy == "best_immediate" and alch_net_each is not None and alch_net_each > ge_net_each:
-            chosen_exit = "HIGH_ALCH"
-            chosen_net_each = alch_net_each
-            alch_units_per_cycle += quantity
-
-        if chosen_exit == "HIGH_ALCH" and scenario.startswith("CURRENT_"):
-            nature_record = item_records.get(nature_rune_item_id)
-            if nature_record is not None:
-                _append_current_warning(nature_record, "high", warnings)
-            if not bool(settings.get("alchemy", {}).get("use_fire_staff", True)):
-                fire_id = int(settings.get("alchemy", {}).get("fire_rune_item_id", 554))
-                fire_record = item_records.get(fire_id)
-                if fire_record is not None:
-                    _append_current_warning(fire_record, "high", warnings)
 
         output_gross += float(ge_price) * quantity
         output_tax += tax_each * quantity
-        output_net += chosen_net_each * quantity
+        output_net += ge_net_each * quantity
         output_details.append(
             {
                 "itemId": item_id,
@@ -208,14 +176,6 @@ def _evaluate_scenario(
                 "gePrice": ge_price,
                 "geTaxPerItem": tax_each,
                 "geNetPerItem": ge_net_each,
-                "highAlchValue": alch_value,
-                "natureRunePrice": nature_price,
-                "fireRunePrice": rune_cost["firePrice"],
-                "alchemyRuneCostPerCast": alchemy_rune_cost,
-                "alchNetPerItem": alch_net_each,
-                "configuredExit": exit_strategy,
-                "chosenExit": chosen_exit,
-                "chosenNetPerItem": chosen_net_each,
             }
         )
         if scenario.startswith("CURRENT_"):
@@ -228,22 +188,26 @@ def _evaluate_scenario(
     profit_mechanical = profit_per_cycle * mechanical_cph if profit_per_cycle is not None else None
     profit_sustainable = profit_per_cycle * sustainable_cph if profit_per_cycle is not None else None
 
-    combined_cph = mechanical_cph
-    profit_with_sequential_alch = profit_mechanical
-    if mechanical_cph > 0 and alch_units_per_cycle > 0:
-        processing_seconds_per_cycle = 3600.0 / mechanical_cph
-        alch_seconds_per_cycle = 3.0 * alch_units_per_cycle
-        combined_cph = 3600.0 / (processing_seconds_per_cycle + alch_seconds_per_cycle)
-        profit_with_sequential_alch = profit_per_cycle * combined_cph if profit_per_cycle is not None else None
+    output_units_per_cycle = sum(float(entry.get("quantity", 1)) for entry in method.get("outputs", []))
+    output_units_per_hour = output_units_per_cycle * mechanical_cph
+    sustainable_output_units_per_hour = output_units_per_cycle * sustainable_cph
 
-    liquidity = _method_liquidity(method, item_records, mechanical_cph, planned_hours, settings["liquidity"])
+    liquidity = _method_liquidity(
+        method,
+        item_records,
+        mechanical_cph,
+        planned_hours,
+        settings["liquidity"],
+    )
     for item in liquidity["outputs"] + liquidity["inputs"]:
         warnings.extend(item["warnings"])
     warnings.extend(missing)
     warnings = list(dict.fromkeys(warnings))
 
     valid = not missing
-    if scenario.startswith("CURRENT_") and any(w.startswith("CURRENT_") or w == "CROSSED_CURRENT_PRICE" for w in warnings):
+    if scenario.startswith("CURRENT_") and any(
+        w.startswith("CURRENT_") or w == "CROSSED_CURRENT_PRICE" for w in warnings
+    ):
         valid = False
     if scenario == "CURRENT_PATIENT_PROXY":
         warnings.insert(0, "NOT_GUARANTEED_TO_FILL")
@@ -251,20 +215,31 @@ def _evaluate_scenario(
     reported_profit_per_cycle = profit_per_cycle if valid else None
     reported_profit_mechanical = profit_mechanical if valid else None
     reported_profit_sustainable = profit_sustainable if valid else None
-    reported_profit_sequential_alch = profit_with_sequential_alch if valid else None
+    gp_per_interaction = None
+    if reported_profit_sustainable is not None and interaction_windows_per_hour and interaction_windows_per_hour > 0:
+        gp_per_interaction = reported_profit_sustainable / interaction_windows_per_hour
 
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "methodId": method_id,
         "name": method.get("name", method_id),
+        "category": method.get("category", "processing"),
         "generatedAt": generated_at,
         "scenario": scenario,
         "valid": valid,
         "mechanics": {
             "cyclesPerHour": mechanical_cph,
+            "theoreticalCyclesPerHour": theoretical_cph,
             "cyclesPerHourByBuyLimits": sustainable_cph,
-            "combinedCyclesPerHourWithSequentialAlch": combined_cph,
-            "alchUnitsPerCycle": alch_units_per_cycle,
+            "outputUnitsPerHour": output_units_per_hour,
+            "outputUnitsPerHourByBuyLimits": sustainable_output_units_per_hour,
+        },
+        "afk": {
+            "intervalSeconds": afk_interval_seconds,
+            "interactionWindowsPerHour": interaction_windows_per_hour,
+            "intensity": afk_config.get("intensity"),
+            "description": afk_config.get("description", ""),
+            "gpPerInteractionWindow": gp_per_interaction,
         },
         "economics": {
             "inputGpPerCycle": input_cost,
@@ -272,12 +247,10 @@ def _evaluate_scenario(
             "totalCostGpPerCycle": total_cost,
             "outputGrossGeGpPerCycle": output_gross,
             "geTaxGpPerCycle": output_tax,
-            "outputChosenNetGpPerCycle": output_net,
+            "outputNetGeGpPerCycle": output_net,
             "profitGpPerCycle": reported_profit_per_cycle,
             "profitGpPerHourMechanical": reported_profit_mechanical,
             "profitGpPerHourBuyLimitSustainable": reported_profit_sustainable,
-            "profitGpPerHourAlchTimeExcluded": reported_profit_mechanical,
-            "profitGpPerHourSequentialAlchIncluded": reported_profit_sequential_alch,
         },
         "inputs": input_details,
         "outputs": output_details,
@@ -288,8 +261,10 @@ def _evaluate_scenario(
             "historicalVolumeNote": "Historical observed volume is a liquidity proxy, not executable market depth.",
         },
         "warnings": warnings,
+        "requirements": method.get("requirements", {}),
         "account": method.get("account", {}),
         "notes": method.get("notes", ""),
+        "reference": method.get("reference"),
     }
 
 
@@ -349,7 +324,7 @@ def _input_basis(scenario: str) -> str:
 
 def _output_basis(scenario: str) -> str:
     if scenario == "CURRENT_INSTANT":
-        return "current observed low"
+        return "current observed low minus GE seller tax"
     if scenario == "CURRENT_PATIENT_PROXY":
-        return "current observed high, patient-order proxy"
-    return f"{_window_key_for_scenario(scenario)} low VWAP"
+        return "current observed high minus GE seller tax, patient-order proxy"
+    return f"{_window_key_for_scenario(scenario)} low VWAP minus GE seller tax"

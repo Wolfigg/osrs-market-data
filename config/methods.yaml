@@ -1,21 +1,100 @@
-methods: {}
+methods:
+  steel_cannonballs_double_mould:
+    enabled: true
+    name: Steel cannonballs - double ammo mould
+    category: smithing
+    inputs:
+      - item_id: 2353
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 2
+        quantity: 4
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1080
+    theoretical_cycles_per_hour: 1200
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 80
+      intensity: very_low
+      description: A full inventory with the double ammo mould takes roughly half of the normal 160-second Make-X duration; banking interrupts the idle window.
+    requirements:
+      members: true
+      smithing: 35
+      quests:
+        - Dwarf Cannon
+        - Sleeping Giants
+      equipment:
+        - Double ammo mould
+    notes: Uses the conservative Edgeville-style rate of about 4,320 steel cannonballs/hour. Theoretical wiki training tables commonly use 4,800/hour with efficient banking.
+    reference: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
 
-# Add processing methods under "methods". Example shape:
-# methods:
-#   example_method:
-#     enabled: true
-#     name: Example processing method
-#     inputs:
-#       - item_id: 123
-#         quantity: 1
-#         buy_via_ge: true
-#     fixed_cost_gp_per_cycle: 0
-#     outputs:
-#       - item_id: 456
-#         quantity: 1
-#         exit: ge  # ge | high_alch | best_immediate
-#     cycles_per_hour: 1200
-#     planned_hours_per_day: 1
-#     account:
-#       members_required: true
-#     notes: ""
+  mahogany_plank_make_afk:
+    enabled: true
+    name: Mahogany Plank Make - autocast
+    category: magic
+    inputs:
+      - item_id: 6332
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 561
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+    outputs:
+      - item_id: 8782
+        quantity: 1
+    fixed_cost_gp_per_cycle: 1050
+    cycles_per_hour: 833
+    theoretical_cycles_per_hour: 1000
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 90
+      intensity: very_low
+      description: Cast once per inventory and let Plank Make auto-cast. Wiki guidance describes roughly 90 seconds per inventory with minimal attention.
+    requirements:
+      members: true
+      magic: 86
+      quests:
+        - Dream Mentor
+      equipment:
+        - Earth-rune supplying staff
+    notes: Realistic AFK rate uses about 75,000 Magic XP/hour divided by 90 XP/cast, approximately 833 planks/hour. Earth rune cost is excluded because an earth-providing staff is assumed.
+    reference: https://oldschool.runescape.wiki/w/Plank_Make
+
+  camphor_plank_make_afk:
+    enabled: true
+    name: Camphor Plank Make - autocast
+    category: magic
+    inputs:
+      - item_id: 32904
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 561
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+    outputs:
+      - item_id: 31432
+        quantity: 1
+    fixed_cost_gp_per_cycle: 1750
+    cycles_per_hour: 833
+    theoretical_cycles_per_hour: 1000
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 90
+      intensity: very_low
+      description: Same auto-cast Plank Make interaction pattern as other supported logs, with an inventory finishing in roughly 90 seconds.
+    requirements:
+      members: true
+      magic: 86
+      quests:
+        - Dream Mentor
+      equipment:
+        - Earth-rune supplying staff
+    notes: Camphor Plank Make charges 1,750 coins per log, plus one Nature rune and two Astral runes. Earth rune cost is excluded because an earth-providing staff is assumed.
+    reference: https://oldschool.runescape.wiki/w/Camphor_plank
