@@ -29,6 +29,114 @@ methods:
     notes: Uses the conservative Edgeville-style rate of about 4,320 steel cannonballs/hour. Theoretical wiki training tables commonly use 4,800/hour with efficient banking.
     reference: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
 
+  sapphire_bolt_tips:
+    enabled: true
+    name: Cut sapphire bolt tips
+    category: fletching
+    inputs:
+      - item_id: 1607
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 9189
+        quantity: 12
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1150
+    theoretical_cycles_per_hour: 1200
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Withdraw 27 sapphires with a chisel and let Make-X process them at 3 seconds each, giving roughly 81 seconds before the next bank interaction.
+    requirements:
+      members: true
+      fletching: 56
+      equipment:
+        - Chisel
+    notes: Included even when temporarily unprofitable because real-time gem and bolt-tip prices can change the ranking materially.
+    reference: https://oldschool.runescape.wiki/w/Sapphire_bolt_tips
+
+  emerald_bolt_tips:
+    enabled: true
+    name: Cut emerald bolt tips
+    category: fletching
+    inputs:
+      - item_id: 1605
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 9190
+        quantity: 12
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1150
+    theoretical_cycles_per_hour: 1200
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Withdraw 27 emeralds with a chisel and let Make-X process them at 3 seconds each, giving roughly 81 seconds before the next bank interaction.
+    requirements:
+      members: true
+      fletching: 58
+      equipment:
+        - Chisel
+    notes: Monitored as a market-sensitive AFK processor; whether it is profitable should come from the live price engine, not a cached Wiki headline.
+    reference: https://oldschool.runescape.wiki/w/Emerald_bolt_tips
+
+  ruby_bolt_tips:
+    enabled: true
+    name: Cut ruby bolt tips
+    category: fletching
+    inputs:
+      - item_id: 1603
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 9191
+        quantity: 12
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1150
+    theoretical_cycles_per_hour: 1200
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Withdraw 27 rubies with a chisel and let Make-X process them at 3 seconds each, giving roughly 81 seconds before the next bank interaction.
+    requirements:
+      members: true
+      fletching: 63
+      equipment:
+        - Chisel
+    notes: Wiki guidance uses roughly 1,150 rubies/hour and warns that bolt-tip prices can vary heavily, making this a strong real-time ranking candidate.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Cutting_ruby_bolt_tips
+
+  diamond_bolt_tips:
+    enabled: true
+    name: Cut diamond bolt tips
+    category: fletching
+    inputs:
+      - item_id: 1601
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 9192
+        quantity: 12
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1150
+    theoretical_cycles_per_hour: 1200
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Withdraw 27 diamonds with a chisel and let Make-X process them at 3 seconds each, giving roughly 81 seconds before the next bank interaction.
+    requirements:
+      members: true
+      fletching: 65
+      equipment:
+        - Chisel
+    notes: Wiki guidance uses roughly 1,150 diamonds/hour and specifically recommends checking live price and volume because the margin can flip.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Cutting_diamond_bolt_tips
+
   mahogany_plank_make_afk:
     enabled: true
     name: Mahogany Plank Make - autocast
