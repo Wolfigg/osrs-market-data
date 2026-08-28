@@ -2,6 +2,9 @@ name: Collect and publish OSRS market data
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
   schedule:
     - cron: "17 * * * *"
 
