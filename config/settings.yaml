@@ -1,0 +1,40 @@
+api:
+  base_url: "https://prices.runescape.wiki/api/v1/osrs"
+  user_agent: "osrs-market-data/1.0 - set OSRS_MARKET_USER_AGENT or edit config/settings.yaml"
+  request_spacing_ms: 250
+  timeout_seconds: 20
+  retries: 4
+
+freshness:
+  fresh_seconds: 1800
+  acceptable_seconds: 7200
+  very_stale_seconds: 86400
+
+quality:
+  low_24h_volume: 100
+  sparse_24h_two_sided_coverage_pct: 50
+
+alchemy:
+  enabled: true
+  nature_rune_item_id: 561
+  fire_rune_item_id: 554
+  use_fire_staff: true
+  fire_runes_per_cast: 5
+  casts_per_hour: 1200
+  xp_per_cast: 65
+  candidate_timeseries_limit: 100
+  preliminary_max_age_seconds: 86400
+  preliminary_margin_floor_gp: -50
+  members_filter: "all"
+  available_gp: null
+
+liquidity:
+  notice_market_share_pct: 1
+  caution_market_share_pct: 5
+  high_risk_market_share_pct: 10
+
+methods:
+  default_planned_hours_per_day: 1
+
+publishing:
+  include_raw_series_for_tracked_items: true
