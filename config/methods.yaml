@@ -1,0 +1,21 @@
+methods: {}
+
+# Add processing methods under "methods". Example shape:
+# methods:
+#   example_method:
+#     enabled: true
+#     name: Example processing method
+#     inputs:
+#       - item_id: 123
+#         quantity: 1
+#         buy_via_ge: true
+#     fixed_cost_gp_per_cycle: 0
+#     outputs:
+#       - item_id: 456
+#         quantity: 1
+#         exit: ge  # ge | high_alch | best_immediate
+#     cycles_per_hour: 1200
+#     planned_hours_per_day: 1
+#     account:
+#       members_required: true
+#     notes: ""
