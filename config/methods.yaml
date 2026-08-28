@@ -206,3 +206,148 @@ methods:
         - Earth-rune supplying staff
     notes: Camphor Plank Make charges 1,750 coins per log, plus one Nature rune and two Astral runes. Earth rune cost is excluded because an earth-providing staff is assumed.
     reference: https://oldschool.runescape.wiki/w/Camphor_plank
+
+  bronze_dart_tips:
+    enabled: true
+    name: Smith bronze dart tips
+    category: smithing
+    inputs:
+      - item_id: 2349
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 819
+        quantity: 10
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1060
+    theoretical_cycles_per_hour: 1300
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Smith a full inventory with Make-X; the Wiki gives roughly 81 seconds for an inventory and very little attention.
+    requirements:
+      members: true
+      smithing: 4
+      quests:
+        - The Tourist Trap
+      equipment:
+        - Hammer
+    notes: Uses the standard no-Smiths'-Uniform rate of about 1,060 bars/hour. Theoretical rate with the full Smiths' Uniform is about 1,300 bars/hour.
+    reference: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+
+  iron_dart_tips:
+    enabled: true
+    name: Smith iron dart tips
+    category: smithing
+    inputs:
+      - item_id: 2351
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 820
+        quantity: 10
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1060
+    theoretical_cycles_per_hour: 1300
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Smith a full inventory with Make-X; the Wiki gives roughly 81 seconds for an inventory and very little attention.
+    requirements:
+      members: true
+      smithing: 19
+      quests:
+        - The Tourist Trap
+      equipment:
+        - Hammer
+    notes: Uses the standard no-Smiths'-Uniform rate of about 1,060 bars/hour. Theoretical rate with the full Smiths' Uniform is about 1,300 bars/hour.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Smithing_iron_dart_tips
+
+  steel_dart_tips:
+    enabled: true
+    name: Smith steel dart tips
+    category: smithing
+    inputs:
+      - item_id: 2353
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 821
+        quantity: 10
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1060
+    theoretical_cycles_per_hour: 1300
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Smith a full inventory with Make-X; the Wiki gives roughly 81 seconds for an inventory and very little attention.
+    requirements:
+      members: true
+      smithing: 34
+      quests:
+        - The Tourist Trap
+      equipment:
+        - Hammer
+    notes: Uses the standard no-Smiths'-Uniform rate of about 1,060 bars/hour. Profitability is market-sensitive and should be calculated from the live bar/tip spread.
+    reference: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+
+  mithril_dart_tips:
+    enabled: true
+    name: Smith mithril dart tips
+    category: smithing
+    inputs:
+      - item_id: 2359
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 822
+        quantity: 10
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1060
+    theoretical_cycles_per_hour: 1300
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Smith a full inventory with Make-X; the Wiki gives roughly 81 seconds for an inventory and very little attention.
+    requirements:
+      members: true
+      smithing: 54
+      quests:
+        - The Tourist Trap
+      equipment:
+        - Hammer
+    notes: Uses the standard no-Smiths'-Uniform rate of about 1,060 bars/hour. Included even when the live spread is weak so the app can detect profitable market windows.
+    reference: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+
+  adamant_dart_tips:
+    enabled: true
+    name: Smith adamant dart tips
+    category: smithing
+    inputs:
+      - item_id: 2361
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 823
+        quantity: 10
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1060
+    theoretical_cycles_per_hour: 1300
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 81
+      intensity: very_low
+      description: Smith a full inventory with Make-X; the Wiki gives roughly 81 seconds for an inventory and very little attention.
+    requirements:
+      members: true
+      smithing: 74
+      quests:
+        - The Tourist Trap
+      equipment:
+        - Hammer
+    notes: Often low-margin or negative, but retained as a candidate because live prices can flip the economics and the method remains genuinely AFK.
+    reference: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
