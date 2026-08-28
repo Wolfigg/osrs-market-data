@@ -2,7 +2,14 @@
   "sourceReviewedAt": "2026-08-28",
   "source": "OSRS Wiki Grand Exchange convenience fee exemption list",
   "itemIds": [
-    13190
+    13190,
+    8007,
+    8008,
+    8009,
+    8010,
+    8011,
+    8013,
+    28790
   ],
   "itemNames": [
     "Old school bond",
@@ -30,16 +37,9 @@
     "Salmon",
     "Shrimps",
     "Tuna",
-    "Ardougne teleport",
-    "Camelot teleport",
     "Civitas illa fortis teleport",
-    "Falador teleport",
     "Games necklace(8)",
-    "Kourend castle teleport",
-    "Lumbridge teleport",
     "Ring of dueling(8)",
-    "Teleport to house",
-    "Varrock teleport",
     "Chisel",
     "Gardening trowel",
     "Glassblowing pipe",
