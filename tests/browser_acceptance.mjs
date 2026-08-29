@@ -10,10 +10,7 @@ async function waitForCount(page, selector, text) {
 async function assertResponsive(page, width, height = 900) {
   await page.setViewportSize({ width, height });
   await page.waitForTimeout(50);
-  const overflow = await page.evaluate(() => ({
-    scroll: document.documentElement.scrollWidth,
-    client: document.documentElement.clientWidth,
-  }));
+  const overflow = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
   assert.ok(overflow.scroll <= overflow.client + 1, `horizontal overflow at ${width}px: ${JSON.stringify(overflow)}`);
 }
 
@@ -23,13 +20,21 @@ async function run(browserType, name) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await page.goto(`${base}/index.html`, { waitUntil: "networkidle" });
 
-    // Dataset age boundary: exactly 2.5 hours is Delayed by product contract.
     assert.equal(await page.locator("#health-state").textContent(), "Delayed", `${name}: 2.5h freshness boundary`);
     await waitForCount(page, "#afk-count", "2 methods");
-
-    // Responsive acceptance matrix required by the handoff.
     for (const width of [360, 390, 768, 1280]) await assertResponsive(page, width);
     await page.setViewportSize({ width: 1280, height: 900 });
+
+    // Bankroll/session planner uses working capital and persists locally.
+    await page.locator("#planner-bankroll").fill("100000");
+    await page.locator("#planner-hours").fill("4");
+    await page.waitForFunction(() => document.querySelector("#planner-summary")?.textContent?.includes("Cut camphor logs"));
+    assert.match(await page.locator("#planner-summary").textContent(), /480,000 gp over 4h/);
+    await page.locator("#afk-sort").selectOption("session-profit");
+    assert.equal(await page.locator("#afk-sort").inputValue(), "session-profit");
+    await page.reload({ waitUntil: "networkidle" });
+    assert.equal(await page.locator("#planner-bankroll").inputValue(), "100000");
+    assert.equal(await page.locator("#planner-hours").inputValue(), "4");
 
     // Search and URL-state synchronization.
     await page.locator("#afk-search").fill("camphor");
@@ -44,11 +49,20 @@ async function run(browserType, name) {
     assert.equal(await page.locator("#afk-capital").inputValue(), "500000");
     assert.equal(await page.locator("#afk-sort").inputValue(), "alphabetical");
 
-    // Expanded method details expose non-skill requirements.
+    // Expanded details expose requirements, exact economics and liquidity context.
     const camphor = page.locator('[data-method-id="camphor"]');
     await camphor.locator("summary").click();
-    assert.match(await camphor.textContent(), /Troubled Tortugans/);
-    assert.match(await camphor.textContent(), /Sailing: 45/);
+    const camphorText = await camphor.textContent();
+    assert.match(camphorText, /Troubled Tortugans/);
+    assert.match(camphorText, /Sailing: 45/);
+    assert.match(camphorText, /Current calculation/);
+    assert.match(camphorText, /Sustainability & liquidity/);
+    assert.match(camphorText, /Mechanical rate/);
+
+    // Sustainability filtering is independent of historical stability.
+    await page.goto(`${base}/index.html?profit=all&sustainability=moderate`, { waitUntil: "networkidle" });
+    await waitForCount(page, "#afk-count", "1 method");
+    assert.match(await page.locator("#afk-list").textContent(), /Cut ruby bolt tips/);
 
     // Skill profile persists locally and gates methods by all skills.
     await page.goto(`${base}/index.html?profit=all&type=gathering`, { waitUntil: "networkidle" });
@@ -77,14 +91,11 @@ async function run(browserType, name) {
     await waitForCount(page, "#alch-count", "1 candidate");
     assert.match(await page.locator("#alch-list").textContent(), /Rune platebody/);
     assert.doesNotMatch(await page.locator("#alch-list").textContent(), /Exact million item/);
-
     await page.locator("#alch-profit").selectOption("all");
     await page.locator("#alch-capital").selectOption("all");
     await page.locator("#alch-unavailable").check();
     await waitForCount(page, "#alch-count", "3 candidates");
     assert.match(await page.locator("#alch-list").textContent(), /Unavailable item/);
-
-    // High Alch search and historical sort restoration.
     await page.goto(`${base}/alchemy.html?q=rune&sort=profit-30d`, { waitUntil: "networkidle" });
     await waitForCount(page, "#alch-count", "1 candidate");
     assert.equal(await page.locator("#alch-sort").inputValue(), "profit-30d");
