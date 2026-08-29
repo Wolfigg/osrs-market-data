@@ -12,9 +12,6 @@ on:
           - short
           - long
           - full
-  push:
-    branches:
-      - master
   schedule:
     - cron: "23 * * * *"
     - cron: "41 */6 * * *"
@@ -66,8 +63,6 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             mode="${{ inputs.mode }}"
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
-            mode="full"
           else
             case "${{ github.event.schedule }}" in
               "23 * * * *") mode="short" ;;
