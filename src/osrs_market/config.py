@@ -10,6 +10,7 @@ import yaml
 from .api import ApiSettings
 from .catalog import generated_method_catalog
 from .catalog_expansion import expanded_method_catalog
+from .catalog_wave4 import wave4_method_catalog
 
 _SKILL_KEYS = {
     "attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft",
@@ -29,7 +30,7 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
     types: set[str] = set()
     if prefix == "gathering":
         types.add("gathering")
-    elif prefix == "bankstanding":
+    elif prefix in {"bankstanding", "processing"}:
         types.add("bankstanding")
     elif prefix == "strict_afk":
         types.update(("bankstanding", "make-x"))
@@ -38,28 +39,30 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
     description = str((method.get("afk") or {}).get("description") or "").lower()
     if "autocast" in name or "auto-cast" in description:
         types.add("autocast")
+    if method.get("variants"):
+        types.add("variants")
+    if any(
+        entry.get("quantity_expected") is not None
+        or entry.get("quantity_minimum") is not None
+        or entry.get("quantity_maximum") is not None
+        or entry.get("probability") is not None
+        for entry in method.get("outputs", [])
+    ):
+        types.add("probabilistic")
     return sorted(types)
 
 
 def _set_generated_audit(methods: dict[str, Any]) -> None:
-    """Mark the built-in catalogue as source-reviewed after family-level audit.
-
-    Generated catalogue families share one mechanical recipe per family. The
-    completion audit verifies the family and records provenance on every method.
-    Hand-written methods.yaml entries are overlaid later and receive their more
-    specific provenance from config/method_audit.yaml.
-    """
     for method in methods.values():
         method["audit"] = {
             "status": "verified",
             "verified_at": "2026-08-29",
             "source": method.get("reference"),
-            "notes": "Verified in the 2026-08-29 full catalogue family audit; see docs/AFK_METHOD_CATALOG_AUDIT.md.",
+            "notes": "Verified in the 2026-08-29 catalogue family audit; see docs/AFK_METHOD_CATALOG_AUDIT.md.",
         }
 
 
 def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
-    """Apply source-verified corrections to generated catalogue defaults."""
     f2p_gems = ("sapphire", "emerald", "ruby", "diamond")
 
     for type_key in ("ring", "necklace", "amulet_u"):
@@ -180,6 +183,24 @@ def _validate_method_catalog(methods: dict[str, Any]) -> None:
                     errors.append(f"{method_id}: {side} quantity must be > 0")
                 if int(entry.get("item_id", 0) or 0) <= 0:
                     errors.append(f"{method_id}: {side} item_id must be > 0")
+                for key in ("quantity_expected", "quantity_minimum", "quantity_maximum"):
+                    if entry.get(key) is not None and float(entry[key]) < 0:
+                        errors.append(f"{method_id}: {side} {key} must be >= 0")
+                if entry.get("probability") is not None and not 0 <= float(entry["probability"]) <= 1:
+                    errors.append(f"{method_id}: {side} probability must be between 0 and 1")
+        workflow = method.get("workflow") or {}
+        for key in ("process_seconds", "bank_seconds", "travel_seconds"):
+            if workflow.get(key) is not None and float(workflow[key]) < 0:
+                errors.append(f"{method_id}: workflow.{key} must be >= 0")
+        variants = method.get("variants") or []
+        variant_ids: set[str] = set()
+        for variant in variants:
+            variant_id = str(variant.get("id") or "")
+            if not variant_id:
+                errors.append(f"{method_id}: variant id is required")
+            elif variant_id in variant_ids:
+                errors.append(f"{method_id}: duplicate variant id {variant_id}")
+            variant_ids.add(variant_id)
         if not reference.startswith("https://oldschool.runescape.wiki/"):
             errors.append(f"{method_id}: reference must point to the OSRS Wiki")
         method_types = _infer_method_types(method)
@@ -200,6 +221,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
     if source.name == "methods.yaml":
         generated = generated_method_catalog()
         generated.update(expanded_method_catalog())
+        generated.update(wave4_method_catalog())
         _apply_known_catalog_corrections(generated)
         _set_generated_audit(generated)
 
