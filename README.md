@@ -4,7 +4,7 @@ A Python 3.12 market-analysis pipeline for Old School RuneScape using the OSRS W
 
 The public application intentionally contains two tools:
 
-1. **AFK Money Makers**: ranks genuinely AFK or low-interaction processing methods using live prices, historical VWAPs, GE tax, buy limits, liquidity, realistic rates and AFK interval metrics.
+1. **AFK Money Makers**: ranks genuinely AFK or low-interaction processing methods using live prices, historical VWAPs, GE tax, buy limits, liquidity, realistic rates, AFK interval metrics and a conservative Recommended GP/hour model.
 2. **High Alch**: a standalone active buy-and-alch scanner. It is deliberately not used as an exit for AFK methods.
 
 There is no public Market Explorer, raw API browser, diagnostics page or dashboard branch.
@@ -136,7 +136,10 @@ The AFK branch uses Grand Exchange exits only. High Alchemy is intentionally exc
 Public AFK data includes:
 
 - current GP/hour
+- Recommended GP/hour
+- weighted historical reference GP/hour
 - 24H, 7D and 30D reference GP/hour
+- stability state and current-vs-history deviations
 - AFK interval
 - GP per interaction
 - one-hour and four-hour capital
@@ -145,7 +148,78 @@ Public AFK data includes:
 - requirements
 - risk state
 
-The frontend also supports capital and method-type filtering.
+### Stability model
+
+The first version intentionally uses explicit constants instead of an opaque score.
+
+Historical reference weights are:
+
+```text
+24H: 50%
+7D:  30%
+30D: 20%
+```
+
+Public stability states are:
+
+```text
+Stable
+Watch
+Volatile
+Thin market
+Stale
+Unavailable
+```
+
+Current-vs-history deviation thresholds are intentionally conservative:
+
+```text
+Stable band:       under 15%
+Volatile trigger:  35% or more
+```
+
+Historical-reference spread also contributes to the state. Missing historical windows cannot produce `Stable`.
+
+### Recommended GP/hour
+
+Recommended GP/hour does not replace raw current profitability. Both remain visible.
+
+The initial formula is deliberately simple and auditable:
+
+```text
+Stable:
+    50% current + 50% historical reference
+
+Watch:
+    25% current + 75% historical reference
+
+Volatile:
+    min(current, historical reference * 1.15)
+
+Thin market:
+    (25% current + 75% historical reference) * 0.80
+
+Stale / Unavailable:
+    null
+```
+
+Negative-profit cases are kept conservative by choosing the lower of current and reference rather than blending a loss upward.
+
+Recommended GP/hour is now the default AFK sort, while raw Current GP/hour remains available as an explicit sort option.
+
+### Personal skill filtering
+
+The AFK page allows users to enter relevant skill levels and enable:
+
+```text
+Only show methods I can do by skill level
+```
+
+The values are stored only in browser `localStorage`. No account, RuneLite login or server-side profile storage is used.
+
+Skill matching does not imply that quest or equipment requirements are satisfied. Those remain visible separately.
+
+The frontend also supports capital, method-type and stability filtering.
 
 The method catalogue remains configuration-driven in `config/methods.yaml`.
 
