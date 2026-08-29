@@ -54,6 +54,21 @@ def test_jewellery_membership_matches_current_f2p_access():
         assert methods[f"craft_{gem}_bracelet"]["requirements"]["members"] is True
 
 
+def test_jewellery_and_battlestaff_throughput_matches_current_guidance():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    for type_key in ("ring", "necklace", "bracelet", "amulet_u"):
+        assert methods[f"craft_gold_{type_key}"]["cycles_per_hour"] == 1400
+        assert methods[f"craft_gold_{type_key}"]["theoretical_cycles_per_hour"] == 1600
+        for gem in ("sapphire", "emerald", "ruby", "diamond", "dragonstone"):
+            method = methods[f"craft_{gem}_{type_key}"]
+            assert method["cycles_per_hour"] == 1400
+            assert method["theoretical_cycles_per_hour"] == 1400
+    for element in ("water", "earth", "fire", "air"):
+        method = methods[f"craft_{element}_battlestaves"]
+        assert method["cycles_per_hour"] == 2450
+        assert method["theoretical_cycles_per_hour"] == 2625
+
+
 def test_onyx_bolt_tip_quantity_uses_24_tips_per_gem():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
     onyx = methods["onyx_bolt_tips"]
