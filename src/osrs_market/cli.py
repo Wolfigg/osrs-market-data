@@ -13,11 +13,14 @@ from . import SCHEMA_VERSION
 from .alchemy import build_alchemy_candidate, preliminary_scan
 from .api import ApiError, MarketApiClient
 from .cache import item_windows, load_history, load_mapping, put_item_windows, save_history, save_mapping
+from .catalog_gap import build_catalog_gap_report
 from .config import api_settings, load_json, load_yaml
-from .methods import evaluate_method
+from .method_model import all_method_item_ids
+from .methods_v2 import evaluate_method
 from .metrics import calculate_window_metrics
 from .models import LatestPrice, MappingItem, TimeSeriesPoint
-from .public_models import build_public_afk, build_public_alchemy, build_public_status
+from .public_models import build_public_alchemy, build_public_status
+from .public_models_v2 import build_public_afk
 from .public_site import write_json, write_public_site
 from .quality import build_quality, current_diagnostics
 from .tax import load_and_resolve_exemptions
@@ -62,13 +65,7 @@ class SeriesCollector:
         return series
 
 
-def _record_for_item(
-    item: MappingItem,
-    latest: LatestPrice,
-    windows: dict[str, dict[str, Any]],
-    generated_at: int,
-    settings: dict[str, Any],
-) -> dict[str, Any]:
+def _record_for_item(item: MappingItem, latest: LatestPrice, windows: dict[str, dict[str, Any]], generated_at: int, settings: dict[str, Any]) -> dict[str, Any]:
     current = current_diagnostics(latest, generated_at, settings["freshness"])
     quality = build_quality(current, windows, item.limit, item.highalch, settings)
     return {
@@ -87,8 +84,7 @@ def _required_method_item_ids(methods_config: dict[str, Any]) -> set[int]:
     for method in methods_config.get("methods", {}).values():
         if method.get("enabled", True) is False:
             continue
-        for side in ("inputs", "outputs"):
-            ids.update(int(entry["item_id"]) for entry in method.get(side, []))
+        ids.update(all_method_item_ids(method))
     return ids
 
 
@@ -104,13 +100,7 @@ def _refresh_plan(mode: str) -> dict[str, tuple[str, ...]]:
     return {}
 
 
-def _refresh_history(
-    item_ids: set[int],
-    history: dict[str, Any],
-    collector: SeriesCollector,
-    generated_at: int,
-    mode: str,
-) -> None:
+def _refresh_history(item_ids: set[int], history: dict[str, Any], collector: SeriesCollector, generated_at: int, mode: str) -> None:
     plan = _refresh_plan(mode)
     if not plan:
         return
@@ -122,18 +112,12 @@ def _refresh_history(
                 continue
             for key in window_keys:
                 spec = WINDOW_SPECS[key]
-                window_points = slice_window(points, generated_at, spec.duration_seconds)
-                updates[key] = calculate_window_metrics(window_points, spec)
+                updates[key] = calculate_window_metrics(slice_window(points, generated_at, spec.duration_seconds), spec)
         if updates:
             put_item_windows(history, item_id, updates)
 
 
-def _load_or_fetch_mapping(
-    client: MarketApiClient,
-    cache_dir: Path,
-    generated_at: int,
-    force_refresh: bool,
-) -> dict[int, MappingItem]:
+def _load_or_fetch_mapping(client: MarketApiClient, cache_dir: Path, generated_at: int, force_refresh: bool) -> dict[int, MappingItem]:
     if not force_refresh:
         cached = load_mapping(cache_dir)
         if cached is not None:
@@ -173,6 +157,7 @@ def _write_internal_report(
         if item_id in tracked_ids:
             write_json(root / "market" / "items" / f"{item_id}.json", record)
     write_json(root / "health.json", health)
+    write_json(root / "catalogue-gap.json", build_catalog_gap_report(methods_config.get("methods", {})))
     write_json(
         root / "market" / "summary.json",
         {
@@ -182,10 +167,7 @@ def _write_internal_report(
             "disclaimer": "Observed high/low trades are not a synchronized order book. Historical observed volume is a liquidity proxy, not executable market depth.",
         },
     )
-    write_json(
-        root / "afk" / "results.json",
-        {"schemaVersion": SCHEMA_VERSION, "generatedAt": generated_at, "methods": methods_config.get("methods", {}), "results": afk_results},
-    )
+    write_json(root / "afk" / "results.json", {"schemaVersion": SCHEMA_VERSION, "generatedAt": generated_at, "methods": methods_config.get("methods", {}), "results": afk_results})
     write_json(
         root / "alchemy" / "candidates.json",
         {
@@ -210,8 +192,6 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
     stats = CollectionStats()
     client = MarketApiClient(api_settings(settings))
 
-    # Mapping is refreshed by full/recovery runs. Other modes use the persisted
-    # mapping and fall back to the API only when the cache is absent.
     mapping = _load_or_fetch_mapping(client, cache_dir, generated_at, force_refresh=mode == "full")
     LOGGER.info("fetching latest")
     latest = client.get_latest()
@@ -230,6 +210,9 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
     use_fire_staff = bool(settings["alchemy"].get("use_fire_staff", True))
     fire_id = int(settings["alchemy"].get("fire_rune_item_id", 554))
     method_ids = _required_method_item_ids(methods_config)
+    missing_method_ids = sorted(item_id for item_id in method_ids if item_id not in mapping)
+    if missing_method_ids:
+        raise ValueError(f"configured method item IDs missing from mapping: {missing_method_ids}")
     base_ids = set(tracked_ids) | method_ids | {nature_id}
     if not use_fire_staff:
         base_ids.add(fire_id)
@@ -258,13 +241,7 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
         if item is None:
             stats.warnings.append(f"CONFIGURED_ITEM_MISSING_FROM_MAPPING: {item_id}")
             continue
-        records[item_id] = _record_for_item(
-            item,
-            latest.get(item_id, LatestPrice.from_api(None)),
-            item_windows(history, item_id),
-            generated_at,
-            settings,
-        )
+        records[item_id] = _record_for_item(item, latest.get(item_id, LatestPrice.from_api(None)), item_windows(history, item_id), generated_at, settings)
 
     afk_results: list[dict[str, Any]] = []
     for method_id, method in methods_config.get("methods", {}).items():
@@ -295,12 +272,7 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
                     )
                 )
 
-    alchemy_candidates.sort(
-        key=lambda row: row["currentInstant"]["profitPerCast"]
-        if row["currentInstant"]["profitPerCast"] is not None
-        else float("-inf"),
-        reverse=True,
-    )
+    alchemy_candidates.sort(key=lambda row: row["currentInstant"]["profitPerCast"] if row["currentInstant"]["profitPerCast"] is not None else float("-inf"), reverse=True)
 
     health_status = "degraded" if stats.timeseries_failed or stats.warnings else "ok"
     health = {
@@ -315,10 +287,7 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
             "timeseriesSucceeded": stats.timeseries_succeeded,
             "timeseriesFailed": stats.timeseries_failed,
         },
-        "history": {
-            "shortGeneratedAt": history.get("shortGeneratedAt"),
-            "longGeneratedAt": history.get("longGeneratedAt"),
-        },
+        "history": {"shortGeneratedAt": history.get("shortGeneratedAt"), "longGeneratedAt": history.get("longGeneratedAt")},
         "warnings": stats.warnings,
     }
     alchemy_assumptions = {
@@ -332,32 +301,17 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
 
     internal_dir = output_dir / "internal-report"
     public_dir = output_dir / "public-site"
-    _write_internal_report(
-        internal_dir,
-        generated_at,
-        records,
-        base_ids,
-        tracked_ids,
-        methods_config,
-        afk_results,
-        alchemy_candidates,
-        len(preliminary),
-        alchemy_assumptions,
-        health,
-    )
+    _write_internal_report(internal_dir, generated_at, records, base_ids, tracked_ids, methods_config, afk_results, alchemy_candidates, len(preliminary), alchemy_assumptions, health)
     public_afk = build_public_afk(generated_at, afk_results)
     public_alchemy = build_public_alchemy(generated_at, alchemy_candidates, alchemy_assumptions)
-    public_status = build_public_status(
-        generated_at,
-        health,
-        short_history_generated_at=history.get("shortGeneratedAt"),
-        long_history_generated_at=history.get("longGeneratedAt"),
-    )
+    public_status = build_public_status(generated_at, health, short_history_generated_at=history.get("shortGeneratedAt"), long_history_generated_at=history.get("longGeneratedAt"))
     write_public_site(public_dir, public_afk, public_alchemy, public_status)
 
+    gap = build_catalog_gap_report(methods_config.get("methods", {}))
     LOGGER.info("collection mode: %s", mode)
     LOGGER.info("tracked items: %s", len(tracked_ids))
     LOGGER.info("AFK methods: %s", len(methods_config.get("methods", {})))
+    LOGGER.info("catalogue family coverage: %s%% (%s missing)", gap["coveragePct"], gap["missingFamilyCount"])
     LOGGER.info("alchemy candidates: %s", len(alchemy_candidates))
     LOGGER.info("timeseries requests: %s", stats.timeseries_requested)
     LOGGER.info("timeseries failures: %s", stats.timeseries_failed)
@@ -376,11 +330,20 @@ def main(argv: list[str] | None = None) -> int:
     collect_parser.add_argument("--output", default="build", help="artifact root directory")
     collect_parser.add_argument("--cache-dir", default=".market-cache", help="persistent derived-data cache directory")
     collect_parser.add_argument("--mode", choices=COLLECTION_MODES, default="full", help="collection scope")
+    gap_parser = subparsers.add_parser("catalog-gap", help="write catalogue coverage report without collecting market data")
+    gap_parser.add_argument("--config", default="config", help="configuration directory")
+    gap_parser.add_argument("--output", default="build/catalogue-gap.json", help="report JSON path")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     try:
         if args.command == "collect":
             collect(Path(args.config), Path(args.output), Path(args.cache_dir), args.mode)
+            return 0
+        if args.command == "catalog-gap":
+            methods = load_yaml(Path(args.config) / "methods.yaml").get("methods", {})
+            report = build_catalog_gap_report(methods)
+            write_json(Path(args.output), report)
+            LOGGER.info("catalogue coverage: %s%% (%s methods, %s missing families)", report["coveragePct"], report["catalogueMethodCount"], report["missingFamilyCount"])
             return 0
     except (ApiError, ValueError, KeyError, OSError, json.JSONDecodeError) as exc:
         LOGGER.error("collection failed: %s", exc)
