@@ -8,6 +8,8 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
+PUBLIC_ASSET_VERSION = "20260829-2"
+
 PUBLIC_REQUIRED_FILES = (
     "index.html",
     "alchemy.html",
@@ -47,6 +49,7 @@ def _nav(active: str) -> str:
 
 
 def _base(title: str, active: str, page: str, main: str) -> str:
+    version = _esc(PUBLIC_ASSET_VERSION)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -55,8 +58,8 @@ def _base(title: str, active: str, page: str, main: str) -> str:
   <meta name="color-scheme" content="light">
   <meta name="description" content="OSRS Profit Finder: live AFK money-making and High Alchemy opportunities using observed OSRS Wiki market prices.">
   <title>{_esc(title)} | OSRS Profit Finder</title>
-  <link rel="stylesheet" href="assets/app.css">
-  <script defer src="assets/app.js"></script>
+  <link rel="stylesheet" href="assets/app.css?v={version}">
+  <script defer src="assets/app.js?v={version}"></script>
 </head>
 <body data-page="{_esc(page)}">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -206,3 +209,5 @@ def validate_public_site(output_dir: str | Path) -> None:
             raise ValueError(f"public Market Explorer found in {page}")
         if ">Ledger<" in text or ">About<" in text:
             raise ValueError(f"removed navigation item found in {page}")
+        if f"assets/app.js?v={PUBLIC_ASSET_VERSION}" not in text or f"assets/app.css?v={PUBLIC_ASSET_VERSION}" not in text:
+            raise ValueError(f"versioned public assets missing in {page}")
