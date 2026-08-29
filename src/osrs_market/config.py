@@ -46,16 +46,11 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
     Hand-maintained methods.yaml overrides are applied after this function, so
     explicit config remains authoritative when a method needs custom modelling.
     """
-    # F2P supports gold plus sapphire-through-diamond rings, necklaces and
-    # unstrung amulets. Bracelets and dragonstone jewellery are members-only.
     f2p_gems = ("sapphire", "emerald", "ruby", "diamond")
     for type_key in ("ring", "necklace", "amulet_u"):
         gold = methods.get(f"craft_gold_{type_key}")
         if gold:
             gold.setdefault("requirements", {})["members"] = False
-            # Current Crafting guidance models metal-only jewellery at 1,600/h.
-            # Keep the configured 1,400/h realistic rate conservative, but use
-            # the sourced 1,600/h value as the theoretical ceiling.
             gold["theoretical_cycles_per_hour"] = 1600
         for gem in f2p_gems:
             method = methods.get(f"craft_{gem}_{type_key}")
@@ -74,31 +69,21 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
         if method:
             method.setdefault("requirements", {})["members"] = True
 
-    # Current Crafting guidance uses 1,400/h for gem + metal jewellery. The
-    # generated methods already use 1,400/h mechanically, so do not advertise
-    # an unsupported 1,450/h theoretical rate.
     for type_key in ("ring", "necklace", "bracelet", "amulet_u"):
         for gem in (*f2p_gems, "dragonstone"):
             method = methods.get(f"craft_{gem}_{type_key}")
             if method:
                 method["theoretical_cycles_per_hour"] = 1400
 
-    # An onyx is the exception among the standard precious-gem bolt tips: it
-    # produces 24 tips per gem, not 12.
     onyx_tips = methods.get("onyx_bolt_tips")
     if onyx_tips and onyx_tips.get("outputs"):
         onyx_tips["outputs"][0]["quantity"] = 24
 
-    # Current Crafting training guidance uses 2,450 battlestaves/hour and states
-    # that perfect banking can reach 2,625/hour.
     for element in ("water", "earth", "fire", "air"):
         method = methods.get(f"craft_{element}_battlestaves")
         if method:
             method["theoretical_cycles_per_hour"] = 2625
 
-    # Keep displayed requirements aligned with the gear assumptions behind the
-    # sourced gathering rates. Secondary-drop boosting gear is omitted when the
-    # corresponding secondary value is intentionally excluded from profit.
     magic_logs = methods.get("cut_magic_logs")
     if magic_logs:
         magic_logs.setdefault("requirements", {})["equipment"] = ["Dragon or crystal axe"]
@@ -112,6 +97,13 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
     if dark_crabs:
         dark_crabs.setdefault("requirements", {})["equipment"] = ["Lobster pot"]
 
+    # Cooking raw karambwan requires Tai Bwo Wannai Trio. The deterministic
+    # zero-burn model remains level 99 + Cooking cape, but the quest is still a
+    # real availability requirement and must be shown to the player.
+    karambwan = methods.get("cook_karambwan")
+    if karambwan:
+        karambwan.setdefault("requirements", {})["quests"] = ["Tai Bwo Wannai Trio"]
+
 
 def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
     requirements = method.get("requirements") or {}
@@ -121,8 +113,6 @@ def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
     for key in list(requirements):
         value = requirements[key]
         lowered = str(key).lower()
-        # bool is a subclass of int in Python. Preserve flags such as
-        # `members: false` instead of misclassifying them as numeric metadata.
         if not isinstance(value, bool) and isinstance(value, (int, float)) and lowered not in _SKILL_KEYS:
             metadata[key] = requirements.pop(key)
     if metadata:
