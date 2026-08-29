@@ -22,6 +22,7 @@ _CATEGORY_LABELS = {
     "fishing": "Fishing",
     "mining": "Mining",
     "woodcutting": "Woodcutting",
+    "sailing": "Sailing",
 }
 
 
@@ -64,13 +65,13 @@ def public_risk(warnings: list[str] | None, valid: bool = True) -> dict[str, Any
     reasons: list[str] = []
     level = "normal"
     joined = " ".join(warnings)
-    if any(token in joined for token in ("STALE", "LOW_24H_VOLUME", "HIGH_RISK", "CROSSED")):
+    if any(token in joined for token in ("STALE", "LOW_24H_VOLUME", "HIGH_LIQUIDITY_RISK", "HIGH_RISK", "CROSSED")):
         level = "high"
     elif warnings:
         level = "watch"
     if "STALE" in joined:
         reasons.append("Price is older than usual, so current profit may not be representative.")
-    if "LOW_24H_VOLUME" in joined or "HIGH_RISK" in joined:
+    if "LOW_24H_VOLUME" in joined or "HIGH_LIQUIDITY_RISK" in joined or "HIGH_RISK" in joined:
         reasons.append("Thin market: planned volume is large relative to recent trading.")
     if "CROSSED" in joined:
         reasons.append("Current market observations disagree, so this entry needs caution.")
@@ -93,7 +94,7 @@ def _requirements(result: dict[str, Any]) -> dict[str, Any]:
             equipment = [str(x) for x in value]
         elif lowered == "members":
             continue
-        elif isinstance(value, (int, float)):
+        elif not isinstance(value, bool) and isinstance(value, (int, float)):
             skills[lowered] = _intish(value)  # type: ignore[assignment]
     return {"skills": skills, "quests": quests, "equipment": equipment}
 
@@ -130,9 +131,15 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
         afk = current.get("afk") or {}
         mechanics = current.get("mechanics") or {}
         sustainable_cph = _number(mechanics.get("cyclesPerHourByBuyLimits")) or 0.0
-        input_gp_per_cycle = _number(economics.get("inputGpPerCycle")) or 0.0
-        capital_one_hour = input_gp_per_cycle * sustainable_cph
-        capital_four_hours = input_gp_per_cycle * sustainable_cph * 4
+        # Capital must include consumed item costs plus fixed coin costs such as
+        # Plank Make's per-log fee. Reusable tools are stored in requirements,
+        # not method inputs, so totalCostGpPerCycle is the correct catalogue
+        # capital basis.
+        capital_gp_per_cycle = _number(economics.get("totalCostGpPerCycle"))
+        if capital_gp_per_cycle is None:
+            capital_gp_per_cycle = _number(economics.get("inputGpPerCycle")) or 0.0
+        capital_one_hour = capital_gp_per_cycle * sustainable_cph
+        capital_four_hours = capital_gp_per_cycle * sustainable_cph * 4
         current_gp = _number(economics.get("profitGpPerHourBuyLimitSustainable"))
         valid = bool(current.get("valid")) and current_gp is not None
 
@@ -163,7 +170,7 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             "history": history,
             "stability": stability,
             "afk": {"classification": classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
-            "economics": {"capitalOneHour": round(capital_one_hour) if inputs else 0, "capitalFourHours": round(capital_four_hours) if inputs else 0, "buyLimitConstrained": buy_limit_constrained},
+            "economics": {"capitalOneHour": round(capital_one_hour), "capitalFourHours": round(capital_four_hours), "buyLimitConstrained": buy_limit_constrained},
             "risk": risk,
             "inputs": inputs,
             "outputs": outputs,
