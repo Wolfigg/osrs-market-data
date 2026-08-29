@@ -84,7 +84,9 @@ def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
     for key in list(requirements):
         value = requirements[key]
         lowered = str(key).lower()
-        if isinstance(value, (int, float)) and lowered not in _SKILL_KEYS:
+        # bool is a subclass of int in Python. Preserve flags such as
+        # `members: false` instead of misclassifying them as numeric metadata.
+        if not isinstance(value, bool) and isinstance(value, (int, float)) and lowered not in _SKILL_KEYS:
             metadata[key] = requirements.pop(key)
     if metadata:
         method["requirement_metadata"] = metadata
