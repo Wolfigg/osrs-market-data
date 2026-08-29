@@ -6,7 +6,7 @@ from osrs_market.config import load_yaml
 from osrs_market.public_models import build_public_afk
 
 
-def test_full_catalog_has_structural_guards_and_explicit_types():
+def test_full_catalog_has_structural_guards_and_verified_audit():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
     assert len(methods) >= 60
     for method_id, method in methods.items():
@@ -17,6 +17,8 @@ def test_full_catalog_has_structural_guards_and_explicit_types():
         assert method["outputs"], method_id
         assert method["method_types"], method_id
         assert method["reference"].startswith("https://oldschool.runescape.wiki/"), method_id
+        assert method["audit"]["status"] == "verified", method_id
+        assert method["audit"]["source"].startswith("https://oldschool.runescape.wiki/"), method_id
 
 
 def test_audited_hand_tuned_methods_receive_provenance():
@@ -70,6 +72,24 @@ def test_jewellery_and_battlestaff_throughput_matches_current_guidance():
         assert method["theoretical_cycles_per_hour"] == 2625
 
 
+def test_longbow_cooking_and_glass_intervals_match_make_x_mechanics():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    for wood in ("maple", "yew", "magic"):
+        unstrung = methods[f"fletch_{wood}_longbow_u"]
+        assert unstrung["cycles_per_hour"] == 1500
+        assert unstrung["theoretical_cycles_per_hour"] == 1800
+        assert unstrung["afk"]["interval_seconds"] == 48.6
+        assert methods[f"string_{wood}_longbows"]["afk"]["interval_seconds"] == 16.8
+    for food in ("karambwan", "sharks", "monkfish", "anglerfish", "dark_crabs"):
+        cooking = methods[f"cook_{food}"]
+        assert cooking["cycles_per_hour"] == 1300
+        assert cooking["theoretical_cycles_per_hour"] == 1500
+        assert cooking["afk"]["interval_seconds"] == 67.2
+    assert methods["blow_unpowered_orbs"]["cycles_per_hour"] == 1600
+    assert methods["blow_unpowered_orbs"]["theoretical_cycles_per_hour"] == 1750
+    assert methods["blow_unpowered_orbs"]["afk"]["interval_seconds"] == 48.6
+
+
 def test_onyx_bolt_tip_quantity_uses_24_tips_per_gem():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
     onyx = methods["onyx_bolt_tips"]
@@ -77,11 +97,15 @@ def test_onyx_bolt_tip_quantity_uses_24_tips_per_gem():
     assert onyx["outputs"] == [{"item_id": 9194, "quantity": 24}]
 
 
-def test_gathering_requirements_match_modelled_rate_gear():
+def test_gathering_requirements_match_modelled_rate_gear_and_access():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
     assert methods["cut_magic_logs"]["requirements"]["equipment"] == ["Dragon or crystal axe"]
     assert methods["cut_redwood_logs"]["requirements"]["equipment"] == ["Dragon axe"]
-    assert methods["cut_camphor_logs"]["requirements"]["equipment"] == ["Dragon axe", "Log basket"]
+    camphor = methods["cut_camphor_logs"]["requirements"]
+    assert camphor["woodcutting"] == 66
+    assert camphor["sailing"] == 45
+    assert camphor["quests"] == ["Troubled Tortugans (partial)"]
+    assert camphor["equipment"] == ["Dragon axe", "Log basket"]
     assert methods["catch_dark_crabs"]["requirements"]["equipment"] == ["Lobster pot"]
 
 
@@ -95,7 +119,7 @@ def _public_result(category: str, method_types: list[str]):
         "valid": True,
         "mechanics": {"cyclesPerHour": 100, "cyclesPerHourByBuyLimits": 100},
         "afk": {"intervalSeconds": 60, "gpPerInteractionWindow": 1000, "description": "No keyword dependence."},
-        "economics": {"profitGpPerHourBuyLimitSustainable": 100_000, "inputGpPerCycle": 0},
+        "economics": {"profitGpPerHourBuyLimitSustainable": 100_000, "inputGpPerCycle": 0, "totalCostGpPerCycle": 0},
         "inputs": [],
         "outputs": [{"name": "Output", "quantity": 1}],
         "requirements": {"members": True},
