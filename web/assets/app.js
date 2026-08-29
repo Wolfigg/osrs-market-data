@@ -43,7 +43,7 @@
       const liveAt = Number(s.liveGeneratedAt || s.generatedAt || now);
       const age = Math.max(Number(s.ageSeconds || 0), now - liveAt);
       const node = document.querySelector("#health-state");
-      const ageState = age < 5400 ? "current" : age < 9000 ? "delayed" : "stale";
+      const ageState = age < 5400 ? "current" : age <= 9000 ? "delayed" : "stale";
       const state = s.state === "data_issue" ? "data_issue" : ageState;
       node.textContent = ({ current: "Current", delayed: "Delayed", stale: "Stale", data_issue: "Data issue" })[state] || "Data issue";
       node.className = `status-plaque ${state}`;
