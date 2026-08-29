@@ -39,7 +39,10 @@ def _apply_cooking_model(method: dict[str, Any]) -> dict[str, Any]:
     success = cooking_success_probability(profile, level, location, gauntlets, cape)
     if cooked.get("outputs"):
         cooked["outputs"][0]["quantity_expected"] = success
-        cooked["outputs"][0]["quantity_minimum"] = success
+        # A probabilistic cook is not guaranteed to produce a cooked item on a
+        # single cycle. Conservative profitability therefore uses zero as the
+        # deterministic lower bound unless the selected setup is zero-burn.
+        cooked["outputs"][0]["quantity_minimum"] = 1.0 if success >= 1.0 else 0.0
         cooked["outputs"][0]["quantity_maximum"] = 1.0
     cooked.setdefault("model", {})["cookingResult"] = {
         "level": level,
