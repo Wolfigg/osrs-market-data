@@ -40,6 +40,7 @@ def test_auxiliary_numeric_requirement_metadata_is_not_a_skill():
     assert "minimum_cooking" not in sharks["requirements"]
     assert sharks["requirement_metadata"]["minimum_cooking"] == 80
     assert sharks["requirements"]["cooking"] == 99
+    assert methods["cook_karambwan"]["requirements"]["quests"] == ["Tai Bwo Wannai Trio"]
 
 
 def test_jewellery_membership_matches_current_f2p_access():
