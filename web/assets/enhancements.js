@@ -9,6 +9,7 @@
   const gp = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
   const esc = (value) => String(value ?? "").replace(/[&<>'\"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]);
   const gpText = value => value == null ? "Unavailable" : `${gp.format(value)} gp`;
+  const plainGp = value => value == null ? "-" : gp.format(value);
 
   const readSet = key => {
     try { return new Set(JSON.parse(localStorage.getItem(key) || "[]")); }
@@ -30,6 +31,32 @@
   function confidenceText(m) {
     const c = m.fillConfidence || {};
     return c.score == null ? esc(c.label || "Unknown") : `${esc(c.label)} (${esc(c.score)}/100)`;
+  }
+
+  function correctedSessionPlan(m, bankroll, hours) {
+    const mechanical = Number(m.mechanics?.cyclesPerHour || 0);
+    const geRate = Number(m.mechanics?.cyclesPerHourByBuyLimits ?? mechanical);
+    const cost = Number(m.economics?.capitalPerCycle || 0);
+    const profitPerCycle = m.economics?.profitPerCycle == null ? null : Number(m.economics.profitPerCycle);
+    const turnoverHours = Math.max(0.25, Number(m.fillConfidence?.turnoverHours || 1));
+    if (!(bankroll > 0) || !(hours > 0) || profitPerCycle == null || !m.current?.valid) {
+      return { active: false, profit: null, cyclesPerHour: 0, workingCapital: null, turnoverHours, limitingFactor: null };
+    }
+    const bankrollRate = cost > 0 ? bankroll / (cost * turnoverHours) : Infinity;
+    const cycles = Math.max(0, Math.min(mechanical, geRate, bankrollRate));
+    let limitingFactor = "mechanics";
+    if (bankrollRate <= cycles + 1e-9 && bankrollRate < mechanical - 1e-9 && bankrollRate < geRate - 1e-9) limitingFactor = "bankroll_turnover";
+    else if (geRate <= cycles + 1e-9 && geRate < mechanical - 1e-9) limitingFactor = "ge_buy_limit";
+    else if (["low", "very_low"].includes(m.fillConfidence?.state)) limitingFactor = "fill_confidence";
+    return {
+      active: true,
+      cyclesPerHour: cycles,
+      gpPerHour: profitPerCycle * cycles,
+      profit: profitPerCycle * cycles * hours,
+      workingCapital: cost > 0 ? cost * cycles * turnoverHours : 0,
+      turnoverHours,
+      limitingFactor,
+    };
   }
 
   function ensureUtilityPanels() {
@@ -89,6 +116,41 @@
     });
   }
 
+  function applyPlannerV2() {
+    if (!methods.length) return;
+    const bankroll = Math.max(0, Number(document.querySelector("#planner-bankroll")?.value || 0));
+    const hours = Math.min(24, Math.max(0.25, Number(document.querySelector("#planner-hours")?.value || 4)));
+    const map = byId();
+    const visible = [...document.querySelectorAll("#afk-list [data-method-id]")];
+    const planned = visible.map(record => {
+      const method = map.get(record.dataset.methodId);
+      const plan = method ? correctedSessionPlan(method, bankroll, hours) : null;
+      if (plan) {
+        const cell = record.querySelector(".session-column");
+        if (cell) cell.textContent = plainGp(plan.profit);
+        record.dataset.correctedSessionProfit = plan.profit == null ? "" : String(plan.profit);
+        const box = record.querySelector(".confidence-box");
+        if (box && plan.active && !box.querySelector(".planner-v2-note")) {
+          box.insertAdjacentHTML("beforeend", `<p class="planner-v2-note"><strong>Bankroll model:</strong> ${gpText(plan.workingCapital)} tied up across an estimated ${plan.turnoverHours}h market-turnover window.</p>`);
+        }
+      }
+      return { record, method, plan };
+    });
+
+    const summary = document.querySelector("#planner-summary");
+    if (summary && bankroll > 0) {
+      const best = planned.filter(row => row.plan?.profit != null).sort((a, b) => b.plan.profit - a.plan.profit)[0];
+      summary.textContent = best ? `Best shown: ${best.method.name} · ${gpText(best.plan.profit)} over ${hours}h` : "No displayed method is fundable with the current filters.";
+    }
+
+    if (document.querySelector("#afk-sort")?.value === "session-profit") {
+      const sorted = [...planned].sort((a, b) => (b.plan?.profit ?? -Infinity) - (a.plan?.profit ?? -Infinity));
+      const currentIds = visible.map(x => x.dataset.methodId).join("|");
+      const sortedIds = sorted.map(x => x.record.dataset.methodId).join("|");
+      if (currentIds !== sortedIds) sorted.forEach(row => row.record.parentNode?.appendChild(row.record));
+    }
+  }
+
   document.addEventListener("click", event => {
     const favouriteButton = event.target.closest("[data-favourite]");
     if (favouriteButton) {
@@ -120,11 +182,18 @@
     }
   });
 
+  ["input", "change"].forEach(type => document.addEventListener(type, event => {
+    if (event.target.matches("#planner-bankroll,#planner-hours,#afk-sort,#afk-search,#afk-category,#afk-profit,#afk-level,#afk-type,#afk-stability,#afk-sustainability,#afk-capital,#afk-can-do,input[name='afk-membership'],.skill-level")) {
+      setTimeout(() => { enhanceVisibleRecords(); applyPlannerV2(); }, 0);
+    }
+  }));
+
   fetch("data/afk.json", { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject()).then(data => {
     methods = data.methods || [];
     renderUtilityPanels();
     enhanceVisibleRecords();
+    applyPlannerV2();
     const list = document.querySelector("#afk-list");
-    if (list) new MutationObserver(() => enhanceVisibleRecords()).observe(list, { childList: true, subtree: false });
+    if (list) new MutationObserver(() => { enhanceVisibleRecords(); applyPlannerV2(); }).observe(list, { childList: true, subtree: false });
   }).catch(() => {});
 })();
