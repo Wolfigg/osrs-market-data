@@ -16,7 +16,7 @@ from .config import api_settings, load_json, load_yaml
 from .methods import evaluate_method
 from .metrics import calculate_window_metrics
 from .models import LatestPrice, MappingItem, TimeSeriesPoint
-from .public_models import build_dashboard, build_public_afk, build_public_alchemy, build_public_status
+from .public_models import build_public_afk, build_public_alchemy, build_public_status
 from .public_site import write_json, write_public_site
 from .quality import build_quality, current_diagnostics
 from .tax import load_and_resolve_exemptions
@@ -175,8 +175,7 @@ def collect(config_dir: Path, output_dir: Path) -> None:
     public_afk = build_public_afk(generated_at, afk_results)
     public_alchemy = build_public_alchemy(generated_at, alchemy_candidates, alchemy_assumptions)
     public_status = build_public_status(generated_at, health)
-    public_dashboard = build_dashboard(generated_at, public_afk, public_alchemy)
-    write_public_site(public_dir, public_dashboard, public_afk, public_alchemy, public_status)
+    write_public_site(public_dir, public_afk, public_alchemy, public_status)
 
     LOGGER.info("tracked items: %s", len(tracked_ids))
     LOGGER.info("AFK methods: %s", len(methods_config.get("methods", {})))

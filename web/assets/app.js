@@ -31,76 +31,19 @@
       const now = Math.floor(Date.now() / 1000);
       const age = Math.max(Number(s.ageSeconds || 0), now - Number(s.generatedAt || now));
       const node = document.querySelector("#health-state");
-      node.textContent = ({ current: "Current", delayed: "Delayed", data_issue: "Data issue" })[s.state] || "Data issue";
-      node.className = `status-plaque ${s.state || "data_issue"}`;
-      document.querySelector("#update-age").textContent = s.state === "data_issue" ? "Showing last good public dataset" : relativeAge(age);
+      const ageState = age < 5400 ? "current" : age < 9000 ? "delayed" : "stale";
+      const state = s.state === "data_issue" ? "data_issue" : ageState;
+      node.textContent = ({ current: "Current", delayed: "Delayed", stale: "Stale", data_issue: "Data issue" })[state] || "Data issue";
+      node.className = `status-plaque ${state}`;
+      const generated = new Date(Number(s.generatedAt || now) * 1000);
+      const scanTime = generated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      document.querySelector("#update-age").textContent = state === "data_issue"
+        ? `Last market scan ${scanTime} · data issue`
+        : `Last market scan ${scanTime} · ${relativeAge(age)}`;
     } catch (_) {
       document.querySelector("#health-state").textContent = "Data issue";
       document.querySelector("#health-state").className = "status-plaque data_issue";
       document.querySelector("#update-age").textContent = "Status unavailable";
-    }
-  }
-
-  function featuredAfkHtml(i) {
-    if (!i) return `<p class="empty-state">No reliable current AFK calculation is available.</p>`;
-    return `<div class="panel-heading"><span class="kicker">Featured AFK · ${esc(i.category)}</span><h2>${esc(i.name)}</h2></div><p class="metric-primary">${plainGp(i.currentGpPerHour)}</p><p class="metric-caption">GP per hour at sustainable throughput</p><div class="stat-grid"><div class="stat"><span>24H reference</span><strong>${gpText(i.reference24hGpPerHour)}</strong></div><div class="stat"><span>AFK interval</span><strong>${i.afkIntervalSeconds == null ? "-" : `${plainGp(i.afkIntervalSeconds)} sec`}</strong></div><div class="stat"><span>GP / interaction</span><strong>${gpText(i.gpPerInteraction)}</strong></div></div><div class="entry-meta">${badge(membership(i.members))}${badge(i.risk, i.risk)}<span>1h capital: <strong>${gpText(i.capitalOneHour)}</strong></span></div><p class="reason">${esc(i.reason)}</p><a class="action-link" href="afk.html?method=${encodeURIComponent(i.methodId)}">Browse AFK Methods</a>`;
-  }
-
-  function featuredAlchHtml(i) {
-    if (!i) return `<p class="empty-state">No reliable current High Alch candidate is available.</p>`;
-    return `<div class="ticket-heading"><span class="kicker">High Alch trade ticket</span><h2>${esc(i.name)}</h2></div><p class="metric-primary">${plainGp(i.profit4h)}</p><p class="metric-caption">Practical four-hour profit</p><div class="stat-grid"><div class="stat"><span>Profit / cast</span><strong>${gpText(i.profitPerCast)}</strong></div><div class="stat"><span>4H quantity</span><strong>${plainGp(i.quantity4h)}</strong></div><div class="stat"><span>Capital</span><strong>${gpText(i.capitalRequired)}</strong></div></div><div class="entry-meta">${badge(membership(i.members))}${badge(i.freshness)}${badge(i.risk, i.risk)}</div><a class="action-link" href="alchemy.html">Open High Alch</a>`;
-  }
-
-  function dashboardAfkRow(m, rank) {
-    return `<a class="top-five-row top-afk-grid" href="afk.html?method=${encodeURIComponent(m.methodId)}"><span class="rank-number">${rank}</span><span class="top-name"><strong>${esc(m.name)}</strong><small>${esc(m.category)} · ${membership(m.members)}</small></span><span class="num profit">${plainGp(m.current.gpPerHour)}</span><span class="num">${plainGp(m.history?.["24hGpPerHour"])}</span><span class="num long-reference">${plainGp(m.history?.["7dGpPerHour"])}</span><span class="num long-reference">${plainGp(m.history?.["30dGpPerHour"])}</span><span class="num">${m.afk.intervalSeconds == null ? "-" : `${plainGp(m.afk.intervalSeconds)}s`}</span></a>`;
-  }
-
-  function dashboardAlchRow(i, rank) {
-    return `<a class="top-five-row top-alch-grid" href="alchemy.html"><span class="rank-number">${rank}</span><span class="top-name"><strong>${esc(i.name)}</strong><small>${membership(i.members)} · ${esc(i.freshness)}</small></span><span class="num profit">${plainGp(i.profit4h)}</span><span class="num">${plainGp(i.profitPerCast)}</span><span class="num">${i.roi == null ? "-" : `${pct.format(i.roi)}%`}</span><span class="num">${plainGp(i.capitalRequired)}</span></a>`;
-  }
-
-  function dashboardRankingsHtml(methods, items) {
-    const topAfk = methods
-      .filter(m => m.current?.valid && m.current.gpPerHour != null)
-      .sort((a, b) => Number(b.current.gpPerHour) - Number(a.current.gpPerHour))
-      .slice(0, 5);
-    const topAlch = items
-      .filter(i => i.profit4h != null && i.profitPerCast != null)
-      .sort((a, b) => Number(b.profit4h) - Number(a.profit4h))
-      .slice(0, 5);
-
-    const afkRows = topAfk.length
-      ? topAfk.map((m, index) => dashboardAfkRow(m, index + 1)).join("")
-      : `<p class="empty-state">No reliable current AFK methods are available.</p>`;
-    const alchRows = topAlch.length
-      ? topAlch.map((i, index) => dashboardAlchRow(i, index + 1)).join("")
-      : `<p class="empty-state">No reliable current High Alch candidates are available.</p>`;
-
-    return `<section class="dashboard-rankings" aria-label="Top five opportunities"><article class="top-five-panel"><div class="section-heading"><p class="eyebrow">Work Board</p><h2>Top 5 AFK</h2></div><div class="top-five-header top-afk-grid"><span>#</span><span>Method</span><span class="num">Current GP/h</span><span class="num">24H GP/h</span><span class="num long-reference">7D GP/h</span><span class="num long-reference">30D GP/h</span><span class="num">AFK</span></div><div class="top-five-list">${afkRows}</div><a class="top-five-footer" href="afk.html">View all AFK methods</a></article><article class="top-five-panel"><div class="section-heading"><p class="eyebrow">Alchemist's Desk</p><h2>Top 5 High Alch</h2></div><div class="top-five-header top-alch-grid"><span>#</span><span>Item</span><span class="num">4H profit</span><span class="num">Profit/cast</span><span class="num">ROI</span><span class="num">Capital</span></div><div class="top-five-list">${alchRows}</div><a class="top-five-footer" href="alchemy.html">View all High Alch opportunities</a></article></section>`;
-  }
-
-  async function initDashboard() {
-    try {
-      const [d, afk, alch] = await Promise.all([
-        loadJson("data/dashboard.json"),
-        loadJson("data/afk.json"),
-        loadJson("data/alchemy.json")
-      ]);
-      const a = document.querySelector("#featured-afk");
-      const h = document.querySelector("#featured-alch");
-      a.classList.remove("loading-panel");
-      h.classList.remove("loading-panel");
-      a.innerHTML = featuredAfkHtml(d.featuredAfk);
-      h.innerHTML = featuredAlchHtml(d.featuredAlchemy);
-      const existing = document.querySelector(".dashboard-rankings");
-      if (existing) existing.remove();
-      document.querySelector(".dashboard-grid").insertAdjacentHTML("afterend", dashboardRankingsHtml(afk.methods || [], alch.items || []));
-      document.querySelector("#notices").innerHTML = (d.notices || []).length
-        ? d.notices.map(n => `<div class="notice-entry"><span class="notice-kind">${esc(n.kind)}</span><span class="notice-title">${esc(n.title)}</span><span class="notice-text">${esc(n.text)}</span></div>`).join("")
-        : `<p class="empty-state">No notable market notices in the current dataset.</p>`;
-    } catch (_) {
-      document.querySelector("#featured-afk").innerHTML = `<p class="empty-state">Featured AFK data could not be loaded.</p>`;
-      document.querySelector("#featured-alch").innerHTML = `<p class="empty-state">High Alch data could not be loaded.</p>`;
     }
   }
 
@@ -141,9 +84,6 @@
       const methods = data.methods || [];
       const cat = document.querySelector("#afk-category");
       const sortNode = document.querySelector("#afk-sort");
-      if (!sortNode.querySelector('option[value="gp-7d"]')) {
-        sortNode.querySelector('option[value="gp-24h"]').insertAdjacentHTML("afterend", '<option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option>');
-      }
       const params = new URLSearchParams(location.search);
       const cats = [...new Set(methods.map(m => m.category))].sort();
       cat.insertAdjacentHTML("beforeend", cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join(""));
@@ -204,6 +144,14 @@
     try {
       const data = await loadJson("data/alchemy.json");
       const items = data.items || [];
+      const params = new URLSearchParams(location.search);
+      document.querySelector("#alch-search").value = params.get("q") || "";
+      if (["f2p", "members"].includes(params.get("members"))) document.querySelector(`input[name="alch-membership"][value="${params.get("members")}"]`).checked = true;
+      if (params.get("profit") === "all") document.querySelector("#alch-profit").value = "all";
+      if (params.get("min")) document.querySelector("#alch-min-profit").value = params.get("min");
+      if (params.get("sort") && document.querySelector(`#alch-sort option[value="${CSS.escape(params.get("sort"))}"]`)) document.querySelector("#alch-sort").value = params.get("sort");
+      document.querySelector("#alch-unavailable").checked = params.get("unavailable") === "1";
+
       const render = () => {
         const search = document.querySelector("#alch-search").value.trim().toLowerCase();
         const mv = readRadio("alch-membership");
@@ -235,7 +183,6 @@
   }
 
   initStatus();
-  if (page === "dashboard") initDashboard();
   if (page === "afk") initAfk();
   if (page === "alchemy") initAlchemy();
 })();
