@@ -43,18 +43,27 @@ jobs:
       - name: Run tests
         run: pytest
 
-      - name: Collect market data
-        run: python -m osrs_market.cli collect --output site
+      - name: Collect market data and build artifacts
+        run: python -m osrs_market.cli collect --output build
+
+      - name: Upload maintainer diagnostics
+        if: always() && hashFiles('build/internal-report/**') != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: osrs-market-diagnostics
+          path: build/internal-report
+          retention-days: 5
+          if-no-files-found: ignore
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
         with:
           enablement: true
 
-      - name: Upload GitHub Pages artifact
+      - name: Upload public GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: build/public-site
 
   deploy:
     needs: build
