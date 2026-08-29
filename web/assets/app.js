@@ -10,6 +10,8 @@
   const membership = (m) => m ? "P2P" : "F2P";
   const badge = (text, klass="") => `<span class="badge ${esc(klass)}">${esc(text)}</span>`;
   const riskBadge = (risk) => badge(risk?.label || risk?.level || "Unknown", risk?.level || "");
+  const stabilityBadge = (stability) => badge(stability?.label || "Unknown", stability?.state || "");
+  const SKILL_STORAGE_KEY = "osrs-profit-finder.skill-levels.v1";
 
   async function loadJson(path) {
     const r = await fetch(path, { cache: "no-store" });
@@ -63,7 +65,7 @@
   function syncQuery(values) {
     const p = new URLSearchParams();
     Object.entries(values).forEach(([k, v]) => {
-      if (v != null && v !== "" && v !== "all" && v !== "profitable" && v !== "gp-hour" && v !== "profit-4h" && v !== "0") p.set(k, v);
+      if (v != null && v !== "" && v !== "all" && v !== "profitable" && v !== "recommended" && v !== "profit-4h" && v !== "0") p.set(k, v);
     });
     history.replaceState(null, "", `${location.pathname}${p.toString() ? `?${p}` : ""}`);
   }
@@ -79,13 +81,38 @@
     return items?.length ? `<h3>${esc(title)}</h3><ul class="detail-list">${items.map(x => `<li>${esc(x.quantity)} × ${esc(x.name)}</li>`).join("")}</ul>` : "";
   }
 
+  function loadSkillLevels() {
+    try { return JSON.parse(localStorage.getItem(SKILL_STORAGE_KEY) || "{}"); }
+    catch (_) { return {}; }
+  }
+
+  function saveSkillLevels() {
+    const levels = {};
+    document.querySelectorAll(".skill-level").forEach(input => {
+      const value = Number(input.value || 0);
+      if (value >= 1 && value <= 99) levels[input.dataset.skill] = value;
+    });
+    localStorage.setItem(SKILL_STORAGE_KEY, JSON.stringify(levels));
+    return levels;
+  }
+
+  function canDoBySkills(method, levels) {
+    return Object.entries(method.requirements?.skills || {}).every(([skill, required]) => Number(levels[skill] || 0) >= Number(required));
+  }
+
+  function deviationText(value) {
+    if (value == null) return "-";
+    return `${value >= 0 ? "+" : ""}${pct.format(value)}%`;
+  }
+
   function afkRecord(m) {
     const cur = m.current.gpPerHour;
+    const rec = m.recommended?.gpPerHour;
     const ref24 = m.history?.["24hGpPerHour"];
     const ref7 = m.history?.["7dGpPerHour"];
     const ref30 = m.history?.["30dGpPerHour"];
     const cls = cur != null && cur < 0 ? "loss" : "profit";
-    return `<details class="ledger-record" data-method-id="${esc(m.methodId)}"><summary class="ledger-summary afk-grid"><div class="method-name"><strong>${esc(m.name)}</strong><small>${esc(m.category)} · ${esc(m.afk.classification)} · ${membership(m.members)}</small></div><div class="num primary-mobile ${cls}">${plainGp(cur)}</div><div class="num">${plainGp(ref24)}</div><div class="num desktop-secondary">${plainGp(ref7)}</div><div class="num desktop-secondary">${plainGp(ref30)}</div><div class="num">${m.afk.intervalSeconds == null ? "-" : `${plainGp(m.afk.intervalSeconds)}s`}</div><div class="num">${plainGp(m.afk.gpPerInteraction)}</div><div class="num desktop-secondary">${plainGp(m.economics.capitalOneHour)}</div><div class="desktop-secondary">${membership(m.members)}</div><div class="desktop-secondary">${riskBadge(m.risk)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(m.afk.classification)}${(m.tags || []).map(t => badge(t)).join("")}${riskBadge(m.risk)}</div><p>${esc(m.description || m.afk.description || "")}</p><div class="detail-grid"><div>${requirementsHtml(m.requirements)}</div><div>${itemsHtml("Inputs", m.inputs)}${itemsHtml("Outputs", m.outputs)}</div><div><h3>Economics</h3><p>1h capital: <strong>${gpText(m.economics.capitalOneHour)}</strong></p><p>4h capital: <strong>${gpText(m.economics.capitalFourHours)}</strong></p><p>GE buy-limit constrained: <strong>${m.economics.buyLimitConstrained ? "Yes" : "No"}</strong></p><p>${esc(m.risk?.reasons?.[0] || "No material current warning.")}</p></div></div><div class="history-grid"><div class="history-cell"><span>Current</span><strong>${gpText(cur)}</strong></div><div class="history-cell"><span>6H</span><strong>${gpText(m.history?.["6hGpPerHour"])}</strong></div><div class="history-cell"><span>24H</span><strong>${gpText(ref24)}</strong></div><div class="history-cell"><span>7D</span><strong>${gpText(ref7)}</strong></div><div class="history-cell"><span>30D</span><strong>${gpText(ref30)}</strong></div></div>${m.reference ? `<a class="action-link" href="${esc(m.reference)}" target="_blank" rel="noopener noreferrer">Source / reference</a>` : ""}</div></details>`;
+    return `<details class="ledger-record" data-method-id="${esc(m.methodId)}"><summary class="ledger-summary afk-grid"><div class="method-name"><strong>${esc(m.name)}</strong><small>${esc(m.category)} · ${esc(m.afk.classification)} · ${membership(m.members)}</small></div><div class="num primary-mobile ${cls}">${plainGp(rec)}</div><div class="num">${plainGp(cur)}</div><div class="num desktop-secondary">${plainGp(ref24)}</div><div class="num desktop-secondary">${plainGp(ref7)}</div><div class="num desktop-secondary">${plainGp(ref30)}</div><div class="num">${m.afk.intervalSeconds == null ? "-" : `${plainGp(m.afk.intervalSeconds)}s`}</div><div class="num desktop-secondary">${plainGp(m.economics.capitalOneHour)}</div><div class="desktop-secondary">${stabilityBadge(m.stability)}</div><div class="desktop-secondary">${membership(m.members)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(m.afk.classification)}${(m.tags || []).map(t => badge(t)).join("")}${stabilityBadge(m.stability)}${riskBadge(m.risk)}</div><p>${esc(m.description || m.afk.description || "")}</p><div class="detail-grid"><div>${requirementsHtml(m.requirements)}</div><div>${itemsHtml("Inputs", m.inputs)}${itemsHtml("Outputs", m.outputs)}</div><div><h3>Recommendation</h3><p>Recommended GP/h: <strong>${gpText(rec)}</strong></p><p>Weighted historical reference: <strong>${gpText(m.recommended?.referenceGpPerHour)}</strong></p><p>${esc(m.stability?.reasons?.[0] || "No recommendation available.")}</p><p>1h capital: <strong>${gpText(m.economics.capitalOneHour)}</strong></p></div></div><div class="history-grid"><div class="history-cell"><span>Recommended</span><strong>${gpText(rec)}</strong></div><div class="history-cell"><span>Current</span><strong>${gpText(cur)}</strong></div><div class="history-cell"><span>24H</span><strong>${gpText(ref24)}</strong><small>${deviationText(m.stability?.currentVs24hPct)}</small></div><div class="history-cell"><span>7D</span><strong>${gpText(ref7)}</strong><small>${deviationText(m.stability?.currentVs7dPct)}</small></div><div class="history-cell"><span>30D</span><strong>${gpText(ref30)}</strong><small>${deviationText(m.stability?.currentVs30dPct)}</small></div></div>${m.reference ? `<a class="action-link" href="${esc(m.reference)}" target="_blank" rel="noopener noreferrer">Source / reference</a>` : ""}</div></details>`;
   }
 
   async function initAfk() {
@@ -104,8 +131,11 @@
       if (params.get("profit") === "all") document.querySelector("#afk-profit").value = "all";
       if (params.get("level")) document.querySelector("#afk-level").value = params.get("level");
       if (params.get("type")) document.querySelector("#afk-type").value = params.get("type");
+      if (params.get("stability")) document.querySelector("#afk-stability").value = params.get("stability");
       if (params.get("capital")) document.querySelector("#afk-capital").value = params.get("capital");
       if (params.get("sort") && sortNode.querySelector(`option[value="${CSS.escape(params.get("sort"))}"]`)) sortNode.value = params.get("sort");
+      const savedLevels = loadSkillLevels();
+      document.querySelectorAll(".skill-level").forEach(input => { input.value = savedLevels[input.dataset.skill] || ""; });
 
       const render = () => {
         const search = document.querySelector("#afk-search").value.trim().toLowerCase();
@@ -114,8 +144,11 @@
         const pv = document.querySelector("#afk-profit").value;
         const lv = document.querySelector("#afk-level").value;
         const tv = document.querySelector("#afk-type").value;
+        const sv = document.querySelector("#afk-stability").value;
         const cap = document.querySelector("#afk-capital").value;
         const capLimit = cap === "all" ? null : Number(cap);
+        const onlyCanDo = document.querySelector("#afk-can-do").checked;
+        const levels = saveSkillLevels();
         const sort = sortNode.value;
         let rows = methods.filter(m =>
           !(search && !`${m.name} ${m.category} ${(m.tags || []).join(" ")}`.toLowerCase().includes(search)) &&
@@ -125,9 +158,12 @@
           !(pv === "profitable" && !(m.current.valid && Number(m.current.gpPerHour) > 0)) &&
           !(lv !== "all" && m.afk.classification !== lv) &&
           !(tv !== "all" && !(m.tags || []).includes(tv)) &&
-          !(capLimit != null && Number(m.economics.capitalOneHour) >= capLimit)
+          !(sv !== "all" && m.stability?.state !== sv) &&
+          !(capLimit != null && Number(m.economics.capitalOneHour) >= capLimit) &&
+          !(onlyCanDo && !canDoBySkills(m, levels))
         );
         const val = (m, k) => ({
+          recommended: m.recommended?.gpPerHour,
           "gp-hour": m.current.gpPerHour,
           "gp-24h": m.history?.["24hGpPerHour"],
           "gp-7d": m.history?.["7dGpPerHour"],
@@ -138,14 +174,14 @@
         })[k];
         rows.sort((a, b) => sort === "alphabetical" ? a.name.localeCompare(b.name) : sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#afk-count").textContent = `${rows.length} method${rows.length === 1 ? "" : "s"}`;
-        list.innerHTML = `<div class="ledger-header afk-grid"><div>Method</div><div class="num">Current GP/h</div><div class="num">24H GP/h</div><div class="num desktop-secondary">7D GP/h</div><div class="num desktop-secondary">30D GP/h</div><div class="num">AFK interval</div><div class="num">GP / interaction</div><div class="num desktop-secondary">1h capital</div><div class="desktop-secondary">Access</div><div class="desktop-secondary">Risk</div></div>${rows.length ? rows.map(afkRecord).join("") : `<p class="empty-state">No methods match these filters.</p>`}`;
-        syncQuery({ q: search, category: cv, members: mv, profit: pv, level: lv, type: tv, capital: cap, sort });
+        list.innerHTML = `<div class="ledger-header afk-grid"><div>Method</div><div class="num">Recommended</div><div class="num">Current</div><div class="num desktop-secondary">24H</div><div class="num desktop-secondary">7D</div><div class="num desktop-secondary">30D</div><div class="num">AFK</div><div class="num desktop-secondary">1h capital</div><div class="desktop-secondary">Stability</div><div class="desktop-secondary">Access</div></div>${rows.length ? rows.map(afkRecord).join("") : `<p class="empty-state">No methods match these filters.</p>`}`;
+        syncQuery({ q: search, category: cv, members: mv, profit: pv, level: lv, type: tv, stability: sv, capital: cap, sort });
         const requested = params.get("method");
         if (requested) list.querySelector(`[data-method-id="${CSS.escape(requested)}"]`)?.setAttribute("open", "");
       };
 
-      document.querySelectorAll("#afk-category,#afk-profit,#afk-level,#afk-type,#afk-capital,#afk-sort,input[name='afk-membership']").forEach(el => el.addEventListener("change", render));
-      document.querySelector("#afk-search").addEventListener("input", render);
+      document.querySelectorAll("#afk-category,#afk-profit,#afk-level,#afk-type,#afk-stability,#afk-capital,#afk-sort,#afk-can-do,input[name='afk-membership'],.skill-level").forEach(el => el.addEventListener("change", render));
+      document.querySelectorAll("#afk-search,.skill-level").forEach(el => el.addEventListener("input", render));
       render();
     } catch (_) {
       list.innerHTML = `<p class="empty-state">AFK method data could not be loaded.</p>`;
@@ -190,14 +226,9 @@
           !(capLimit != null && (i.capitalRequired == null || Number(i.capitalRequired) >= capLimit))
         );
         const val = (i, k) => ({
-          "profit-4h": i.profit4h,
-          "profit-cast": i.profitPerCast,
-          "profit-24h": i.history?.["24hProfitPerCast"],
-          "profit-7d": i.history?.["7dProfitPerCast"],
-          "profit-30d": i.history?.["30dProfitPerCast"],
-          roi: i.roi,
-          capital: i.capitalRequired,
-          volume: i.volume24h
+          "profit-4h": i.profit4h, "profit-cast": i.profitPerCast,
+          "profit-24h": i.history?.["24hProfitPerCast"], "profit-7d": i.history?.["7dProfitPerCast"], "profit-30d": i.history?.["30dProfitPerCast"],
+          roi: i.roi, capital: i.capitalRequired, volume: i.volume24h
         })[k];
         rows.sort((a, b) => sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#alch-count").textContent = `${rows.length} candidate${rows.length === 1 ? "" : "s"}`;
