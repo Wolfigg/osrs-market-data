@@ -76,6 +76,14 @@ def test_onyx_bolt_tip_quantity_uses_24_tips_per_gem():
     assert onyx["outputs"] == [{"item_id": 9194, "quantity": 24}]
 
 
+def test_gathering_requirements_match_modelled_rate_gear():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    assert methods["cut_magic_logs"]["requirements"]["equipment"] == ["Dragon or crystal axe"]
+    assert methods["cut_redwood_logs"]["requirements"]["equipment"] == ["Dragon axe"]
+    assert methods["cut_camphor_logs"]["requirements"]["equipment"] == ["Dragon axe", "Log basket"]
+    assert methods["catch_dark_crabs"]["requirements"]["equipment"] == ["Lobster pot"]
+
+
 def _public_result(category: str, method_types: list[str]):
     return {
         "methodId": "test",
