@@ -34,6 +34,14 @@ def test_generated_catalog_types_come_from_semantics_not_copy_text():
     assert methods["fletch_magic_longbow_u"]["method_types"] == ["bankstanding", "make-x"]
 
 
+def test_auxiliary_numeric_requirement_metadata_is_not_a_skill():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    sharks = methods["cook_sharks"]
+    assert "minimum_cooking" not in sharks["requirements"]
+    assert sharks["requirement_metadata"]["minimum_cooking"] == 80
+    assert sharks["requirements"]["cooking"] == 99
+
+
 def _public_result(category: str, method_types: list[str]):
     return {
         "methodId": "test",
