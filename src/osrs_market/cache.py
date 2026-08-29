@@ -53,20 +53,28 @@ def load_history(cache_dir: Path) -> dict[str, Any]:
     if payload is None:
         return {
             "schemaVersion": SCHEMA_VERSION,
+            "generatedAt": None,
+            "source": "osrs-wiki",
+            "status": "empty",
             "shortGeneratedAt": None,
             "longGeneratedAt": None,
             "items": {},
         }
     if not isinstance(payload.get("items"), dict):
         raise ValueError("historical cache items must be an object")
+    payload.setdefault("generatedAt", _latest_timestamp(payload.get("shortGeneratedAt"), payload.get("longGeneratedAt")))
+    payload.setdefault("source", "osrs-wiki")
+    payload.setdefault("status", "ok")
     payload.setdefault("shortGeneratedAt", None)
     payload.setdefault("longGeneratedAt", None)
     return payload
 
 
 def save_history(cache_dir: Path, payload: dict[str, Any]) -> None:
+    generated_at = _latest_timestamp(payload.get("shortGeneratedAt"), payload.get("longGeneratedAt"))
     normalized = {
         "schemaVersion": SCHEMA_VERSION,
+        "generatedAt": generated_at,
         "source": "osrs-wiki",
         "status": "ok",
         "shortGeneratedAt": payload.get("shortGeneratedAt"),
@@ -86,6 +94,11 @@ def put_item_windows(history: dict[str, Any], item_id: int, windows: dict[str, d
     items = history.setdefault("items", {})
     current = items.setdefault(str(int(item_id)), {})
     current.update(windows)
+
+
+def _latest_timestamp(*values: Any) -> int | None:
+    timestamps = [int(value) for value in values if value is not None]
+    return max(timestamps) if timestamps else None
 
 
 def _optional_int(value: Any) -> int | None:
