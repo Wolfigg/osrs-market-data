@@ -1,3 +1,5 @@
+import json
+
 from osrs_market.cache import item_windows, load_history, load_mapping, put_item_windows, save_history, save_mapping
 from osrs_market.models import MappingItem
 
@@ -14,6 +16,13 @@ def test_mapping_cache_round_trip(tmp_path):
     assert items[1].highalch == 100
 
 
+def test_empty_history_cache_has_explicit_metadata(tmp_path):
+    history = load_history(tmp_path / "cache")
+    assert history["generatedAt"] is None
+    assert history["source"] == "osrs-wiki"
+    assert history["status"] == "empty"
+
+
 def test_history_cache_round_trip(tmp_path):
     cache_dir = tmp_path / "cache"
     history = load_history(cache_dir)
@@ -23,9 +32,14 @@ def test_history_cache_round_trip(tmp_path):
     save_history(cache_dir, history)
 
     loaded = load_history(cache_dir)
+    assert loaded["generatedAt"] == 100
+    assert loaded["source"] == "osrs-wiki"
+    assert loaded["status"] == "ok"
     assert loaded["shortGeneratedAt"] == 100
     assert loaded["longGeneratedAt"] == 80
     assert item_windows(loaded, 2353)["24h"]["highVwap"] == 500
+    raw = json.loads((cache_dir / "historical.json").read_text(encoding="utf-8"))
+    assert raw["generatedAt"] == 100
 
 
 def test_put_item_windows_preserves_other_windows(tmp_path):
