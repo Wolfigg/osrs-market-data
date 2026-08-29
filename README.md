@@ -4,7 +4,7 @@ A Python 3.12 market-analysis pipeline for Old School RuneScape using the OSRS W
 
 The public application intentionally contains two tools:
 
-1. **AFK Money Makers**: ranks genuinely AFK or low-interaction processing methods using live prices, historical VWAPs, GE tax, buy limits, liquidity, realistic rates, AFK interval metrics and a conservative Recommended GP/hour model.
+1. **AFK Money Makers**: ranks genuinely AFK or low-interaction processing methods using live prices, historical VWAPs, GE tax, buy limits, liquidity, audited game mechanics, AFK interval metrics and a conservative Recommended GP/hour model.
 2. **High Alch**: a standalone active buy-and-alch scanner. It is deliberately not used as an exit for AFK methods.
 
 There is no public Market Explorer, raw API browser, diagnostics page or dashboard branch.
@@ -110,9 +110,12 @@ The collector persists only derived metrics needed by the application:
 └── historical.json
 ```
 
-The history cache tracks separate timestamps for short and long analysis:
+The history cache records provenance plus overall and per-tier timestamps:
 
 ```text
+generatedAt
+source
+status
 shortGeneratedAt
 longGeneratedAt
 ```
@@ -142,11 +145,24 @@ Public AFK data includes:
 - stability state and current-vs-history deviations
 - AFK interval
 - GP per interaction
-- one-hour and four-hour capital
+- one-hour and four-hour capital, including fixed coin costs
 - membership
 - method tags
 - requirements
 - risk state
+
+### Mechanically audited catalogue
+
+Every enabled method must pass structural validation and carry an OSRS Wiki-backed `audit.status: verified`. Collection fails rather than publishing an enabled method without verified audit provenance.
+
+The completion audit covers the generated and hand-tuned families, including cannonballs, bolt tips, dart tips, Plank Make, longbows, cooking, jewellery, glassblowing, battlestaves and gathering methods. Detailed assumptions and corrections are recorded in:
+
+```text
+config/method_audit.yaml
+docs/AFK_METHOD_CATALOG_AUDIT.md
+```
+
+Reusable equipment is represented as a requirement, not as a consumed input. Fixed coin charges such as Plank Make fees are included in capital calculations.
 
 ### Stability model
 
@@ -205,7 +221,7 @@ Stale / Unavailable:
 
 Negative-profit cases are kept conservative by choosing the lower of current and reference rather than blending a loss upward.
 
-Recommended GP/hour is now the default AFK sort, while raw Current GP/hour remains available as an explicit sort option.
+Recommended GP/hour is the default AFK sort, while raw Current GP/hour remains available as an explicit sort option.
 
 ### Personal skill filtering
 
@@ -217,11 +233,11 @@ Only show methods I can do by skill level
 
 The values are stored only in browser `localStorage`. No account, RuneLite login or server-side profile storage is used.
 
+The profile includes skills currently used by the catalogue, including Sailing for current 2026 content such as camphor logging.
+
 Skill matching does not imply that quest or equipment requirements are satisfied. Those remain visible separately.
 
 The frontend also supports capital, method-type and stability filtering.
-
-The method catalogue remains configuration-driven in `config/methods.yaml`.
 
 ## High Alch branch
 
@@ -241,6 +257,18 @@ Public High Alch data includes:
 - recent volume context
 
 Historical item and rune prices use matching windows.
+
+## Freshness contract
+
+The public header uses actual dataset age:
+
+```text
+< 90 minutes       Current
+90m through 2.5h   Delayed
+> 2.5 hours        Stale
+```
+
+Short-history and 30D-history ages are shown separately from live data freshness. Exactly 2.5 hours remains `Delayed`.
 
 ## Run locally
 
@@ -263,9 +291,11 @@ export OSRS_MARKET_USER_AGENT="osrs-market-data/0.3 - github.com/Wolfigg/osrs-ma
 
 The responsibilities are intentionally separated:
 
-- `ci.yml`: tests on pushes and pull requests
+- `ci.yml`: Python regression tests plus deterministic Chromium/Firefox browser acceptance on pull requests and pushes
 - `refresh-live.yml`: lightweight `/latest` refresh and Pages deployment every five minutes
 - `refresh-history.yml`: hourly short history, six-hour 30D history and daily full/bootstrap refresh
+
+The browser acceptance suite uses a synthetic static dataset. It tests the actual generated HTML/CSS/JS without making live market API calls and covers 360, 390, 768 and desktop widths, filters, URL restoration, local skill storage, details, capital boundaries, unavailable rows and freshness boundaries.
 
 Both deployment workflows upload exactly:
 
@@ -276,3 +306,7 @@ build/public-site
 Maintainer diagnostics are uploaded separately as Actions artifacts.
 
 No OSRS/Jagex credentials or API key are required.
+
+## Completion documentation
+
+`docs/IMPLEMENTATION_CHECKLIST.md` is the current definition-of-done checklist for the two-tool product. The obsolete Market Explorer-era checklist has been removed.
