@@ -42,6 +42,18 @@ def test_auxiliary_numeric_requirement_metadata_is_not_a_skill():
     assert sharks["requirements"]["cooking"] == 99
 
 
+def test_jewellery_membership_matches_current_f2p_access():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    for type_key in ("ring", "necklace", "amulet_u"):
+        assert methods[f"craft_gold_{type_key}"]["requirements"]["members"] is False
+        for gem in ("sapphire", "emerald", "ruby", "diamond"):
+            assert methods[f"craft_{gem}_{type_key}"]["requirements"]["members"] is False
+        assert methods[f"craft_dragonstone_{type_key}"]["requirements"]["members"] is True
+    assert methods["craft_gold_bracelet"]["requirements"]["members"] is True
+    for gem in ("sapphire", "emerald", "ruby", "diamond", "dragonstone"):
+        assert methods[f"craft_{gem}_bracelet"]["requirements"]["members"] is True
+
+
 def _public_result(category: str, method_types: list[str]):
     return {
         "methodId": "test",
