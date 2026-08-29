@@ -74,7 +74,7 @@ jobs:
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
 
       - name: Refresh historical metrics and rebuild public site
-        run: python -m osrs_market.cli collect --mode "${{ steps.mode.outputs.mode }}" --output build --cache-dir .market-cache
+        run: /usr/bin/time -v python -m osrs_market.cli collect --mode "${{ steps.mode.outputs.mode }}" --output build --cache-dir .market-cache
 
       - name: Save derived market cache
         uses: actions/cache/save@v4
