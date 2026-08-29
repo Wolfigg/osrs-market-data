@@ -8,16 +8,11 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260829-2"
+PUBLIC_ASSET_VERSION = "20260829-3"
 
 PUBLIC_REQUIRED_FILES = (
-    "index.html",
-    "alchemy.html",
-    "assets/app.css",
-    "assets/app.js",
-    "data/afk.json",
-    "data/alchemy.json",
-    "data/status.json",
+    "index.html", "alchemy.html", "assets/app.css", "assets/app.js",
+    "data/afk.json", "data/alchemy.json", "data/status.json",
 )
 
 FORBIDDEN_PUBLIC_KEYS = {
@@ -103,7 +98,15 @@ def _afk_page() -> str:
 <section class="page-heading compact">
   <p class="eyebrow">Work Board</p>
   <h1>AFK Money Makers</h1>
-  <p>Compare low-interaction methods using current observed prices, conservative Recommended GP/hour, historical references, capital requirements and interaction time.</p>
+  <p>Compare low-interaction methods using live prices, conservative Recommended GP/hour, session affordability and market sustainability.</p>
+</section>
+<section class="planner-frame" aria-label="Session planner">
+  <div class="planner-heading"><div><p class="eyebrow">My session</p><h2>Bankroll & time planner</h2></div><p class="muted">Optional. Values stay in this browser.</p></div>
+  <div class="planner-grid">
+    <label class="field"><span>Available cash</span><input id="planner-bankroll" type="number" min="0" step="10000" placeholder="2,000,000"></label>
+    <label class="field"><span>Session length</span><input id="planner-hours" type="number" min="0.25" max="24" step="0.25" value="4"></label>
+    <div class="planner-summary"><span>Planner result</span><strong id="planner-summary">Enter a bankroll to rank what you can actually fund.</strong></div>
+  </div>
 </section>
 <section class="filter-frame" aria-label="AFK filters">
   <div class="filter-grid">
@@ -114,8 +117,9 @@ def _afk_page() -> str:
     <label class="field"><span>AFK level</span><select id="afk-level"><option value="all">All levels</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option></select></label>
     <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option><option value="gathering">Gathering</option></select></label>
     <label class="field"><span>Stability</span><select id="afk-stability"><option value="all">All states</option><option value="stable">Stable</option><option value="watch">Watch</option><option value="volatile">Volatile</option><option value="thin_market">Thin market</option><option value="stale">Stale</option></select></label>
+    <label class="field"><span>Sustainability</span><select id="afk-sustainability"><option value="all">All levels</option><option value="strong">Strong</option><option value="moderate">Moderate</option><option value="watch">Liquidity watch</option><option value="constrained">Constrained</option><option value="thin">Thin market</option><option value="limited">GE limited</option><option value="unknown">Unknown</option></select></label>
     <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
-    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Recommended GP/hour</option><option value="gp-hour">Current GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
+    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Recommended GP/hour</option><option value="session-profit">My session profit</option><option value="sustainability">Sustainability</option><option value="gp-hour">Current GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
   </div>
   <details class="profile-panel">
     <summary>My skill levels</summary>
@@ -123,7 +127,7 @@ def _afk_page() -> str:
     <div class="filter-grid">{_skill_fields()}<label class="checkbox-field"><input id="afk-can-do" type="checkbox"><span>Only show methods I can do by skill level</span></label></div>
   </details>
 </section>
-<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Recommended GP/hour is a conservative blend of current and 24H/7D/30D history, adjusted for stability.</p></div>
+<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Session profit respects your bankroll, GE buy-limit throughput and selected duration. Market-share warnings use observed 24H volume.</p></div>
 <section id="afk-list" class="ranking-ledger" aria-live="polite"></section>
 """
     return _base("AFK Money Makers", "afk", "afk", main)
@@ -131,83 +135,59 @@ def _afk_page() -> str:
 
 def _alchemy_page() -> str:
     main = f"""
-<section class="page-heading compact">
-  <p class="eyebrow">Alchemist's Desk</p>
-  <h1>High Alch</h1>
-  <p>Active trading scanner. High Alchemy is kept separate from AFK money making.</p>
-</section>
-<section class="filter-frame" aria-label="High Alch filters">
-  <div class="filter-grid alch-filters">
-    <label class="field search-field"><span>Item search</span><input id="alch-search" type="search" placeholder="Item name" autocomplete="off"></label>
-    <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="alch-membership" value="all" checked><span>All</span></label><label><input type="radio" name="alch-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="alch-membership" value="members"><span>Members</span></label></fieldset>
-    <label class="field"><span>Profitability</span><select id="alch-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
-    <label class="field"><span>Minimum profit/cast</span><input id="alch-min-profit" type="number" value="0" min="0" step="1"></label>
-    <label class="field"><span>Capital</span><select id="alch-capital">{_capital_options()}</select></label>
-    <label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
-    <label class="checkbox-field"><input id="alch-unavailable" type="checkbox"><span>Show unavailable / stale</span></label>
-  </div>
-</section>
-<div class="ledger-toolbar"><p id="alch-count">Loading candidates...</p><p class="muted">Requirement: 55 Magic.</p></div>
-<section id="alch-list" class="alchemy-ledger" aria-live="polite"></section>
+<section class="page-heading compact"><p class="eyebrow">Alchemist's Desk</p><h1>High Alch</h1><p>Active trading scanner. High Alchemy is kept separate from AFK money making.</p></section>
+<section class="filter-frame" aria-label="High Alch filters"><div class="filter-grid alch-filters">
+<label class="field search-field"><span>Item search</span><input id="alch-search" type="search" placeholder="Item name" autocomplete="off"></label>
+<fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="alch-membership" value="all" checked><span>All</span></label><label><input type="radio" name="alch-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="alch-membership" value="members"><span>Members</span></label></fieldset>
+<label class="field"><span>Profitability</span><select id="alch-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
+<label class="field"><span>Minimum profit/cast</span><input id="alch-min-profit" type="number" value="0" min="0" step="1"></label>
+<label class="field"><span>Capital</span><select id="alch-capital">{_capital_options()}</select></label>
+<label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
+<label class="checkbox-field"><input id="alch-unavailable" type="checkbox"><span>Show unavailable / stale</span></label></div></section>
+<div class="ledger-toolbar"><p id="alch-count">Loading candidates...</p><p class="muted">Requirement: 55 Magic.</p></div><section id="alch-list" class="alchemy-ledger" aria-live="polite"></section>
 """
     return _base("High Alch", "alchemy", "alchemy", main)
 
 
 def write_public_site(output_dir: str | Path, afk: dict[str, Any], alchemy: dict[str, Any], status: dict[str, Any], assets_dir: str | Path = "web/assets") -> None:
     root = Path(output_dir)
-    if root.exists():
-        shutil.rmtree(root)
-    (root / "data").mkdir(parents=True, exist_ok=True)
-    (root / "assets").mkdir(parents=True, exist_ok=True)
-    write_json(root / "data" / "afk.json", afk)
-    write_json(root / "data" / "alchemy.json", alchemy)
-    write_json(root / "data" / "status.json", status)
-    (root / "index.html").write_text(_afk_page(), encoding="utf-8")
-    (root / "alchemy.html").write_text(_alchemy_page(), encoding="utf-8")
+    if root.exists(): shutil.rmtree(root)
+    (root / "data").mkdir(parents=True, exist_ok=True); (root / "assets").mkdir(parents=True, exist_ok=True)
+    write_json(root / "data" / "afk.json", afk); write_json(root / "data" / "alchemy.json", alchemy); write_json(root / "data" / "status.json", status)
+    (root / "index.html").write_text(_afk_page(), encoding="utf-8"); (root / "alchemy.html").write_text(_alchemy_page(), encoding="utf-8")
     assets = Path(assets_dir)
-    for filename in ("app.css", "app.js"):
-        shutil.copy2(assets / filename, root / "assets" / filename)
+    for filename in ("app.css", "app.js"): shutil.copy2(assets / filename, root / "assets" / filename)
     validate_public_site(root)
 
 
 def _walk_keys(value: Any) -> set[str]:
     found: set[str] = set()
     if isinstance(value, dict):
-        for key, child in value.items():
-            found.add(str(key)); found.update(_walk_keys(child))
+        for key, child in value.items(): found.add(str(key)); found.update(_walk_keys(child))
     elif isinstance(value, list):
-        for child in value:
-            found.update(_walk_keys(child))
+        for child in value: found.update(_walk_keys(child))
     return found
 
 
 def validate_public_site(output_dir: str | Path) -> None:
     root = Path(output_dir)
     for name in PUBLIC_REQUIRED_FILES:
-        if not (root / name).is_file():
-            raise ValueError(f"missing public-site file: {name}")
+        if not (root / name).is_file(): raise ValueError(f"missing public-site file: {name}")
     forbidden_paths = ("market", "internal", "raw", "health.json", "index.json", "about.html", "afk.html", "data/dashboard.json")
     for name in forbidden_paths:
-        if (root / name).exists():
-            raise ValueError(f"unwanted or internal artifact leaked into public site: {name}")
+        if (root / name).exists(): raise ValueError(f"unwanted or internal artifact leaked into public site: {name}")
     for name in ("afk.json", "alchemy.json", "status.json"):
         payload = json.loads((root / "data" / name).read_text(encoding="utf-8"))
-        if payload.get("schemaVersion") != PUBLIC_SCHEMA_VERSION:
-            raise ValueError(f"invalid public schemaVersion in data/{name}")
+        if payload.get("schemaVersion") != PUBLIC_SCHEMA_VERSION: raise ValueError(f"invalid public schemaVersion in data/{name}")
         leaked = FORBIDDEN_PUBLIC_KEYS & _walk_keys(payload)
-        if leaked:
-            raise ValueError(f"internal fields leaked into data/{name}: {sorted(leaked)}")
+        if leaked: raise ValueError(f"internal fields leaked into data/{name}: {sorted(leaked)}")
     afk = json.loads((root / "data" / "afk.json").read_text(encoding="utf-8"))
-    if not isinstance(afk.get("methods"), list):
-        raise ValueError("data/afk.json methods must be a list")
+    if not isinstance(afk.get("methods"), list): raise ValueError("data/afk.json methods must be a list")
     alchemy = json.loads((root / "data" / "alchemy.json").read_text(encoding="utf-8"))
-    if not isinstance(alchemy.get("items"), list):
-        raise ValueError("data/alchemy.json items must be a list")
+    if not isinstance(alchemy.get("items"), list): raise ValueError("data/alchemy.json items must be a list")
     for page in ("index.html", "alchemy.html"):
         text = (root / page).read_text(encoding="utf-8")
-        if "Market Explorer" in text:
-            raise ValueError(f"public Market Explorer found in {page}")
-        if ">Ledger<" in text or ">About<" in text:
-            raise ValueError(f"removed navigation item found in {page}")
+        if "Market Explorer" in text: raise ValueError(f"public Market Explorer found in {page}")
+        if ">Ledger<" in text or ">About<" in text: raise ValueError(f"removed navigation item found in {page}")
         if f"assets/app.js?v={PUBLIC_ASSET_VERSION}" not in text or f"assets/app.css?v={PUBLIC_ASSET_VERSION}" not in text:
             raise ValueError(f"versioned public assets missing in {page}")
