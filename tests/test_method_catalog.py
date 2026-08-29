@@ -54,6 +54,13 @@ def test_jewellery_membership_matches_current_f2p_access():
         assert methods[f"craft_{gem}_bracelet"]["requirements"]["members"] is True
 
 
+def test_onyx_bolt_tip_quantity_uses_24_tips_per_gem():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    onyx = methods["onyx_bolt_tips"]
+    assert onyx["requirements"]["fletching"] == 73
+    assert onyx["outputs"] == [{"item_id": 9194, "quantity": 24}]
+
+
 def _public_result(category: str, method_types: list[str]):
     return {
         "methodId": "test",
