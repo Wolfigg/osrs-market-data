@@ -224,6 +224,8 @@ def _evaluate_scenario(
         "methodId": method_id,
         "name": method.get("name", method_id),
         "category": method.get("category", "processing"),
+        "methodTypes": method.get("method_types", []),
+        "audit": method.get("audit", {}),
         "generatedAt": generated_at,
         "scenario": scenario,
         "valid": valid,
