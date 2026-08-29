@@ -2,6 +2,9 @@ name: Refresh live market data
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
   schedule:
     - cron: "2/5 * * * *"
 
