@@ -17,6 +17,7 @@ _CATEGORY_LABELS = {
     "smithing": "Smithing", "fletching": "Fletching", "crafting": "Crafting",
     "cooking": "Cooking", "magic": "Magic", "fishing": "Fishing",
     "mining": "Mining", "woodcutting": "Woodcutting", "sailing": "Sailing",
+    "herblore": "Herblore",
 }
 
 
@@ -133,12 +134,17 @@ def _public_liquidity(current: dict[str, Any], mechanical_cph: float) -> dict[st
             detail_source = current.get(side) or []
             detail = next((x for x in detail_source if int(x.get("itemId")) == item_id), {})
             quantity = _number(detail.get("quantity")) or 0.0
-            volume = _number(row.get("observedVolume24h"))
+            total_volume = _number(row.get("observedVolume24h"))
+            directional_key = "observedHighVolume24h" if side == "inputs" else "observedLowVolume24h"
+            directional_volume = _number(row.get(directional_key))
             units_per_hour = quantity * mechanical_cph
-            share = units_per_hour / volume * 100.0 if volume and volume > 0 else None
+            total_share = units_per_hour / total_volume * 100.0 if total_volume and total_volume > 0 else None
+            directional_share = units_per_hour / directional_volume * 100.0 if directional_volume and directional_volume > 0 else None
             result[side].append({
                 "itemId": item_id, "name": str(row.get("name", "")), "unitsPerHour": _intish(units_per_hour),
-                "volume24h": _intish(volume), "oneHourSharePct24h": share,
+                "volume24h": _intish(total_volume), "oneHourSharePct24h": total_share,
+                "directionalVolume24h": _intish(directional_volume),
+                "directionalOneHourSharePct24h": directional_share,
             })
     return result
 
@@ -177,6 +183,59 @@ def _sustainability(mechanical_cph: float, sustainable_cph: float, liquidity: di
     }
 
 
+def _pressure_score(share: float | None) -> float | None:
+    if share is None: return None
+    if share < 0.5: return 98.0
+    if share < 1: return 92.0
+    if share < 2: return 84.0
+    if share < 5: return 70.0
+    if share < 10: return 55.0
+    if share < 25: return 35.0
+    return 18.0
+
+
+def _fill_confidence(mechanical_cph: float, sustainable_cph: float, liquidity: dict[str, Any]) -> dict[str, Any]:
+    input_shares = [float(row["directionalOneHourSharePct24h"]) for row in liquidity.get("inputs", []) if row.get("directionalOneHourSharePct24h") is not None]
+    output_shares = [float(row["directionalOneHourSharePct24h"]) for row in liquidity.get("outputs", []) if row.get("directionalOneHourSharePct24h") is not None]
+    input_pressure = max(input_shares, default=None)
+    output_pressure = max(output_shares, default=None)
+    input_score = _pressure_score(input_pressure)
+    output_score = _pressure_score(output_pressure)
+    available = [score for score in (input_score, output_score) if score is not None]
+    if not available:
+        return {
+            "state": "unknown", "label": "Unknown", "score": None, "inputScore": input_score, "outputScore": output_score,
+            "maxDirectionalSharePct24h": None, "turnoverHours": 2.0,
+            "reason": "Directional 24H trade volume is not available for the required market sides.",
+        }
+    score = min(available)
+    throughput = sustainable_cph / mechanical_cph if mechanical_cph > 0 else 0.0
+    score *= max(0.35, min(1.0, throughput))
+    if score >= 90: state, label, turnover = "high", "High", 0.25
+    elif score >= 75: state, label, turnover = "good", "Good", 0.5
+    elif score >= 55: state, label, turnover = "fair", "Fair", 1.0
+    elif score >= 35: state, label, turnover = "low", "Low", 2.0
+    else: state, label, turnover = "very_low", "Very low", 4.0
+    all_shares = input_shares + output_shares
+    max_share = max(all_shares, default=None)
+    return {
+        "state": state, "label": label, "score": round(score, 1), "inputScore": input_score, "outputScore": output_score,
+        "maxDirectionalSharePct24h": max_share, "turnoverHours": turnover,
+        "reason": "Confidence uses the exact observed trade direction needed for inputs and outputs, plus GE buy-limit throughput. It is a proxy, not guaranteed order-book depth.",
+    }
+
+
+def _profit_scenarios(current_gp: float | None, expected_gp: float | None, history: dict[str, Any]) -> dict[str, float | None]:
+    references = [current_gp, expected_gp, history.get("24hGpPerHour"), history.get("7dGpPerHour"), history.get("30dGpPerHour")]
+    available = [float(value) for value in references if value is not None]
+    conservative = min(available) if available else None
+    return {
+        "currentGpPerHour": current_gp,
+        "expectedGpPerHour": expected_gp,
+        "conservativeGpPerHour": conservative,
+    }
+
+
 def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> dict[str, Any]:
     grouped: dict[str, dict[str, dict[str, Any]]] = {}
     for result in afk_results:
@@ -210,18 +269,21 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
         buy_limit_constrained = sustainable_cph + 1e-9 < mechanical_cph
         risk = public_risk(current.get("warnings"), valid=valid)
         stability = build_stability(current_gp, history, current.get("warnings"), valid)
-        recommended = recommended_gp_per_hour(current_gp, history, stability["state"])
+        expected = recommended_gp_per_hour(current_gp, history, stability["state"])
         reference = weighted_reference(history)
         liquidity = _public_liquidity(current, mechanical_cph)
         sustainability = _sustainability(mechanical_cph, sustainable_cph, liquidity)
+        fill_confidence = _fill_confidence(mechanical_cph, sustainable_cph, liquidity)
+        profit_scenarios = _profit_scenarios(current_gp if valid else None, expected, history)
 
         methods.append({
             "methodId": method_id, "name": str(current.get("name", method_id)),
             "category": _category(current.get("category")), "tags": _tags(current), "members": _members(current),
             "requirements": _requirements(current),
             "current": {"valid": valid, "gpPerHour": current_gp if valid else None},
-            "recommended": {"gpPerHour": recommended, "referenceGpPerHour": reference},
-            "history": history, "stability": stability, "sustainability": sustainability,
+            "recommended": {"gpPerHour": expected, "referenceGpPerHour": reference},
+            "scenarios": profit_scenarios,
+            "history": history, "stability": stability, "sustainability": sustainability, "fillConfidence": fill_confidence,
             "afk": {"classification": classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
             "mechanics": {"cyclesPerHour": mechanical_cph, "cyclesPerHourByBuyLimits": sustainable_cph},
             "economics": {
@@ -232,10 +294,18 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
                 "outputNetGpPerCycle": _number(economics.get("outputNetGeGpPerCycle")),
             },
             "liquidity": liquidity, "risk": risk, "inputs": inputs, "outputs": outputs,
+            "priceSource": {
+                "provider": "OSRS Wiki Prices / RuneLite",
+                "current": "Latest observed high trades for inputs and low trades for outputs, including GE tax on outputs.",
+                "expected": "Current profit blended with 24H, 7D and 30D historical market references according to price stability.",
+                "conservative": "Lowest available Current, Expected, 24H, 7D or 30D profit reference.",
+                "liquidity": "24H observed directional trade volume for the side required by the method.",
+                "generatedAt": generated_at,
+            },
             "description": str(afk.get("description") or current.get("notes") or ""), "reference": current.get("reference"),
         })
 
-    methods.sort(key=lambda row: row["recommended"]["gpPerHour"] if row["recommended"]["gpPerHour"] is not None else float("-inf"), reverse=True)
+    methods.sort(key=lambda row: row["scenarios"]["expectedGpPerHour"] if row["scenarios"]["expectedGpPerHour"] is not None else float("-inf"), reverse=True)
     return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "methods": methods}
 
 
