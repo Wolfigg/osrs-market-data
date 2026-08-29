@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .recommendation import build_stability, recommended_gp_per_hour, weighted_reference
+
 PUBLIC_SCHEMA_VERSION = 1
 
 _HISTORY_SCENARIOS = {
@@ -57,21 +59,14 @@ def classify_afk(interval_seconds: float | int | None) -> str:
 def public_risk(warnings: list[str] | None, valid: bool = True) -> dict[str, Any]:
     warnings = list(warnings or [])
     if not valid:
-        return {
-            "level": "unavailable",
-            "label": "Unavailable",
-            "reasons": ["Current calculation is not reliable enough to publish."],
-        }
-
+        return {"level": "unavailable", "label": "Unavailable", "reasons": ["Current calculation is not reliable enough to publish."]}
     reasons: list[str] = []
     level = "normal"
     joined = " ".join(warnings)
-
     if any(token in joined for token in ("STALE", "LOW_24H_VOLUME", "HIGH_RISK", "CROSSED")):
         level = "high"
     elif warnings:
         level = "watch"
-
     if "STALE" in joined:
         reasons.append("Price is older than usual, so current profit may not be representative.")
     if "LOW_24H_VOLUME" in joined or "HIGH_RISK" in joined:
@@ -80,13 +75,7 @@ def public_risk(warnings: list[str] | None, valid: bool = True) -> dict[str, Any
         reasons.append("Current market observations disagree, so this entry needs caution.")
     if not reasons and warnings:
         reasons.append("Margin or liquidity deserves attention.")
-
-    labels = {
-        "normal": "Normal market risk",
-        "watch": "Watch market conditions",
-        "high": "High market risk",
-        "unavailable": "Unavailable",
-    }
+    labels = {"normal": "Normal market risk", "watch": "Watch market conditions", "high": "High market risk", "unavailable": "Unavailable"}
     return {"level": level, "label": labels[level], "reasons": reasons}
 
 
@@ -128,6 +117,8 @@ def _tags(result: dict[str, Any]) -> list[str]:
         tags.add("bankstanding")
     if "autocast" in name or "auto-cast" in description:
         tags.add("autocast")
+    if any(token in description for token in ("fish", "mine", "woodcut", "gather")):
+        tags.add("gathering")
     tags.add("members" if _members(result) else "f2p")
     return sorted(tags)
 
@@ -158,54 +149,36 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             hist_econ = hist.get("economics") or {}
             history[key] = _number(hist_econ.get("profitGpPerHourBuyLimitSustainable")) if hist.get("valid") else None
 
-        inputs = [
-            {"name": str(row.get("name", "")), "quantity": _intish(row.get("quantity"))}
-            for row in (current.get("inputs") or [])
-        ]
-        outputs = [
-            {"name": str(row.get("name", "")), "quantity": _intish(row.get("quantity"))}
-            for row in (current.get("outputs") or [])
-        ]
-
+        inputs = [{"name": str(row.get("name", "")), "quantity": _intish(row.get("quantity"))} for row in (current.get("inputs") or [])]
+        outputs = [{"name": str(row.get("name", "")), "quantity": _intish(row.get("quantity"))} for row in (current.get("outputs") or [])]
         interval = _number(afk.get("intervalSeconds"))
         buy_limit_constrained = sustainable_cph + 1e-9 < (_number(mechanics.get("cyclesPerHour")) or 0.0)
         risk = public_risk(current.get("warnings"), valid=valid)
+        stability = build_stability(current_gp, history, current.get("warnings"), valid)
+        recommended = recommended_gp_per_hour(current_gp, history, stability["state"])
+        reference = weighted_reference(history)
 
-        methods.append(
-            {
-                "methodId": method_id,
-                "name": str(current.get("name", method_id)),
-                "category": _category(current.get("category")),
-                "tags": _tags(current),
-                "members": _members(current),
-                "requirements": _requirements(current),
-                "current": {"valid": valid, "gpPerHour": current_gp if valid else None},
-                "history": history,
-                "afk": {
-                    "classification": classify_afk(interval),
-                    "intervalSeconds": _intish(interval),
-                    "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None,
-                    "description": str(afk.get("description") or ""),
-                },
-                "economics": {
-                    "capitalOneHour": round(capital_one_hour) if inputs else 0,
-                    "capitalFourHours": round(capital_four_hours) if inputs else 0,
-                    "buyLimitConstrained": buy_limit_constrained,
-                },
-                "risk": risk,
-                "inputs": inputs,
-                "outputs": outputs,
-                "description": str(afk.get("description") or current.get("notes") or ""),
-                "reference": current.get("reference"),
-            }
-        )
+        methods.append({
+            "methodId": method_id,
+            "name": str(current.get("name", method_id)),
+            "category": _category(current.get("category")),
+            "tags": _tags(current),
+            "members": _members(current),
+            "requirements": _requirements(current),
+            "current": {"valid": valid, "gpPerHour": current_gp if valid else None},
+            "recommended": {"gpPerHour": recommended, "referenceGpPerHour": reference},
+            "history": history,
+            "stability": stability,
+            "afk": {"classification": classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
+            "economics": {"capitalOneHour": round(capital_one_hour) if inputs else 0, "capitalFourHours": round(capital_four_hours) if inputs else 0, "buyLimitConstrained": buy_limit_constrained},
+            "risk": risk,
+            "inputs": inputs,
+            "outputs": outputs,
+            "description": str(afk.get("description") or current.get("notes") or ""),
+            "reference": current.get("reference"),
+        })
 
-    methods.sort(
-        key=lambda row: row["current"]["gpPerHour"]
-        if row["current"]["valid"] and row["current"]["gpPerHour"] is not None
-        else float("-inf"),
-        reverse=True,
-    )
+    methods.sort(key=lambda row: row["recommended"]["gpPerHour"] if row["recommended"]["gpPerHour"] is not None else float("-inf"), reverse=True)
     return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "methods": methods}
 
 
@@ -227,11 +200,7 @@ def _history_profit(row: dict[str, Any], key: str) -> float | None:
     return _number(history.get("profitPerCast")) if history.get("valid") else None
 
 
-def build_public_alchemy(
-    generated_at: int,
-    candidates: list[dict[str, Any]],
-    assumptions: dict[str, Any],
-) -> dict[str, Any]:
+def build_public_alchemy(generated_at: int, candidates: list[dict[str, Any]], assumptions: dict[str, Any]) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     use_fire_staff = bool(assumptions.get("useFireStaff", True))
     for row in candidates:
@@ -244,51 +213,19 @@ def build_public_alchemy(
         history7 = _history_profit(row, "historicalInstant7d")
         history30 = _history_profit(row, "historicalInstant30d")
         risk = public_risk(row.get("warnings"), valid=valid)
-        items.append(
-            {
-                "itemId": int(row["itemId"]),
-                "name": str(row.get("name", row["itemId"])),
-                "members": bool(row.get("members", True)),
-                "buyPrice": _intish(current.get("buyPrice")) if valid else None,
-                "highAlchValue": _intish(row.get("highAlchValue")),
-                "runeCost": _intish(rune_cost) if valid else None,
-                "profitPerCast": _number(current.get("profitPerCast")) if valid else None,
-                "roi": _number(current.get("roiPct")) if valid else None,
-                "buyLimit": _intish(row.get("geBuyLimit")),
-                "quantity4h": _intish((row.get("capacity4h") or {}).get("maxQuantity")) if valid else None,
-                "profit4h": _number(row.get("profitPer4hGeLimit")) if valid else None,
-                "capitalRequired": _number(row.get("capitalRequired")) if valid else None,
-                "volume24h": _intish(row.get("volume24h")),
-                "freshness": _freshness(row.get("buyPriceAgeSeconds")),
-                "history": {
-                    "24hProfitPerCast": history24,
-                    "7dProfitPerCast": history7,
-                    "30dProfitPerCast": history30,
-                },
-                "history24hProfitPerCast": history24,
-                "risk": risk,
-            }
-        )
+        items.append({
+            "itemId": int(row["itemId"]), "name": str(row.get("name", row["itemId"])), "members": bool(row.get("members", True)),
+            "buyPrice": _intish(current.get("buyPrice")) if valid else None, "highAlchValue": _intish(row.get("highAlchValue")), "runeCost": _intish(rune_cost) if valid else None,
+            "profitPerCast": _number(current.get("profitPerCast")) if valid else None, "roi": _number(current.get("roiPct")) if valid else None, "buyLimit": _intish(row.get("geBuyLimit")),
+            "quantity4h": _intish((row.get("capacity4h") or {}).get("maxQuantity")) if valid else None, "profit4h": _number(row.get("profitPer4hGeLimit")) if valid else None,
+            "capitalRequired": _number(row.get("capitalRequired")) if valid else None, "volume24h": _intish(row.get("volume24h")), "freshness": _freshness(row.get("buyPriceAgeSeconds")),
+            "history": {"24hProfitPerCast": history24, "7dProfitPerCast": history7, "30dProfitPerCast": history30}, "history24hProfitPerCast": history24, "risk": risk,
+        })
     items.sort(key=lambda row: row["profit4h"] if row["profit4h"] is not None else float("-inf"), reverse=True)
-    return {
-        "schemaVersion": PUBLIC_SCHEMA_VERSION,
-        "generatedAt": generated_at,
-        "assumptions": {
-            "magicLevel": 55,
-            "castsPerHour": int(assumptions.get("castsPerHour", 1200)),
-            "natureRuneCost": next((item["runeCost"] for item in items if item["runeCost"] is not None), None),
-            "fireStaff": use_fire_staff,
-        },
-        "items": items,
-    }
+    return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "assumptions": {"magicLevel": 55, "castsPerHour": int(assumptions.get("castsPerHour", 1200)), "natureRuneCost": next((item["runeCost"] for item in items if item["runeCost"] is not None), None), "fireStaff": use_fire_staff}, "items": items}
 
 
-def build_public_status(
-    generated_at: int,
-    internal_health: dict[str, Any],
-    short_history_generated_at: int | None = None,
-    long_history_generated_at: int | None = None,
-) -> dict[str, Any]:
+def build_public_status(generated_at: int, internal_health: dict[str, Any], short_history_generated_at: int | None = None, long_history_generated_at: int | None = None) -> dict[str, Any]:
     status = str(internal_health.get("status", "ok"))
     warnings = internal_health.get("warnings") or []
     api = internal_health.get("api") or {}
@@ -299,12 +236,4 @@ def build_public_status(
         state = "delayed"
     else:
         state = "data_issue"
-    return {
-        "schemaVersion": PUBLIC_SCHEMA_VERSION,
-        "generatedAt": generated_at,
-        "liveGeneratedAt": generated_at,
-        "shortHistoryGeneratedAt": short_history_generated_at,
-        "longHistoryGeneratedAt": long_history_generated_at,
-        "state": state,
-        "ageSeconds": 0,
-    }
+    return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "liveGeneratedAt": generated_at, "shortHistoryGeneratedAt": short_history_generated_at, "longHistoryGeneratedAt": long_history_generated_at, "state": state, "ageSeconds": 0}
