@@ -14,15 +14,9 @@ _HISTORY_SCENARIOS = {
 }
 
 _CATEGORY_LABELS = {
-    "smithing": "Smithing",
-    "fletching": "Fletching",
-    "crafting": "Crafting",
-    "cooking": "Cooking",
-    "magic": "Magic",
-    "fishing": "Fishing",
-    "mining": "Mining",
-    "woodcutting": "Woodcutting",
-    "sailing": "Sailing",
+    "smithing": "Smithing", "fletching": "Fletching", "crafting": "Crafting",
+    "cooking": "Cooking", "magic": "Magic", "fishing": "Fishing",
+    "mining": "Mining", "woodcutting": "Woodcutting", "sailing": "Sailing",
 }
 
 
@@ -47,14 +41,10 @@ def classify_afk(interval_seconds: float | int | None) -> str:
     if interval_seconds is None:
         return "Unknown"
     seconds = float(interval_seconds)
-    if seconds >= 180:
-        return "Deep AFK"
-    if seconds >= 90:
-        return "Very AFK"
-    if seconds >= 45:
-        return "AFK"
-    if seconds >= 30:
-        return "Light AFK"
+    if seconds >= 180: return "Deep AFK"
+    if seconds >= 90: return "Very AFK"
+    if seconds >= 45: return "AFK"
+    if seconds >= 30: return "Light AFK"
     return "Low interaction"
 
 
@@ -88,33 +78,103 @@ def _requirements(result: dict[str, Any]) -> dict[str, Any]:
     equipment: list[str] = []
     for key, value in raw.items():
         lowered = str(key).lower()
-        if lowered == "quests" and isinstance(value, list):
-            quests = [str(x) for x in value]
-        elif lowered == "equipment" and isinstance(value, list):
-            equipment = [str(x) for x in value]
-        elif lowered == "members":
-            continue
-        elif not isinstance(value, bool) and isinstance(value, (int, float)):
-            skills[lowered] = _intish(value)  # type: ignore[assignment]
+        if lowered == "quests" and isinstance(value, list): quests = [str(x) for x in value]
+        elif lowered == "equipment" and isinstance(value, list): equipment = [str(x) for x in value]
+        elif lowered == "members": continue
+        elif not isinstance(value, bool) and isinstance(value, (int, float)): skills[lowered] = _intish(value)  # type: ignore[assignment]
     return {"skills": skills, "quests": quests, "equipment": equipment}
 
 
 def _members(result: dict[str, Any]) -> bool:
     requirements = result.get("requirements") or {}
     account = result.get("account") or {}
-    if "members" in requirements:
-        return bool(requirements["members"])
-    if "members" in account:
-        return bool(account["members"])
+    if "members" in requirements: return bool(requirements["members"])
+    if "members" in account: return bool(account["members"])
     return True
 
 
 def _tags(result: dict[str, Any]) -> list[str]:
     tags = {_category(result.get("category")).lower()}
-    explicit_types = result.get("methodTypes") or []
-    tags.update(str(value).lower() for value in explicit_types)
+    tags.update(str(value).lower() for value in (result.get("methodTypes") or []))
     tags.add("members" if _members(result) else "f2p")
     return sorted(tags)
+
+
+def _public_inputs(current: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for row in current.get("inputs") or []:
+        rows.append({
+            "itemId": int(row.get("itemId")), "name": str(row.get("name", "")),
+            "quantity": _intish(row.get("quantity")), "price": _number(row.get("price")),
+            "subtotal": _number(row.get("subtotal")), "buyViaGe": bool(row.get("buyViaGe", True)),
+            "geBuyLimit": _intish(row.get("geBuyLimit")),
+            "maxCyclesPerHourByLimit": _number(row.get("maxCyclesPerHourByLimit")),
+        })
+    return rows
+
+
+def _public_outputs(current: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for row in current.get("outputs") or []:
+        rows.append({
+            "itemId": int(row.get("itemId")), "name": str(row.get("name", "")),
+            "quantity": _intish(row.get("quantity")), "gePrice": _number(row.get("gePrice")),
+            "geTaxPerItem": _number(row.get("geTaxPerItem")), "geNetPerItem": _number(row.get("geNetPerItem")),
+        })
+    return rows
+
+
+def _public_liquidity(current: dict[str, Any], mechanical_cph: float) -> dict[str, Any]:
+    source = current.get("liquidity") or {}
+    result: dict[str, Any] = {"inputs": [], "outputs": []}
+    for side in ("inputs", "outputs"):
+        for row in source.get(side) or []:
+            item_id = int(row.get("itemId"))
+            detail_source = current.get(side) or []
+            detail = next((x for x in detail_source if int(x.get("itemId")) == item_id), {})
+            quantity = _number(detail.get("quantity")) or 0.0
+            volume = _number(row.get("observedVolume24h"))
+            units_per_hour = quantity * mechanical_cph
+            share = units_per_hour / volume * 100.0 if volume and volume > 0 else None
+            result[side].append({
+                "itemId": item_id, "name": str(row.get("name", "")), "unitsPerHour": _intish(units_per_hour),
+                "volume24h": _intish(volume), "oneHourSharePct24h": share,
+            })
+    return result
+
+
+def _sustainability(mechanical_cph: float, sustainable_cph: float, liquidity: dict[str, Any]) -> dict[str, Any]:
+    ratio = sustainable_cph / mechanical_cph if mechanical_cph > 0 else 0.0
+    shares = [row.get("oneHourSharePct24h") for side in ("inputs", "outputs") for row in liquidity.get(side, [])]
+    shares = [float(x) for x in shares if x is not None]
+    max_share = max(shares, default=None)
+    reasons: list[str] = []
+    if ratio < 0.5:
+        state, label = "limited", "GE limited"
+        reasons.append("Grand Exchange buy limits cut sustainable throughput by more than half.")
+    elif max_share is not None and max_share >= 10:
+        state, label = "thin", "Thin market"
+        reasons.append("One hour of mechanical throughput is at least 10% of recent 24H volume for a required item.")
+    elif ratio < 0.85:
+        state, label = "constrained", "Constrained"
+        reasons.append("Grand Exchange buy limits materially reduce the mechanical rate.")
+    elif max_share is not None and max_share >= 5:
+        state, label = "watch", "Liquidity watch"
+        reasons.append("One hour of throughput is at least 5% of recent 24H volume for a required item.")
+    elif max_share is None:
+        state, label = "unknown", "Liquidity unknown"
+        reasons.append("Recent 24H volume is unavailable for at least one side of this method.")
+    elif ratio < 0.95 or max_share >= 1:
+        state, label = "moderate", "Moderate"
+        reasons.append("Method is usable, but buy limits or recent market share deserve attention for longer sessions.")
+    else:
+        state, label = "strong", "Strong"
+        reasons.append("Buy limits preserve at least 95% of mechanical throughput and one-hour market share is below 1%.")
+    limiting = "ge_buy_limit" if ratio < 0.999 else ("market_liquidity" if max_share is not None and max_share >= 1 else "mechanics")
+    return {
+        "state": state, "label": label, "throughputRatioPct": ratio * 100.0,
+        "maxOneHourSharePct24h": max_share, "limitingFactor": limiting, "reasons": reasons,
+    }
 
 
 def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -125,19 +185,14 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
     methods: list[dict[str, Any]] = []
     for method_id, scenarios in grouped.items():
         current = scenarios.get("CURRENT_INSTANT")
-        if current is None:
-            continue
+        if current is None: continue
         economics = current.get("economics") or {}
         afk = current.get("afk") or {}
         mechanics = current.get("mechanics") or {}
+        mechanical_cph = _number(mechanics.get("cyclesPerHour")) or 0.0
         sustainable_cph = _number(mechanics.get("cyclesPerHourByBuyLimits")) or 0.0
-        # Capital must include consumed item costs plus fixed coin costs such as
-        # Plank Make's per-log fee. Reusable tools are stored in requirements,
-        # not method inputs, so totalCostGpPerCycle is the correct catalogue
-        # capital basis.
         capital_gp_per_cycle = _number(economics.get("totalCostGpPerCycle"))
-        if capital_gp_per_cycle is None:
-            capital_gp_per_cycle = _number(economics.get("inputGpPerCycle")) or 0.0
+        if capital_gp_per_cycle is None: capital_gp_per_cycle = _number(economics.get("inputGpPerCycle")) or 0.0
         capital_one_hour = capital_gp_per_cycle * sustainable_cph
         capital_four_hours = capital_gp_per_cycle * sustainable_cph * 4
         current_gp = _number(economics.get("profitGpPerHourBuyLimitSustainable"))
@@ -149,33 +204,35 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             hist_econ = hist.get("economics") or {}
             history[key] = _number(hist_econ.get("profitGpPerHourBuyLimitSustainable")) if hist.get("valid") else None
 
-        inputs = [{"name": str(row.get("name", "")), "quantity": _intish(row.get("quantity"))} for row in (current.get("inputs") or [])]
-        outputs = [{"name": str(row.get("name", "")), "quantity": _intish(row.get("quantity"))} for row in (current.get("outputs") or [])]
+        inputs = _public_inputs(current)
+        outputs = _public_outputs(current)
         interval = _number(afk.get("intervalSeconds"))
-        buy_limit_constrained = sustainable_cph + 1e-9 < (_number(mechanics.get("cyclesPerHour")) or 0.0)
+        buy_limit_constrained = sustainable_cph + 1e-9 < mechanical_cph
         risk = public_risk(current.get("warnings"), valid=valid)
         stability = build_stability(current_gp, history, current.get("warnings"), valid)
         recommended = recommended_gp_per_hour(current_gp, history, stability["state"])
         reference = weighted_reference(history)
+        liquidity = _public_liquidity(current, mechanical_cph)
+        sustainability = _sustainability(mechanical_cph, sustainable_cph, liquidity)
 
         methods.append({
-            "methodId": method_id,
-            "name": str(current.get("name", method_id)),
-            "category": _category(current.get("category")),
-            "tags": _tags(current),
-            "members": _members(current),
+            "methodId": method_id, "name": str(current.get("name", method_id)),
+            "category": _category(current.get("category")), "tags": _tags(current), "members": _members(current),
             "requirements": _requirements(current),
             "current": {"valid": valid, "gpPerHour": current_gp if valid else None},
             "recommended": {"gpPerHour": recommended, "referenceGpPerHour": reference},
-            "history": history,
-            "stability": stability,
+            "history": history, "stability": stability, "sustainability": sustainability,
             "afk": {"classification": classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
-            "economics": {"capitalOneHour": round(capital_one_hour), "capitalFourHours": round(capital_four_hours), "buyLimitConstrained": buy_limit_constrained},
-            "risk": risk,
-            "inputs": inputs,
-            "outputs": outputs,
-            "description": str(afk.get("description") or current.get("notes") or ""),
-            "reference": current.get("reference"),
+            "mechanics": {"cyclesPerHour": mechanical_cph, "cyclesPerHourByBuyLimits": sustainable_cph},
+            "economics": {
+                "capitalPerCycle": capital_gp_per_cycle, "capitalOneHour": round(capital_one_hour), "capitalFourHours": round(capital_four_hours),
+                "buyLimitConstrained": buy_limit_constrained, "profitPerCycle": _number(economics.get("profitGpPerCycle")) if valid else None,
+                "inputGpPerCycle": _number(economics.get("inputGpPerCycle")), "fixedCostGpPerCycle": _number(economics.get("fixedCostGpPerCycle")),
+                "outputGrossGpPerCycle": _number(economics.get("outputGrossGeGpPerCycle")), "geTaxGpPerCycle": _number(economics.get("geTaxGpPerCycle")),
+                "outputNetGpPerCycle": _number(economics.get("outputNetGeGpPerCycle")),
+            },
+            "liquidity": liquidity, "risk": risk, "inputs": inputs, "outputs": outputs,
+            "description": str(afk.get("description") or current.get("notes") or ""), "reference": current.get("reference"),
         })
 
     methods.sort(key=lambda row: row["recommended"]["gpPerHour"] if row["recommended"]["gpPerHour"] is not None else float("-inf"), reverse=True)
@@ -183,15 +240,11 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
 
 
 def _freshness(age_seconds: int | float | None) -> str:
-    if age_seconds is None:
-        return "Unknown"
+    if age_seconds is None: return "Unknown"
     age = float(age_seconds)
-    if age <= 1800:
-        return "Fresh"
-    if age <= 7200:
-        return "Recent"
-    if age <= 86400:
-        return "Delayed"
+    if age <= 1800: return "Fresh"
+    if age <= 7200: return "Recent"
+    if age <= 86400: return "Delayed"
     return "Stale"
 
 
@@ -207,8 +260,7 @@ def build_public_alchemy(generated_at: int, candidates: list[dict[str, Any]], as
         current = row.get("currentInstant") or {}
         valid = bool(current.get("valid")) and current.get("profitPerCast") is not None
         rune_cost = _number(current.get("natureRunePrice")) or 0.0
-        if not use_fire_staff:
-            rune_cost += _number(current.get("fireRunePrice")) or 0.0
+        if not use_fire_staff: rune_cost += _number(current.get("fireRunePrice")) or 0.0
         history24 = _history_profit(row, "historicalInstant24h")
         history7 = _history_profit(row, "historicalInstant7d")
         history30 = _history_profit(row, "historicalInstant30d")
@@ -230,10 +282,7 @@ def build_public_status(generated_at: int, internal_health: dict[str, Any], shor
     warnings = internal_health.get("warnings") or []
     api = internal_health.get("api") or {}
     failed = int(api.get("timeseriesFailed") or 0)
-    if status == "ok" and not warnings and failed == 0:
-        state = "current"
-    elif failed > 0 or warnings:
-        state = "delayed"
-    else:
-        state = "data_issue"
+    if status == "ok" and not warnings and failed == 0: state = "current"
+    elif failed > 0 or warnings: state = "delayed"
+    else: state = "data_issue"
     return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "liveGeneratedAt": generated_at, "shortHistoryGeneratedAt": short_history_generated_at, "longHistoryGeneratedAt": long_history_generated_at, "state": state, "ageSeconds": 0}
