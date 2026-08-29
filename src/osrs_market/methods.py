@@ -296,14 +296,17 @@ def _method_liquidity(
                 continue
             quantity_per_cycle = float(entry.get("quantity", 1))
             planned_quantity = quantity_per_cycle * cycles_per_hour * planned_hours
-            volume_24h = float(record["windows"].get("24h", {}).get("totalVolume") or 0)
+            window_24h = record["windows"].get("24h", {})
+            volume_24h = float(window_24h.get("totalVolume") or 0)
             share = planned_quantity / volume_24h * 100.0 if volume_24h > 0 else None
             buy_via_ge = bool(entry.get("buy_via_ge", True)) if kind == "inputs" else False
             row = {
                 "itemId": item_id,
                 "name": record["item"]["name"],
                 "observedVolume6h": record["windows"].get("6h", {}).get("totalVolume"),
-                "observedVolume24h": record["windows"].get("24h", {}).get("totalVolume"),
+                "observedVolume24h": window_24h.get("totalVolume"),
+                "observedHighVolume24h": window_24h.get("highVolume"),
+                "observedLowVolume24h": window_24h.get("lowVolume"),
                 "observedVolume7d": record["windows"].get("7d", {}).get("totalVolume"),
                 "observedVolume30d": record["windows"].get("30d", {}).get("totalVolume"),
                 "plannedQuantity24h": planned_quantity,
