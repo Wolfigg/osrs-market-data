@@ -96,6 +96,22 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
         if method:
             method["theoretical_cycles_per_hour"] = 2625
 
+    # Keep displayed requirements aligned with the gear assumptions behind the
+    # sourced gathering rates. Secondary-drop boosting gear is omitted when the
+    # corresponding secondary value is intentionally excluded from profit.
+    magic_logs = methods.get("cut_magic_logs")
+    if magic_logs:
+        magic_logs.setdefault("requirements", {})["equipment"] = ["Dragon or crystal axe"]
+    redwood_logs = methods.get("cut_redwood_logs")
+    if redwood_logs:
+        redwood_logs.setdefault("requirements", {})["equipment"] = ["Dragon axe"]
+    camphor_logs = methods.get("cut_camphor_logs")
+    if camphor_logs:
+        camphor_logs.setdefault("requirements", {})["equipment"] = ["Dragon axe", "Log basket"]
+    dark_crabs = methods.get("catch_dark_crabs")
+    if dark_crabs:
+        dark_crabs.setdefault("requirements", {})["equipment"] = ["Lobster pot"]
+
 
 def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
     requirements = method.get("requirements") or {}
