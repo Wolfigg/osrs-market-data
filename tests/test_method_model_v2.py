@@ -41,11 +41,26 @@ def test_workflow_caps_configured_cycles_per_hour():
     assert effective_cycles_per_hour(method) == 1200
 
 
-def test_probabilistic_output_has_expected_and_lower_bound_quantities():
+def test_probabilistic_output_has_source_backed_expected_and_lower_bound_quantities():
     output = wave4_method_catalog()["superglass_make_giant_seaweed"]["outputs"][0]
-    assert output_quantity(output, "expected") == 28.5
-    assert output_quantity(output, "minimum") == 27.0
+    assert output_quantity(output, "expected") == 26.1
+    assert output_quantity(output, "minimum") == 18.0
     assert output_quantity(output, "maximum") == 30.0
+
+
+def test_untradeable_karambwanji_is_not_a_market_input():
+    method = wave4_method_catalog()["catch_raw_karambwan"]
+    assert method["inputs"] == []
+    assert 3150 not in all_method_item_ids(method)
+    assert "Self-supplied raw karambwanji bait" in method["requirements"]["supplies"]
+
+
+def test_yew_nest_probability_uses_documented_standard_tree_roll():
+    method = wave4_method_catalog()["cut_yew_logs_with_nests"]
+    assert method["requirements"]["members"] is True
+    nest = next(row for row in method["outputs"] if row["item_id"] == 5075)
+    assert output_quantity(nest, "expected") == 1 / 256
+    assert output_quantity(nest, "minimum") == 0
 
 
 def test_merged_catalogue_exceeds_wave3_and_validates_richer_metadata():
