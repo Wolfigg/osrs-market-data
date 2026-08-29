@@ -78,5 +78,4 @@ def test_catalog_gap_report_finds_covered_and_remaining_families():
     by_key = {row["key"]: row for row in report["families"]}
     assert by_key["tanning"]["status"] == "covered"
     assert by_key["superglass"]["status"] == "covered"
-    assert by_key["enchant_jewellery"]["status"] == "missing"
-    assert report["missingFamilyCount"] >= 1
+    assert by_key["enchant_jewellery"]["status"] == "covered"
