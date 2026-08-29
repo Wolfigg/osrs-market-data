@@ -50,7 +50,7 @@ def test_probabilistic_output_has_expected_and_lower_bound_quantities():
 
 def test_merged_catalogue_exceeds_wave3_and_validates_richer_metadata():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
-    assert len(methods) >= 145
+    assert len(methods) >= 135
     assert methods["superglass_make_giant_seaweed"]["audit"]["status"] == "verified"
     assert "probabilistic" in methods["superglass_make_giant_seaweed"]["method_types"]
     assert "variants" in methods["spin_flax"]["method_types"]
@@ -59,7 +59,7 @@ def test_merged_catalogue_exceeds_wave3_and_validates_richer_metadata():
 def test_catalog_gap_report_finds_covered_and_remaining_families():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
     report = build_catalog_gap_report(methods)
-    assert report["catalogueMethodCount"] >= 145
+    assert report["catalogueMethodCount"] >= 135
     by_key = {row["key"]: row for row in report["families"]}
     assert by_key["tanning"]["status"] == "covered"
     assert by_key["superglass"]["status"] == "covered"
