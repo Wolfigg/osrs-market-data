@@ -10,6 +10,13 @@ import yaml
 from .api import ApiSettings
 from .catalog import generated_method_catalog
 
+_SKILL_KEYS = {
+    "attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft",
+    "construction", "hitpoints", "agility", "herblore", "thieving", "crafting",
+    "fletching", "slayer", "hunter", "mining", "smithing", "fishing", "cooking",
+    "firemaking", "woodcutting", "farming",
+}
+
 
 def _infer_method_types(method: dict[str, Any]) -> list[str]:
     explicit = method.get("method_types")
@@ -33,11 +40,26 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
     return sorted(types)
 
 
+def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
+    requirements = method.get("requirements") or {}
+    if not isinstance(requirements, dict):
+        return
+    metadata = dict(method.get("requirement_metadata") or {})
+    for key in list(requirements):
+        value = requirements[key]
+        lowered = str(key).lower()
+        if isinstance(value, (int, float)) and lowered not in _SKILL_KEYS:
+            metadata[key] = requirements.pop(key)
+    if metadata:
+        method["requirement_metadata"] = metadata
+
+
 def _validate_method_catalog(methods: dict[str, Any]) -> None:
     errors: list[str] = []
     for method_id, method in methods.items():
         if method.get("enabled", True) is False:
             continue
+        _normalise_requirement_metadata(method)
         cph = float(method.get("cycles_per_hour", 0) or 0)
         theoretical = method.get("theoretical_cycles_per_hour")
         interval = (method.get("afk") or {}).get("interval_seconds")
@@ -76,7 +98,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         generated.update(configured)
 
         audit_path = source.with_name("method_audit.yaml")
-        audit_payload = yaml.safe_load(audit_path.read_text(encoding="utf-8")) or {} if audit_path.exists() else {}
+        audit_payload = (yaml.safe_load(audit_path.read_text(encoding="utf-8")) or {}) if audit_path.exists() else {}
         audits = audit_payload.get("methods", {}) or {}
         for method_id, audit in audits.items():
             if method_id not in generated:
