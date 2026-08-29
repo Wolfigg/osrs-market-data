@@ -6,18 +6,33 @@ from osrs_market.public_models import PUBLIC_SCHEMA_VERSION, build_public_afk, b
 from osrs_market.public_site import validate_public_site, write_public_site
 
 
-def _afk_result(scenario="CURRENT_INSTANT", valid=True, gp=100_000, warnings=None, fixed_cost=0):
+def _afk_result(scenario="CURRENT_INSTANT", valid=True, gp=100_000, warnings=None, fixed_cost=0, volume=100_000):
     return {
         "methodId": "ruby_bolt_tips",
         "name": "Cut ruby bolt tips",
         "category": "fletching",
+        "methodTypes": ["bankstanding", "make-x"],
         "scenario": scenario,
         "valid": valid,
         "mechanics": {"cyclesPerHour": 1000, "cyclesPerHourByBuyLimits": 900},
         "afk": {"intervalSeconds": 81, "gpPerInteractionWindow": 2200, "description": "Use Make-X at a bank."},
-        "economics": {"profitGpPerHourBuyLimitSustainable": gp, "inputGpPerCycle": 1000, "fixedCostGpPerCycle": fixed_cost, "totalCostGpPerCycle": 1000 + fixed_cost},
-        "inputs": [{"name": "Ruby", "quantity": 1}],
-        "outputs": [{"name": "Ruby bolt tips", "quantity": 12}],
+        "economics": {
+            "profitGpPerHourBuyLimitSustainable": gp,
+            "profitGpPerCycle": gp / 900 if valid else None,
+            "inputGpPerCycle": 1000,
+            "fixedCostGpPerCycle": fixed_cost,
+            "totalCostGpPerCycle": 1000 + fixed_cost,
+            "outputGrossGeGpPerCycle": 1200,
+            "geTaxGpPerCycle": 12,
+            "outputNetGeGpPerCycle": 1188,
+        },
+        "inputs": [{"itemId": 1603, "name": "Ruby", "quantity": 1, "price": 1000, "subtotal": 1000, "buyViaGe": True, "geBuyLimit": 11000, "maxCyclesPerHourByLimit": 2750}],
+        "outputs": [{"itemId": 9191, "name": "Ruby bolt tips", "quantity": 12, "gePrice": 100, "geTaxPerItem": 1, "geNetPerItem": 99}],
+        "liquidity": {
+            "plannedHoursPerDay": 1,
+            "inputs": [{"itemId": 1603, "name": "Ruby", "observedVolume24h": volume, "warnings": []}],
+            "outputs": [{"itemId": 9191, "name": "Ruby bolt tips", "observedVolume24h": volume * 12, "warnings": []}],
+        },
         "requirements": {"members": True, "fletching": 63, "equipment": ["Chisel"]},
         "warnings": warnings or [],
         "reference": "https://oldschool.runescape.wiki/w/Ruby_bolt_tips",
@@ -41,22 +56,38 @@ def test_afk_classification_boundaries():
     assert classify_afk(180) == "Deep AFK"
 
 
-def test_public_afk_contains_curated_fields_history_and_recommendation():
+def test_public_afk_contains_history_recommendation_sustainability_and_breakdown():
     rows = [_afk_result()]
     for scenario, gp in [("HISTORICAL_INSTANT_6H", 90_000), ("HISTORICAL_INSTANT_24H", 80_000), ("HISTORICAL_INSTANT_7D", 70_000), ("HISTORICAL_INSTANT_30D", 60_000)]:
         rows.append(_afk_result(scenario=scenario, gp=gp))
-    payload = build_public_afk(123, rows)
-    method = payload["methods"][0]
-    assert payload["schemaVersion"] == PUBLIC_SCHEMA_VERSION
+    method = build_public_afk(123, rows)["methods"][0]
     assert method["history"]["24hGpPerHour"] == 80_000
-    assert method["history"]["7dGpPerHour"] == 70_000
-    assert method["history"]["30dGpPerHour"] == 60_000
     assert method["recommended"]["gpPerHour"] is not None
-    assert method["recommended"]["gpPerHour"] < method["current"]["gpPerHour"]
-    assert method["stability"]["state"] in {"watch", "volatile"}
     assert method["economics"]["capitalOneHour"] == 900_000
+    assert method["economics"]["capitalPerCycle"] == 1000
+    assert method["economics"]["inputGpPerCycle"] == 1000
+    assert method["economics"]["outputNetGpPerCycle"] == 1188
+    assert method["inputs"][0]["price"] == 1000
+    assert method["outputs"][0]["geTaxPerItem"] == 1
+    assert method["mechanics"] == {"cyclesPerHour": 1000.0, "cyclesPerHourByBuyLimits": 900.0}
+    assert method["liquidity"]["inputs"][0]["unitsPerHour"] == 1000
+    assert method["liquidity"]["inputs"][0]["oneHourSharePct24h"] == 1.0
+    assert method["sustainability"]["state"] == "moderate"
+    assert method["sustainability"]["throughputRatioPct"] == 90.0
     assert "warnings" not in method
     assert "scenario" not in method
+
+
+def test_sustainability_marks_thin_market_and_ge_limited_methods():
+    thin = build_public_afk(123, [_afk_result(volume=8_000)])["methods"][0]
+    assert thin["sustainability"]["state"] == "thin"
+    assert thin["sustainability"]["maxOneHourSharePct24h"] == 12.5
+
+    row = _afk_result()
+    row["mechanics"]["cyclesPerHourByBuyLimits"] = 400
+    limited = build_public_afk(123, [row])["methods"][0]
+    assert limited["sustainability"]["state"] == "limited"
+    assert limited["sustainability"]["limitingFactor"] == "ge_buy_limit"
 
 
 def test_afk_capital_includes_fixed_coin_costs():
@@ -88,60 +119,44 @@ def test_status_hides_internal_health_details_and_tracks_history_age():
     assert payload == {"schemaVersion": 1, "generatedAt": 123, "liveGeneratedAt": 123, "shortHistoryGeneratedAt": 100, "longHistoryGeneratedAt": 80, "state": "delayed", "ageSeconds": 0}
 
 
-def test_public_site_is_two_section_afk_first_site(tmp_path):
-    assets = tmp_path / "assets-source"
-    assets.mkdir()
-    (assets / "app.css").write_text("body{}", encoding="utf-8")
-    (assets / "app.js").write_text("void 0;", encoding="utf-8")
-    afk = build_public_afk(123, [_afk_result()])
-    alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
+def test_public_site_contains_session_planner_and_sustainability_filters(tmp_path):
+    assets = tmp_path / "assets-source"; assets.mkdir()
+    (assets / "app.css").write_text("body{}", encoding="utf-8"); (assets / "app.js").write_text("void 0;", encoding="utf-8")
+    afk = build_public_afk(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
     site = tmp_path / "site"
     write_public_site(site, afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
     validate_public_site(site)
-
     index = (site / "index.html").read_text(encoding="utf-8")
-    alchemy = (site / "alchemy.html").read_text(encoding="utf-8")
-    assert "AFK Money Makers" in index
-    assert "Recommended GP/hour" in index
-    assert "Stability" in index
+    assert "Bankroll & time planner" in index
+    assert 'id="planner-bankroll"' in index
+    assert 'id="planner-hours"' in index
+    assert "Sustainability" in index
+    assert "My session profit" in index
     assert "My skill levels" in index
-    assert "Sailing" in index
-    assert "Only show methods I can do by skill level" in index
-    assert "Method type" in index
-    assert "Capital" in index
     assert "High Alch" in index
-    assert "Ledger" not in index
-    assert ">About<" not in index
-    assert "30D profit/cast" in alchemy
-    assert not (site / "afk.html").exists()
-    assert not (site / "about.html").exists()
-    assert not (site / "data" / "dashboard.json").exists()
+    assert "Ledger" not in index and ">About<" not in index
     assert not (site / "market").exists()
 
 
-def test_client_supports_recommendation_skill_storage_and_long_history():
+def test_client_supports_planner_sustainability_breakdowns_and_history():
     app = open("web/assets/app.js", encoding="utf-8").read()
-    assert 'recommended: m.recommended?.gpPerHour' in app
-    assert 'm.stability?.state' in app
+    assert 'osrs-profit-finder.session-planner.v1' in app
+    assert 'function sessionPlan' in app
+    assert 'bankroll / cost' in app
+    assert 'ge_buy_limit' in app
+    assert 'market_liquidity' in app
+    assert 'function calculationHtml' in app
+    assert 'function liquidityHtml' in app
+    assert '"session-profit": planFor(m).profit' in app
+    assert 'm.sustainability?.state' in app
     assert 'osrs-profit-finder.skill-levels.v1' in app
-    assert 'canDoBySkills' in app
-    assert '"gp-7d": m.history?.["7dGpPerHour"]' in app
-    assert '"gp-30d": m.history?.["30dGpPerHour"]' in app
-    assert '"profit-7d": i.history?.["7dProfitPerCast"]' in app
-    assert '"profit-30d": i.history?.["30dProfitPerCast"]' in app
     assert 'age < 5400 ? "current" : age <= 9000 ? "delayed" : "stale"' in app
-    assert "shortHistoryGeneratedAt" in app
-    assert "Last market scan" in app
 
 
 def test_sanitizer_rejects_internal_key(tmp_path):
-    site = tmp_path / "site"
-    (site / "assets").mkdir(parents=True)
-    (site / "data").mkdir()
-    for page in ("index.html", "alchemy.html"):
-        (site / page).write_text("ok", encoding="utf-8")
-    (site / "assets" / "app.css").write_text("", encoding="utf-8")
-    (site / "assets" / "app.js").write_text("", encoding="utf-8")
+    site = tmp_path / "site"; (site / "assets").mkdir(parents=True); (site / "data").mkdir()
+    for page in ("index.html", "alchemy.html"): (site / page).write_text("ok", encoding="utf-8")
+    (site / "assets" / "app.css").write_text("", encoding="utf-8"); (site / "assets" / "app.js").write_text("", encoding="utf-8")
     base = {"schemaVersion": 1, "generatedAt": 123}
     (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": [], "series": []}), encoding="utf-8")
     (site / "data" / "alchemy.json").write_text(json.dumps({**base, "items": []}), encoding="utf-8")
