@@ -34,6 +34,8 @@ def _candidate(valid=True):
         "buyPriceAgeSeconds": 60,
         "currentInstant": {"valid": valid, "buyPrice": 1000, "natureRunePrice": 100, "fireRunePrice": None, "profitPerCast": 900 if valid else None, "roiPct": 81.8 if valid else None},
         "historicalInstant24h": {"valid": True, "profitPerCast": 800},
+        "historicalInstant7d": {"valid": True, "profitPerCast": 750},
+        "historicalInstant30d": {"valid": True, "profitPerCast": 700},
         "capacity4h": {"maxQuantity": 100},
         "profitPer4hGeLimit": 90_000 if valid else None,
         "capitalRequired": 110_000 if valid else None,
@@ -64,6 +66,16 @@ def test_public_afk_contains_curated_fields_and_history():
     assert "scenario" not in method
 
 
+def test_public_alchemy_contains_matching_historical_windows():
+    payload = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
+    history = payload["items"][0]["history"]
+    assert history == {
+        "24hProfitPerCast": 800.0,
+        "7dProfitPerCast": 750.0,
+        "30dProfitPerCast": 700.0,
+    }
+
+
 def test_unavailable_alchemy_never_emits_numeric_profit():
     payload = build_public_alchemy(123, [_candidate(valid=False)], {"castsPerHour": 1200, "useFireStaff": True})
     item = payload["items"][0]
@@ -73,9 +85,22 @@ def test_unavailable_alchemy_never_emits_numeric_profit():
     assert item["risk"]["level"] == "unavailable"
 
 
-def test_status_hides_internal_health_details():
-    payload = build_public_status(123, {"status": "degraded", "api": {"timeseriesFailed": 2}, "warnings": ["SECRET_CODE"]})
-    assert payload == {"schemaVersion": 1, "generatedAt": 123, "state": "delayed", "ageSeconds": 0}
+def test_status_hides_internal_health_details_and_tracks_history_age():
+    payload = build_public_status(
+        123,
+        {"status": "degraded", "api": {"timeseriesFailed": 2}, "warnings": ["SECRET_CODE"]},
+        short_history_generated_at=100,
+        long_history_generated_at=80,
+    )
+    assert payload == {
+        "schemaVersion": 1,
+        "generatedAt": 123,
+        "liveGeneratedAt": 123,
+        "shortHistoryGeneratedAt": 100,
+        "longHistoryGeneratedAt": 80,
+        "state": "delayed",
+        "ageSeconds": 0,
+    }
 
 
 def test_public_site_is_two_section_afk_first_site(tmp_path):
@@ -95,6 +120,9 @@ def test_public_site_is_two_section_afk_first_site(tmp_path):
     assert "High Alch" in index
     assert "Ledger" not in index
     assert ">About<" not in index
+    assert "Method type" in index
+    assert "Capital" in index
+    assert "30D profit/cast" in alchemy
     assert "AFK Money Makers" in alchemy
     assert not (site / "afk.html").exists()
     assert not (site / "about.html").exists()
@@ -106,7 +134,10 @@ def test_client_supports_long_history_sorting_and_age_based_freshness():
     app = open("web/assets/app.js", encoding="utf-8").read()
     assert '"gp-7d": m.history?.["7dGpPerHour"]' in app
     assert '"gp-30d": m.history?.["30dGpPerHour"]' in app
+    assert '"profit-7d": i.history?.["7dProfitPerCast"]' in app
+    assert '"profit-30d": i.history?.["30dProfitPerCast"]' in app
     assert 'age < 5400 ? "current" : age < 9000 ? "delayed" : "stale"' in app
+    assert "shortHistoryGeneratedAt" in app
     assert "Last market scan" in app
 
 
