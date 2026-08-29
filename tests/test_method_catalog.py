@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,13 @@ def test_full_catalog_has_structural_guards_and_verified_audit():
         assert method["reference"].startswith("https://oldschool.runescape.wiki/"), method_id
         assert method["audit"]["status"] == "verified", method_id
         assert method["audit"]["source"].startswith("https://oldschool.runescape.wiki/"), method_id
+        assert isinstance(method["audit"]["verified_at"], str), method_id
+
+
+def test_merged_catalog_is_strictly_json_serializable():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    encoded = json.dumps(methods, allow_nan=False)
+    assert "steel_cannonballs_double_mould" in encoded
 
 
 def test_audited_hand_tuned_methods_receive_provenance():
