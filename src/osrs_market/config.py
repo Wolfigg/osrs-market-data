@@ -9,6 +9,7 @@ import yaml
 
 from .api import ApiSettings
 from .catalog import generated_method_catalog
+from .catalog_expansion import expanded_method_catalog
 
 _SKILL_KEYS = {
     "attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft",
@@ -43,11 +44,10 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
 def _set_generated_audit(methods: dict[str, Any]) -> None:
     """Mark the built-in catalogue as source-reviewed after family-level audit.
 
-    The generated catalogue is intentionally repetitive. Methods in the same
-    family share one mechanical recipe, so the completion audit verifies each
-    family and then records provenance on every generated method. Hand-written
-    methods.yaml entries are overlaid later and receive their more specific
-    provenance from config/method_audit.yaml.
+    Generated catalogue families share one mechanical recipe per family. The
+    completion audit verifies the family and records provenance on every method.
+    Hand-written methods.yaml entries are overlaid later and receive their more
+    specific provenance from config/method_audit.yaml.
     """
     for method in methods.values():
         method["audit"] = {
@@ -59,16 +59,9 @@ def _set_generated_audit(methods: dict[str, Any]) -> None:
 
 
 def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
-    """Apply source-verified corrections to generated catalogue defaults.
-
-    Hand-maintained methods.yaml overrides are applied after this function, so
-    explicit config remains authoritative when a method needs custom modelling.
-    """
+    """Apply source-verified corrections to generated catalogue defaults."""
     f2p_gems = ("sapphire", "emerald", "ruby", "diamond")
 
-    # Current Crafting guidance models 1,600/h for metal-only jewellery and
-    # 1,400/h for gem + metal jewellery. Keep the public working rate at the
-    # catalogue's conservative 1,400/h, while correcting access and ceilings.
     for type_key in ("ring", "necklace", "amulet_u"):
         gold = methods.get(f"craft_gold_{type_key}")
         if gold:
@@ -97,14 +90,10 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
             if method:
                 method["theoretical_cycles_per_hour"] = 1400
 
-    # Precious-gem bolt tips use 12 tips/gem except onyx, which produces 24.
     onyx_tips = methods.get("onyx_bolt_tips")
     if onyx_tips and onyx_tips.get("outputs"):
         onyx_tips["outputs"][0]["quantity"] = 24
 
-    # Regular-knife unstrung longbows take 3 ticks per bow. A 27-log inventory
-    # therefore gives 48.6 seconds of uninterrupted processing. The current
-    # Fletching training reference places the regular-knife ceiling near 1,800/h.
     for wood in ("maple", "yew", "magic"):
         method = methods.get(f"fletch_{wood}_longbow_u")
         if method:
@@ -112,36 +101,24 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
             method.setdefault("afk", {})["interval_seconds"] = 48.6
         stringing = methods.get(f"string_{wood}_longbows")
         if stringing:
-            # A 14-bow ordinary inventory strings at 2 ticks/bow = 16.8 s.
             stringing.setdefault("afk", {})["interval_seconds"] = 16.8
 
-    # Ordinary Make-X cooking takes 4 ticks per item. The deterministic zero-burn
-    # model uses 99 Cooking + cape, 1,300/h realistic throughput, and the true
-    # 28-item processing interval / theoretical ceiling.
     for food in ("karambwan", "sharks", "monkfish", "anglerfish", "dark_crabs"):
         method = methods.get(f"cook_{food}")
         if method:
             method["theoretical_cycles_per_hour"] = 1500
             method.setdefault("afk", {})["interval_seconds"] = 67.2
 
-    # Current Crafting guidance assumes 1,750 glass items/hour. Use 1,600/h as
-    # the conservative public rate and 1,750/h as the sourced ceiling. With a
-    # pipe occupying one slot, 27 orbs at 3 ticks/item give 48.6 s processing.
     orbs = methods.get("blow_unpowered_orbs")
     if orbs:
         orbs["theoretical_cycles_per_hour"] = 1750
         orbs.setdefault("afk", {})["interval_seconds"] = 48.6
 
-    # Current Crafting guidance uses 2,450 battlestaves/hour and states perfect
-    # banking can reach 2,625/hour.
     for element in ("water", "earth", "fire", "air"):
         method = methods.get(f"craft_{element}_battlestaves")
         if method:
             method["theoretical_cycles_per_hour"] = 2625
 
-    # Align gathering requirements with the equipment/access assumptions behind
-    # the modelled rates. Random secondary-drop value remains intentionally
-    # excluded from profitability.
     magic_logs = methods.get("cut_magic_logs")
     if magic_logs:
         magic_logs.setdefault("requirements", {})["equipment"] = ["Dragon or crystal axe"]
@@ -158,9 +135,6 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
     if dark_crabs:
         dark_crabs.setdefault("requirements", {})["equipment"] = ["Lobster pot"]
 
-    # Cooking raw karambwan requires Tai Bwo Wannai Trio. The deterministic
-    # zero-burn model remains level 99 + Cooking cape, but the quest is still a
-    # real availability requirement and must be shown to the player.
     karambwan = methods.get("cook_karambwan")
     if karambwan:
         karambwan.setdefault("requirements", {})["quests"] = ["Tai Bwo Wannai Trio"]
@@ -174,8 +148,6 @@ def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
     for key in list(requirements):
         value = requirements[key]
         lowered = str(key).lower()
-        # bool is a subclass of int in Python. Preserve access flags such as
-        # members: false rather than moving them into numeric metadata.
         if not isinstance(value, bool) and isinstance(value, (int, float)) and lowered not in _SKILL_KEYS:
             metadata[key] = requirements.pop(key)
     if metadata:
@@ -227,6 +199,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
     payload = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
     if source.name == "methods.yaml":
         generated = generated_method_catalog()
+        generated.update(expanded_method_catalog())
         _apply_known_catalog_corrections(generated)
         _set_generated_audit(generated)
 
