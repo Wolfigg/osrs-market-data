@@ -38,7 +38,8 @@ def _intish(value: Any) -> int | float | None:
 
 def _category(value: Any) -> str:
     raw = str(value or "other").strip().lower()
-    return _CATEGORY_LABELS.get(raw, raw.replace("_", " ").title() or "Other")
+    skill = raw.rsplit("/", 1)[-1]
+    return _CATEGORY_LABELS.get(skill, skill.replace("_", " ").title() or "Other")
 
 
 def classify_afk(interval_seconds: float | int | None) -> str:
@@ -109,16 +110,8 @@ def _members(result: dict[str, Any]) -> bool:
 
 def _tags(result: dict[str, Any]) -> list[str]:
     tags = {_category(result.get("category")).lower()}
-    description = str((result.get("afk") or {}).get("description") or "").lower()
-    name = str(result.get("name") or "").lower()
-    if "make-x" in description or "make x" in description:
-        tags.add("make-x")
-    if "bank" in description or "bolt tip" in name or "dart tip" in name:
-        tags.add("bankstanding")
-    if "autocast" in name or "auto-cast" in description:
-        tags.add("autocast")
-    if any(token in description for token in ("fish", "mine", "woodcut", "gather")):
-        tags.add("gathering")
+    explicit_types = result.get("methodTypes") or []
+    tags.update(str(value).lower() for value in explicit_types)
     tags.add("members" if _members(result) else "f2p")
     return sorted(tags)
 
