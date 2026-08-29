@@ -53,6 +53,10 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
         gold = methods.get(f"craft_gold_{type_key}")
         if gold:
             gold.setdefault("requirements", {})["members"] = False
+            # Current Crafting guidance models metal-only jewellery at 1,600/h.
+            # Keep the configured 1,400/h realistic rate conservative, but use
+            # the sourced 1,600/h value as the theoretical ceiling.
+            gold["theoretical_cycles_per_hour"] = 1600
         for gem in f2p_gems:
             method = methods.get(f"craft_{gem}_{type_key}")
             if method:
@@ -64,16 +68,33 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
     gold_bracelet = methods.get("craft_gold_bracelet")
     if gold_bracelet:
         gold_bracelet.setdefault("requirements", {})["members"] = True
+        gold_bracelet["theoretical_cycles_per_hour"] = 1600
     for gem in (*f2p_gems, "dragonstone"):
         method = methods.get(f"craft_{gem}_bracelet")
         if method:
             method.setdefault("requirements", {})["members"] = True
+
+    # Current Crafting guidance uses 1,400/h for gem + metal jewellery. The
+    # generated methods already use 1,400/h mechanically, so do not advertise
+    # an unsupported 1,450/h theoretical rate.
+    for type_key in ("ring", "necklace", "bracelet", "amulet_u"):
+        for gem in (*f2p_gems, "dragonstone"):
+            method = methods.get(f"craft_{gem}_{type_key}")
+            if method:
+                method["theoretical_cycles_per_hour"] = 1400
 
     # An onyx is the exception among the standard precious-gem bolt tips: it
     # produces 24 tips per gem, not 12.
     onyx_tips = methods.get("onyx_bolt_tips")
     if onyx_tips and onyx_tips.get("outputs"):
         onyx_tips["outputs"][0]["quantity"] = 24
+
+    # Current Crafting training guidance uses 2,450 battlestaves/hour and states
+    # that perfect banking can reach 2,625/hour.
+    for element in ("water", "earth", "fire", "air"):
+        method = methods.get(f"craft_{element}_battlestaves")
+        if method:
+            method["theoretical_cycles_per_hour"] = 2625
 
 
 def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
