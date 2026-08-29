@@ -1,0 +1,79 @@
+name: Refresh live market data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "2/5 * * * *"
+
+concurrency:
+  group: osrs-market-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OSRS_MARKET_USER_AGENT: "osrs-market-data/0.3 - github.com/${{ github.repository }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Restore derived market cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .market-cache
+          key: osrs-history-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            osrs-history-${{ runner.os }}-${{ github.ref_name }}-
+
+      - name: Refresh live prices and rebuild public site
+        run: python -m osrs_market.cli collect --mode live --output build --cache-dir .market-cache
+
+      - name: Upload maintainer diagnostics
+        if: always() && hashFiles('build/internal-report/**') != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: osrs-market-live-diagnostics
+          path: build/internal-report
+          retention-days: 3
+          if-no-files-found: ignore
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - name: Upload public GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/public-site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
