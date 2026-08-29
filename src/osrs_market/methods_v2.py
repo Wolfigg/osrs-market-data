@@ -5,6 +5,7 @@ from typing import Any
 
 from .method_model import effective_cycles_per_hour, input_quantity, iter_method_variants, method_has_probabilistic_quantities, output_quantity
 from .methods import evaluate_method as evaluate_legacy_method
+from .wave6 import apply_account_profile
 
 
 def cooking_success_probability(profile: dict[str, Any], level: int, location: str, gauntlets: bool, cooking_cape: bool = False) -> float:
@@ -39,9 +40,6 @@ def _apply_cooking_model(method: dict[str, Any]) -> dict[str, Any]:
     success = cooking_success_probability(profile, level, location, gauntlets, cape)
     if cooked.get("outputs"):
         cooked["outputs"][0]["quantity_expected"] = success
-        # A probabilistic cook is not guaranteed to produce a cooked item on a
-        # single cycle. Conservative profitability therefore uses zero as the
-        # deterministic lower bound unless the selected setup is zero-burn.
         cooked["outputs"][0]["quantity_minimum"] = 1.0 if success >= 1.0 else 0.0
         cooked["outputs"][0]["quantity_maximum"] = 1.0
     cooked.setdefault("model", {})["cookingResult"] = {
@@ -59,7 +57,11 @@ def _apply_cooking_model(method: dict[str, Any]) -> dict[str, Any]:
 
 def _materialise_method(method: dict[str, Any], basis: str) -> dict[str, Any]:
     materialised = _apply_cooking_model(method)
-    materialised["cycles_per_hour"] = effective_cycles_per_hour(materialised)
+    distribution = materialised.get("throughputDistribution") or {}
+    if distribution.get("p50") is not None:
+        materialised["cycles_per_hour"] = float(distribution["p50"])
+    else:
+        materialised["cycles_per_hour"] = effective_cycles_per_hour(materialised)
     for entry in materialised.get("inputs", []):
         entry["quantity"] = input_quantity(entry, basis)
         for key in ("quantity_expected", "quantity_minimum", "quantity_maximum", "probability"):
@@ -71,10 +73,11 @@ def _materialise_method(method: dict[str, Any], basis: str) -> dict[str, Any]:
     return materialised
 
 
-def evaluate_method(method_id: str, method: dict[str, Any], item_records: dict[int, dict[str, Any]], exempt_item_ids: set[int], settings: dict[str, Any], generated_at: int) -> list[dict[str, Any]]:
+def evaluate_method(method_id: str, method: dict[str, Any], item_records: dict[int, dict[str, Any]], exempt_item_ids: set[int], settings: dict[str, Any], generated_at: int, account_profile: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for variant_method_id, raw_variant in iter_method_variants(method_id, method):
-        variant = _apply_cooking_model(raw_variant)
+        personalised = apply_account_profile(raw_variant, account_profile)
+        variant = _apply_cooking_model(personalised)
         expected_method = _materialise_method(variant, "expected")
         expected_results = evaluate_legacy_method(variant_method_id, expected_method, item_records, exempt_item_ids, settings, generated_at)
         lower_by_scenario: dict[str, dict[str, Any]] = {}
@@ -91,6 +94,10 @@ def evaluate_method(method_id: str, method: dict[str, Any], item_records: dict[i
             economics = row.setdefault("economics", {})
             economics["profitGpPerCycleLowerBound"] = ((lower.get("economics") or {}).get("profitGpPerCycle") if lower else economics.get("profitGpPerCycle"))
             economics["profitGpPerHourLowerBoundSustainable"] = ((lower.get("economics") or {}).get("profitGpPerHourBuyLimitSustainable") if lower else economics.get("profitGpPerHourBuyLimitSustainable"))
+            row["eligibility"] = variant.get("eligibility")
+            row["throughputDistribution"] = variant.get("throughputDistribution")
+            row["provenance"] = variant.get("provenanceSummary")
+            row["route"] = variant.get("routeResult")
             row["model"] = {
                 "probabilisticOutputs": probabilistic,
                 "expectedValueUsed": probabilistic,
@@ -99,6 +106,9 @@ def evaluate_method(method_id: str, method: dict[str, Any], item_records: dict[i
                 "variant": variant_meta or None,
                 "cooking": model_meta.get("cooking"),
                 "cookingResult": model_meta.get("cookingResult"),
+                "fishing": model_meta.get("fishing"),
+                "mining": model_meta.get("mining"),
+                "woodcutting": model_meta.get("woodcutting"),
                 "doseModel": model_meta.get("doseModel"),
                 "unpricedInputs": model_meta.get("unpricedInputs"),
                 "excludedExpectedOutputs": model_meta.get("excludedExpectedOutputs"),
@@ -107,5 +117,7 @@ def evaluate_method(method_id: str, method: dict[str, Any], item_records: dict[i
                 row.setdefault("warnings", []).append("EXPECTED_VALUE_OUTPUT_MODEL")
             if model_meta.get("unpricedInputs"):
                 row.setdefault("warnings", []).append("UNPRICED_SELF_SUPPLIED_INPUT")
+            if (variant.get("eligibility") or {}).get("blocked"):
+                row.setdefault("warnings", []).append("ACCOUNT_REQUIREMENTS_NOT_MET")
             results.append(row)
     return results
