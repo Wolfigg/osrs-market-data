@@ -30,8 +30,8 @@ def _afk_result(scenario="CURRENT_INSTANT", valid=True, gp=100_000, warnings=Non
         "outputs": [{"itemId": 9191, "name": "Ruby bolt tips", "quantity": 12, "gePrice": 100, "geTaxPerItem": 1, "geNetPerItem": 99}],
         "liquidity": {
             "plannedHoursPerDay": 1,
-            "inputs": [{"itemId": 1603, "name": "Ruby", "observedVolume24h": volume, "warnings": []}],
-            "outputs": [{"itemId": 9191, "name": "Ruby bolt tips", "observedVolume24h": volume * 12, "warnings": []}],
+            "inputs": [{"itemId": 1603, "name": "Ruby", "observedVolume24h": volume, "observedHighVolume24h": volume * 0.6, "observedLowVolume24h": volume * 0.4, "warnings": []}],
+            "outputs": [{"itemId": 9191, "name": "Ruby bolt tips", "observedVolume24h": volume * 12, "observedHighVolume24h": volume * 5, "observedLowVolume24h": volume * 7, "warnings": []}],
         },
         "requirements": {"members": True, "fletching": 63, "equipment": ["Chisel"]},
         "warnings": warnings or [],
@@ -56,13 +56,16 @@ def test_afk_classification_boundaries():
     assert classify_afk(180) == "Deep AFK"
 
 
-def test_public_afk_contains_history_recommendation_sustainability_and_breakdown():
+def test_public_afk_contains_history_scenarios_confidence_and_breakdown():
     rows = [_afk_result()]
     for scenario, gp in [("HISTORICAL_INSTANT_6H", 90_000), ("HISTORICAL_INSTANT_24H", 80_000), ("HISTORICAL_INSTANT_7D", 70_000), ("HISTORICAL_INSTANT_30D", 60_000)]:
         rows.append(_afk_result(scenario=scenario, gp=gp))
     method = build_public_afk(123, rows)["methods"][0]
     assert method["history"]["24hGpPerHour"] == 80_000
     assert method["recommended"]["gpPerHour"] is not None
+    assert method["scenarios"]["currentGpPerHour"] == 100_000
+    assert method["scenarios"]["expectedGpPerHour"] == method["recommended"]["gpPerHour"]
+    assert method["scenarios"]["conservativeGpPerHour"] == 60_000
     assert method["economics"]["capitalOneHour"] == 900_000
     assert method["economics"]["capitalPerCycle"] == 1000
     assert method["economics"]["inputGpPerCycle"] == 1000
@@ -72,10 +75,22 @@ def test_public_afk_contains_history_recommendation_sustainability_and_breakdown
     assert method["mechanics"] == {"cyclesPerHour": 1000.0, "cyclesPerHourByBuyLimits": 900.0}
     assert method["liquidity"]["inputs"][0]["unitsPerHour"] == 1000
     assert method["liquidity"]["inputs"][0]["oneHourSharePct24h"] == 1.0
+    assert method["liquidity"]["inputs"][0]["directionalVolume24h"] == 60_000
+    assert method["liquidity"]["outputs"][0]["directionalVolume24h"] == 700_000
+    assert method["fillConfidence"]["score"] is not None
+    assert method["fillConfidence"]["turnoverHours"] > 0
+    assert method["priceSource"]["provider"] == "OSRS Wiki Prices / RuneLite"
     assert method["sustainability"]["state"] == "moderate"
     assert method["sustainability"]["throughputRatioPct"] == 90.0
     assert "warnings" not in method
     assert "scenario" not in method
+
+
+def test_directional_fill_confidence_penalises_required_side_pressure():
+    liquid = build_public_afk(123, [_afk_result(volume=1_000_000)])["methods"][0]
+    thin = build_public_afk(123, [_afk_result(volume=8_000)])["methods"][0]
+    assert liquid["fillConfidence"]["score"] > thin["fillConfidence"]["score"]
+    assert thin["fillConfidence"]["turnoverHours"] >= liquid["fillConfidence"]["turnoverHours"]
 
 
 def test_sustainability_marks_thin_market_and_ge_limited_methods():
@@ -121,7 +136,9 @@ def test_status_hides_internal_health_details_and_tracks_history_age():
 
 def test_public_site_contains_session_planner_and_sustainability_filters(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
-    (assets / "app.css").write_text("body{}", encoding="utf-8"); (assets / "app.js").write_text("void 0;", encoding="utf-8")
+    (assets / "app.css").write_text("body{}", encoding="utf-8")
+    (assets / "app.js").write_text("void 0;", encoding="utf-8")
+    (assets / "enhancements.js").write_text("void 0;", encoding="utf-8")
     afk = build_public_afk(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
     site = tmp_path / "site"
     write_public_site(site, afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
@@ -130,19 +147,20 @@ def test_public_site_contains_session_planner_and_sustainability_filters(tmp_pat
     assert "Bankroll & time planner" in index
     assert 'id="planner-bankroll"' in index
     assert 'id="planner-hours"' in index
-    assert "Sustainability" in index
+    assert "Market capacity" in index
     assert "My session profit" in index
     assert "My skill levels" in index
     assert "High Alch" in index
+    assert "enhancements.js" in index
     assert "Ledger" not in index and ">About<" not in index
     assert not (site / "market").exists()
 
 
 def test_client_supports_planner_sustainability_breakdowns_and_history():
     app = open("web/assets/app.js", encoding="utf-8").read()
+    enhancements = open("web/assets/enhancements.js", encoding="utf-8").read()
     assert 'osrs-profit-finder.session-planner.v1' in app
     assert 'function sessionPlan' in app
-    assert 'bankroll / cost' in app
     assert 'ge_buy_limit' in app
     assert 'market_liquidity' in app
     assert 'function calculationHtml' in app
@@ -151,12 +169,27 @@ def test_client_supports_planner_sustainability_breakdowns_and_history():
     assert 'm.sustainability?.state' in app
     assert 'osrs-profit-finder.skill-levels.v1' in app
     assert 'age < 5400 ? "current" : age <= 9000 ? "delayed" : "stale"' in app
+    assert 'osrs-profit-finder.favourites.v1' in enhancements
+    assert 'osrs-profit-finder.compare.v1' in enhancements
+    assert 'function correctedSessionPlan' in enhancements
+    assert 'bankroll / (cost * turnoverHours)' in enhancements
+    assert 'Current' in enhancements and 'Expected' in enhancements and 'Conservative' in enhancements
+    assert 'Price source' in enhancements
+
+
+def test_production_validator_rejects_incomplete_decision_model(tmp_path):
+    assets = tmp_path / "assets-source"; assets.mkdir()
+    for name in ("app.css", "app.js", "enhancements.js"): (assets / name).write_text("", encoding="utf-8")
+    afk = build_public_afk(123, [_afk_result()])
+    del afk["methods"][0]["fillConfidence"]
+    with pytest.raises(ValueError, match="fill confidence"):
+        write_public_site(tmp_path / "site", afk, build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True}), build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
 
 
 def test_sanitizer_rejects_internal_key(tmp_path):
     site = tmp_path / "site"; (site / "assets").mkdir(parents=True); (site / "data").mkdir()
     for page in ("index.html", "alchemy.html"): (site / page).write_text("ok", encoding="utf-8")
-    (site / "assets" / "app.css").write_text("", encoding="utf-8"); (site / "assets" / "app.js").write_text("", encoding="utf-8")
+    for asset in ("app.css", "app.js", "enhancements.js"): (site / "assets" / asset).write_text("", encoding="utf-8")
     base = {"schemaVersion": 1, "generatedAt": 123}
     (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": [], "series": []}), encoding="utf-8")
     (site / "data" / "alchemy.json").write_text(json.dumps({**base, "items": []}), encoding="utf-8")
