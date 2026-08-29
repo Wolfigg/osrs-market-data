@@ -25,21 +25,32 @@
     return `Updated ${Math.floor(s / 86400)} day${s >= 172800 ? "s" : ""} ago`;
   }
 
+  function compactAge(timestamp, now) {
+    if (!timestamp) return "pending";
+    const s = Math.max(0, now - Number(timestamp));
+    if (s < 60) return "<1m";
+    if (s < 3600) return `${Math.floor(s / 60)}m`;
+    if (s < 86400) return `${Math.floor(s / 3600)}h`;
+    return `${Math.floor(s / 86400)}d`;
+  }
+
   async function initStatus() {
     try {
       const s = await loadJson("data/status.json");
       const now = Math.floor(Date.now() / 1000);
-      const age = Math.max(Number(s.ageSeconds || 0), now - Number(s.generatedAt || now));
+      const liveAt = Number(s.liveGeneratedAt || s.generatedAt || now);
+      const age = Math.max(Number(s.ageSeconds || 0), now - liveAt);
       const node = document.querySelector("#health-state");
       const ageState = age < 5400 ? "current" : age < 9000 ? "delayed" : "stale";
       const state = s.state === "data_issue" ? "data_issue" : ageState;
       node.textContent = ({ current: "Current", delayed: "Delayed", stale: "Stale", data_issue: "Data issue" })[state] || "Data issue";
       node.className = `status-plaque ${state}`;
-      const generated = new Date(Number(s.generatedAt || now) * 1000);
+      const generated = new Date(liveAt * 1000);
       const scanTime = generated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const history = `History 24H/7D ${compactAge(s.shortHistoryGeneratedAt, now)} · 30D ${compactAge(s.longHistoryGeneratedAt, now)}`;
       document.querySelector("#update-age").textContent = state === "data_issue"
-        ? `Last market scan ${scanTime} · data issue`
-        : `Last market scan ${scanTime} · ${relativeAge(age)}`;
+        ? `Last market scan ${scanTime} · data issue · ${history}`
+        : `Last market scan ${scanTime} · ${relativeAge(age)} · ${history}`;
     } catch (_) {
       document.querySelector("#health-state").textContent = "Data issue";
       document.querySelector("#health-state").className = "status-plaque data_issue";
@@ -92,6 +103,8 @@
       if (["f2p", "members"].includes(params.get("members"))) document.querySelector(`input[name="afk-membership"][value="${params.get("members")}"]`).checked = true;
       if (params.get("profit") === "all") document.querySelector("#afk-profit").value = "all";
       if (params.get("level")) document.querySelector("#afk-level").value = params.get("level");
+      if (params.get("type")) document.querySelector("#afk-type").value = params.get("type");
+      if (params.get("capital")) document.querySelector("#afk-capital").value = params.get("capital");
       if (params.get("sort") && sortNode.querySelector(`option[value="${CSS.escape(params.get("sort"))}"]`)) sortNode.value = params.get("sort");
 
       const render = () => {
@@ -100,6 +113,9 @@
         const mv = readRadio("afk-membership");
         const pv = document.querySelector("#afk-profit").value;
         const lv = document.querySelector("#afk-level").value;
+        const tv = document.querySelector("#afk-type").value;
+        const cap = document.querySelector("#afk-capital").value;
+        const capLimit = cap === "all" ? null : Number(cap);
         const sort = sortNode.value;
         let rows = methods.filter(m =>
           !(search && !`${m.name} ${m.category} ${(m.tags || []).join(" ")}`.toLowerCase().includes(search)) &&
@@ -107,7 +123,9 @@
           !(mv === "f2p" && m.members) &&
           !(mv === "members" && !m.members) &&
           !(pv === "profitable" && !(m.current.valid && Number(m.current.gpPerHour) > 0)) &&
-          !(lv !== "all" && m.afk.classification !== lv)
+          !(lv !== "all" && m.afk.classification !== lv) &&
+          !(tv !== "all" && !(m.tags || []).includes(tv)) &&
+          !(capLimit != null && Number(m.economics.capitalOneHour) >= capLimit)
         );
         const val = (m, k) => ({
           "gp-hour": m.current.gpPerHour,
@@ -121,12 +139,12 @@
         rows.sort((a, b) => sort === "alphabetical" ? a.name.localeCompare(b.name) : sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#afk-count").textContent = `${rows.length} method${rows.length === 1 ? "" : "s"}`;
         list.innerHTML = `<div class="ledger-header afk-grid"><div>Method</div><div class="num">Current GP/h</div><div class="num">24H GP/h</div><div class="num desktop-secondary">7D GP/h</div><div class="num desktop-secondary">30D GP/h</div><div class="num">AFK interval</div><div class="num">GP / interaction</div><div class="num desktop-secondary">1h capital</div><div class="desktop-secondary">Access</div><div class="desktop-secondary">Risk</div></div>${rows.length ? rows.map(afkRecord).join("") : `<p class="empty-state">No methods match these filters.</p>`}`;
-        syncQuery({ q: search, category: cv, members: mv, profit: pv, level: lv, sort });
+        syncQuery({ q: search, category: cv, members: mv, profit: pv, level: lv, type: tv, capital: cap, sort });
         const requested = params.get("method");
         if (requested) list.querySelector(`[data-method-id="${CSS.escape(requested)}"]`)?.setAttribute("open", "");
       };
 
-      document.querySelectorAll("#afk-category,#afk-profit,#afk-level,#afk-sort,input[name='afk-membership']").forEach(el => el.addEventListener("change", render));
+      document.querySelectorAll("#afk-category,#afk-profit,#afk-level,#afk-type,#afk-capital,#afk-sort,input[name='afk-membership']").forEach(el => el.addEventListener("change", render));
       document.querySelector("#afk-search").addEventListener("input", render);
       render();
     } catch (_) {
@@ -136,7 +154,7 @@
 
   function alchRecord(i) {
     const cls = i.profitPerCast != null && i.profitPerCast < 0 ? "loss" : "profit";
-    return `<details class="ledger-record"><summary class="ledger-summary alch-grid"><div class="item-name"><strong>${esc(i.name)}</strong><small>${membership(i.members)} · ${esc(i.freshness)}</small></div><div class="num primary-mobile ${cls}">${plainGp(i.profit4h)}</div><div class="num">${plainGp(i.buyPrice)}</div><div class="num">${plainGp(i.highAlchValue)}</div><div class="num ${cls}">${plainGp(i.profitPerCast)}</div><div class="num desktop-secondary">${i.roi == null ? "-" : `${pct.format(i.roi)}%`}</div><div class="num desktop-secondary">${plainGp(i.quantity4h)}</div><div class="num desktop-secondary ${cls}">${plainGp(i.profit4h)}</div><div class="num desktop-secondary">${plainGp(i.capitalRequired)}</div><div class="desktop-secondary">${esc(i.freshness)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(membership(i.members))}${badge(i.freshness)}${riskBadge(i.risk)}</div><div class="detail-grid"><div><h3>Current calculation</h3><p>Buy price: <strong>${gpText(i.buyPrice)}</strong></p><p>High Alch value: <strong>${gpText(i.highAlchValue)}</strong></p><p>Rune cost: <strong>${gpText(i.runeCost)}</strong></p><p>Profit/cast: <strong>${gpText(i.profitPerCast)}</strong></p></div><div><h3>Four-hour batch</h3><p>Available quantity: <strong>${plainGp(i.quantity4h)}</strong></p><p>GE buy limit: <strong>${plainGp(i.buyLimit)}</strong></p><p>Capital required: <strong>${gpText(i.capitalRequired)}</strong></p><p>Practical profit: <strong>${gpText(i.profit4h)}</strong></p></div><div><h3>Market context</h3><p>24H volume: <strong>${plainGp(i.volume24h)}</strong></p><p>24H reference margin: <strong>${gpText(i.history24hProfitPerCast)}</strong></p><p>Requirement: <strong>55 Magic</strong></p><p>${esc(i.risk?.reasons?.[0] || "No material current warning.")}</p></div></div></div></details>`;
+    return `<details class="ledger-record"><summary class="ledger-summary alch-grid"><div class="item-name"><strong>${esc(i.name)}</strong><small>${membership(i.members)} · ${esc(i.freshness)}</small></div><div class="num primary-mobile ${cls}">${plainGp(i.profit4h)}</div><div class="num">${plainGp(i.buyPrice)}</div><div class="num">${plainGp(i.highAlchValue)}</div><div class="num ${cls}">${plainGp(i.profitPerCast)}</div><div class="num desktop-secondary">${i.roi == null ? "-" : `${pct.format(i.roi)}%`}</div><div class="num desktop-secondary">${plainGp(i.quantity4h)}</div><div class="num desktop-secondary ${cls}">${plainGp(i.profit4h)}</div><div class="num desktop-secondary">${plainGp(i.capitalRequired)}</div><div class="desktop-secondary">${esc(i.freshness)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(membership(i.members))}${badge(i.freshness)}${riskBadge(i.risk)}</div><div class="detail-grid"><div><h3>Current calculation</h3><p>Buy price: <strong>${gpText(i.buyPrice)}</strong></p><p>High Alch value: <strong>${gpText(i.highAlchValue)}</strong></p><p>Rune cost: <strong>${gpText(i.runeCost)}</strong></p><p>Profit/cast: <strong>${gpText(i.profitPerCast)}</strong></p></div><div><h3>Four-hour batch</h3><p>Available quantity: <strong>${plainGp(i.quantity4h)}</strong></p><p>GE buy limit: <strong>${plainGp(i.buyLimit)}</strong></p><p>Capital required: <strong>${gpText(i.capitalRequired)}</strong></p><p>Practical profit: <strong>${gpText(i.profit4h)}</strong></p></div><div><h3>Market context</h3><p>24H volume: <strong>${plainGp(i.volume24h)}</strong></p><p>24H margin: <strong>${gpText(i.history?.["24hProfitPerCast"])}</strong></p><p>7D margin: <strong>${gpText(i.history?.["7dProfitPerCast"])}</strong></p><p>30D margin: <strong>${gpText(i.history?.["30dProfitPerCast"])}</strong></p><p>${esc(i.risk?.reasons?.[0] || "No material current warning.")}</p></div></div></div></details>`;
   }
 
   async function initAlchemy() {
@@ -149,6 +167,7 @@
       if (["f2p", "members"].includes(params.get("members"))) document.querySelector(`input[name="alch-membership"][value="${params.get("members")}"]`).checked = true;
       if (params.get("profit") === "all") document.querySelector("#alch-profit").value = "all";
       if (params.get("min")) document.querySelector("#alch-min-profit").value = params.get("min");
+      if (params.get("capital")) document.querySelector("#alch-capital").value = params.get("capital");
       if (params.get("sort") && document.querySelector(`#alch-sort option[value="${CSS.escape(params.get("sort"))}"]`)) document.querySelector("#alch-sort").value = params.get("sort");
       document.querySelector("#alch-unavailable").checked = params.get("unavailable") === "1";
 
@@ -157,6 +176,8 @@
         const mv = readRadio("alch-membership");
         const pv = document.querySelector("#alch-profit").value;
         const min = Number(document.querySelector("#alch-min-profit").value || 0);
+        const cap = document.querySelector("#alch-capital").value;
+        const capLimit = cap === "all" ? null : Number(cap);
         const sort = document.querySelector("#alch-sort").value;
         const show = document.querySelector("#alch-unavailable").checked;
         let rows = items.filter(i =>
@@ -165,15 +186,25 @@
           !(mv === "members" && !i.members) &&
           !(!show && i.profitPerCast == null) &&
           !(pv === "profitable" && !(Number(i.profitPerCast) > 0)) &&
-          !(i.profitPerCast != null && Number(i.profitPerCast) < min)
+          !(i.profitPerCast != null && Number(i.profitPerCast) < min) &&
+          !(capLimit != null && (i.capitalRequired == null || Number(i.capitalRequired) >= capLimit))
         );
-        const val = (i, k) => ({ "profit-4h": i.profit4h, "profit-cast": i.profitPerCast, roi: i.roi, capital: i.capitalRequired, volume: i.volume24h })[k];
+        const val = (i, k) => ({
+          "profit-4h": i.profit4h,
+          "profit-cast": i.profitPerCast,
+          "profit-24h": i.history?.["24hProfitPerCast"],
+          "profit-7d": i.history?.["7dProfitPerCast"],
+          "profit-30d": i.history?.["30dProfitPerCast"],
+          roi: i.roi,
+          capital: i.capitalRequired,
+          volume: i.volume24h
+        })[k];
         rows.sort((a, b) => sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#alch-count").textContent = `${rows.length} candidate${rows.length === 1 ? "" : "s"}`;
         list.innerHTML = `<div class="ledger-header alch-grid"><div>Item</div><div class="num">4H profit</div><div class="num">Buy</div><div class="num">Alch</div><div class="num">Profit/cast</div><div class="num desktop-secondary">ROI</div><div class="num desktop-secondary">4H qty</div><div class="num desktop-secondary">4H profit</div><div class="num desktop-secondary">Capital</div><div class="desktop-secondary">Freshness</div></div>${rows.length ? rows.map(alchRecord).join("") : `<p class="empty-state">No High Alch candidates match these filters.</p>`}`;
-        syncQuery({ q: search, members: mv, profit: pv, min: String(min), sort, unavailable: show ? "1" : "" });
+        syncQuery({ q: search, members: mv, profit: pv, min: String(min), capital: cap, sort, unavailable: show ? "1" : "" });
       };
-      document.querySelectorAll("#alch-profit,#alch-sort,#alch-unavailable,input[name='alch-membership']").forEach(el => el.addEventListener("change", render));
+      document.querySelectorAll("#alch-profit,#alch-capital,#alch-sort,#alch-unavailable,input[name='alch-membership']").forEach(el => el.addEventListener("change", render));
       document.querySelector("#alch-search").addEventListener("input", render);
       document.querySelector("#alch-min-profit").addEventListener("input", render);
       render();
