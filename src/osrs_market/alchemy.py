@@ -128,6 +128,36 @@ def _is_fresh(timestamp: int | None, generated_at: int, acceptable_seconds: int)
     return timestamp is not None and max(generated_at - timestamp, 0) <= acceptable_seconds
 
 
+def _historical_alch(
+    item: MappingItem,
+    key: str,
+    windows: dict[str, dict[str, Any]],
+    nature_windows: dict[str, dict[str, Any]],
+    use_fire_staff: bool,
+    fire_windows: dict[str, dict[str, Any]] | None,
+    fire_runes_per_cast: int,
+) -> dict[str, Any]:
+    item_price = windows.get(key, {}).get("highVwap")
+    nature_price = nature_windows.get(key, {}).get("highVwap")
+    fire_price = (fire_windows or {}).get(key, {}).get("highVwap") if not use_fire_staff else None
+    result = alch_costs(
+        item,
+        item_price,
+        nature_price,
+        use_fire_staff,
+        fire_price,
+        fire_runes_per_cast,
+    )
+    return {
+        "valid": result["profit"] is not None,
+        "itemHighVwap": item_price,
+        "natureHighVwap": nature_price,
+        "fireHighVwap": fire_price,
+        "profitPerCast": result["profit"],
+        "roiPct": result["roiPct"],
+    }
+
+
 def build_alchemy_candidate(
     item: MappingItem,
     latest_item: LatestPrice,
@@ -146,7 +176,6 @@ def build_alchemy_candidate(
     xp_per_cast = int(alch_settings.get("xp_per_cast", 65))
     fire_runes_per_cast = int(alch_settings.get("fire_runes_per_cast", 5))
     fire_rune_price = latest_fire.high if latest_fire is not None else None
-    historical_fire_price = (fire_windows or {}).get("24h", {}).get("highVwap")
     available_gp = alch_settings.get("available_gp")
     available_gp = int(available_gp) if available_gp is not None else None
     acceptable_seconds = int(settings.get("freshness", {}).get("acceptable_seconds", 7200))
@@ -157,14 +186,9 @@ def build_alchemy_candidate(
 
     instant = alch_costs(item, latest_item.high, latest_nature.high, use_fire_staff, fire_rune_price, fire_runes_per_cast)
     patient = alch_costs(item, latest_item.low, latest_nature.high, use_fire_staff, fire_rune_price, fire_runes_per_cast)
-    hist24 = alch_costs(
-        item,
-        windows.get("24h", {}).get("highVwap"),
-        nature_windows.get("24h", {}).get("highVwap"),
-        use_fire_staff,
-        historical_fire_price,
-        fire_runes_per_cast,
-    )
+    hist24 = _historical_alch(item, "24h", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
+    hist7 = _historical_alch(item, "7d", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
+    hist30 = _historical_alch(item, "30d", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
 
     extra_fire_cost = 0.0
     if not use_fire_staff and fire_rune_price is not None:
@@ -229,14 +253,9 @@ def build_alchemy_candidate(
             "profitPerCast": patient["profit"] if patient_fresh else None,
             "roiPct": patient["roiPct"] if patient_fresh else None,
         },
-        "historicalInstant24h": {
-            "valid": hist24["profit"] is not None,
-            "itemHighVwap": windows.get("24h", {}).get("highVwap"),
-            "natureHighVwap": nature_windows.get("24h", {}).get("highVwap"),
-            "fireHighVwap": historical_fire_price if not use_fire_staff else None,
-            "profitPerCast": hist24["profit"],
-            "roiPct": hist24["roiPct"],
-        },
+        "historicalInstant24h": hist24,
+        "historicalInstant7d": hist7,
+        "historicalInstant30d": hist30,
         "capacity4h": capacity,
         "profitPer4hGeLimit": profit_per_4h,
         "capitalRequired": capital_required,
