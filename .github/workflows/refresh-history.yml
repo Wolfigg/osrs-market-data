@@ -1,0 +1,113 @@
+name: Refresh historical market data
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Historical collection scope
+        required: true
+        default: full
+        type: choice
+        options:
+          - short
+          - long
+          - full
+  schedule:
+    - cron: "23 * * * *"
+    - cron: "41 */6 * * *"
+    - cron: "47 3 * * *"
+
+concurrency:
+  group: osrs-market-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OSRS_MARKET_USER_AGENT: "osrs-market-data/0.3 - github.com/${{ github.repository }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Restore derived market cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .market-cache
+          key: osrs-history-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            osrs-history-${{ runner.os }}-${{ github.ref_name }}-
+
+      - name: Resolve refresh mode
+        id: mode
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            mode="${{ inputs.mode }}"
+          else
+            case "${{ github.event.schedule }}" in
+              "23 * * * *") mode="short" ;;
+              "41 */6 * * *") mode="long" ;;
+              "47 3 * * *") mode="full" ;;
+              *) echo "Unknown schedule" >&2; exit 1 ;;
+            esac
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh historical metrics and rebuild public site
+        run: python -m osrs_market.cli collect --mode "${{ steps.mode.outputs.mode }}" --output build --cache-dir .market-cache
+
+      - name: Save derived market cache
+        uses: actions/cache/save@v4
+        with:
+          path: .market-cache
+          key: osrs-history-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Upload maintainer diagnostics
+        if: always() && hashFiles('build/internal-report/**') != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: osrs-market-history-diagnostics-${{ github.run_id }}
+          path: build/internal-report
+          retention-days: 5
+          if-no-files-found: ignore
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - name: Upload public GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/public-site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
