@@ -43,7 +43,8 @@ def discover_money_making_guides(user_agent: str, session: requests.Session | No
             revisions = page.get("revisions") or []
             revision = revisions[0] if revisions else {}
             title = str(page.get("title") or "")
-            rows.append({"pageId": int(page.get("pageid") or 0), "title": title, "revisionId": int(revision.get("revid") or 0), "revisionTimestamp": revision.get("timestamp"), "url": "https://oldschool.runescape.wiki/w/" + title.replace(" ", "_")})
+            raw_url = "https://oldschool.runescape.wiki/w/" + title.replace(" ", "_")
+            rows.append({"pageId": int(page.get("pageid") or 0), "title": title, "revisionId": int(revision.get("revid") or 0), "revisionTimestamp": revision.get("timestamp"), "url": requests.utils.requote_uri(raw_url)})
     return sorted(rows, key=lambda row: row["title"].casefold())
 
 
