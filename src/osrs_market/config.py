@@ -12,6 +12,7 @@ from .catalog import generated_method_catalog
 from .catalog_expansion import expanded_method_catalog
 from .catalog_wave4 import wave4_method_catalog
 from .catalog_wave5 import wave5_method_catalog
+from .catalog_wave6 import wave6_method_catalog
 
 _SKILL_KEYS = {"attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft", "construction", "hitpoints", "agility", "herblore", "thieving", "crafting", "fletching", "slayer", "hunter", "mining", "smithing", "fishing", "cooking", "firemaking", "woodcutting", "farming", "sailing"}
 
@@ -35,7 +36,7 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
 
 def _set_generated_audit(methods: dict[str, Any]) -> None:
     for method in methods.values():
-        method["audit"] = {"status": "verified", "verified_at": "2026-08-29", "source": method.get("reference"), "notes": "Verified in the 2026-08-29 catalogue family audit."}
+        method["audit"] = {"status": "verified", "verified_at": "2026-08-30", "source": method.get("reference"), "notes": "Verified at catalogue-family level. Wave 6 assumption provenance may require finer-grained review."}
 
 
 def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
@@ -138,6 +139,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         generated.update(expanded_method_catalog())
         generated.update(wave4_method_catalog())
         generated.update(wave5_method_catalog())
+        generated.update(wave6_method_catalog())
         _apply_known_catalog_corrections(generated)
         _set_generated_audit(generated)
         generated.update(payload.get("methods", {}) or {})
