@@ -93,8 +93,12 @@ def _base(title: str, active: str, page: str, main: str) -> str:
 </html>"""
 
 
+def _capital_options() -> str:
+    return """<option value="all">Any capital</option><option value="500000">Under 500k</option><option value="1000000">Under 1m</option><option value="5000000">Under 5m</option><option value="10000000">Under 10m</option><option value="25000000">Under 25m</option>"""
+
+
 def _afk_page() -> str:
-    main = """
+    main = f"""
 <section class="page-heading compact">
   <p class="eyebrow">Work Board</p>
   <h1>AFK Money Makers</h1>
@@ -107,6 +111,8 @@ def _afk_page() -> str:
     <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="afk-membership" value="all" checked><span>All</span></label><label><input type="radio" name="afk-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="afk-membership" value="members"><span>Members</span></label></fieldset>
     <label class="field"><span>Profitability</span><select id="afk-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
     <label class="field"><span>AFK level</span><select id="afk-level"><option value="all">All levels</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option></select></label>
+    <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option></select></label>
+    <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
     <label class="field"><span>Sort</span><select id="afk-sort"><option value="gp-hour">Current GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
   </div>
 </section>
@@ -117,7 +123,7 @@ def _afk_page() -> str:
 
 
 def _alchemy_page() -> str:
-    main = """
+    main = f"""
 <section class="page-heading compact">
   <p class="eyebrow">Alchemist's Desk</p>
   <h1>High Alch</h1>
@@ -129,7 +135,8 @@ def _alchemy_page() -> str:
     <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="alch-membership" value="all" checked><span>All</span></label><label><input type="radio" name="alch-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="alch-membership" value="members"><span>Members</span></label></fieldset>
     <label class="field"><span>Profitability</span><select id="alch-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
     <label class="field"><span>Minimum profit/cast</span><input id="alch-min-profit" type="number" value="0" min="0" step="1"></label>
-    <label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Profit per cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
+    <label class="field"><span>Capital</span><select id="alch-capital">{_capital_options()}</select></label>
+    <label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
     <label class="checkbox-field"><input id="alch-unavailable" type="checkbox"><span>Show unavailable / stale</span></label>
   </div>
 </section>
