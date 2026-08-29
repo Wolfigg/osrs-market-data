@@ -40,6 +40,35 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
     return sorted(types)
 
 
+def _apply_known_access_corrections(methods: dict[str, Any]) -> None:
+    """Correct generated jewellery membership semantics from current OSRS content.
+
+    F2P supports gold plus sapphire-through-diamond rings, necklaces and
+    unstrung amulets. Bracelets and dragonstone jewellery are members-only.
+    Hand-maintained methods.yaml overrides are applied after this function.
+    """
+    f2p_gems = ("sapphire", "emerald", "ruby", "diamond")
+    for type_key in ("ring", "necklace", "amulet_u"):
+        gold = methods.get(f"craft_gold_{type_key}")
+        if gold:
+            gold.setdefault("requirements", {})["members"] = False
+        for gem in f2p_gems:
+            method = methods.get(f"craft_{gem}_{type_key}")
+            if method:
+                method.setdefault("requirements", {})["members"] = False
+        dragonstone = methods.get(f"craft_dragonstone_{type_key}")
+        if dragonstone:
+            dragonstone.setdefault("requirements", {})["members"] = True
+
+    gold_bracelet = methods.get("craft_gold_bracelet")
+    if gold_bracelet:
+        gold_bracelet.setdefault("requirements", {})["members"] = True
+    for gem in (*f2p_gems, "dragonstone"):
+        method = methods.get(f"craft_{gem}_bracelet")
+        if method:
+            method.setdefault("requirements", {})["members"] = True
+
+
 def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
     requirements = method.get("requirements") or {}
     if not isinstance(requirements, dict):
@@ -94,6 +123,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
     payload = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
     if source.name == "methods.yaml":
         generated = generated_method_catalog()
+        _apply_known_access_corrections(generated)
         configured = payload.get("methods", {}) or {}
         generated.update(configured)
 
