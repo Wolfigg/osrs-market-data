@@ -6,7 +6,6 @@ import logging
 import shutil
 import sys
 import time
-from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +85,6 @@ def _resolve_catalog_item_names(methods_config: dict[str, Any], mapping: dict[in
                         errors.append(f"{method_id}: {side} item_name {name!r} resolved to {len(matches)} mapping rows")
                         continue
                     entry["item_id"] = matches[0]
-        # Resolve the actual base method/variant definitions, not only deep copies.
         for side in ("inputs", "outputs"):
             for entry in method.get(side, []):
                 name = str(entry.get("item_name") or "").strip()
@@ -158,6 +156,9 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
     missing_tracked = [x for x in tracked_ids if x not in mapping]
     if missing_tracked: raise ValueError(f"tracked item IDs missing from mapping: {missing_tracked}")
     nature_id = int(settings["alchemy"]["nature_rune_item_id"]); use_fire_staff = bool(settings["alchemy"].get("use_fire_staff", True)); fire_id = int(settings["alchemy"].get("fire_rune_item_id", 554))
+    missing_alchemy_ids = [nature_id] if nature_id not in mapping else []
+    if not use_fire_staff and fire_id not in mapping: missing_alchemy_ids.append(fire_id)
+    if missing_alchemy_ids: raise ValueError(f"configured alchemy rune item IDs missing from mapping: {missing_alchemy_ids}")
     method_ids = _required_method_item_ids(methods_config); missing_method_ids = sorted(x for x in method_ids if x not in mapping)
     if missing_method_ids: raise ValueError(f"configured method item IDs missing from mapping: {missing_method_ids}")
     base_ids = set(tracked_ids) | method_ids | {nature_id}
@@ -170,12 +171,13 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
     if mode in {"short", "full"}: history["shortGeneratedAt"] = generated_at
     if mode in {"long", "full"}: history["longGeneratedAt"] = generated_at
     if mode != "live": save_history(cache_dir, history)
-    records = {item_id: _record_for_item(mapping[item_id], latest.get(item_id, LatestPrice.from_api(None)), item_windows(history, item_id), generated_at, settings) for item_id in sorted(base_ids) if item_id in mapping}
+    records = {item_id: _record_for_item(mapping[item_id], latest.get(item_id, LatestPrice.from_api(None)), item_windows(history, item_id), generated_at, settings) for item_id in sorted(base_ids)}
     afk_results = []
     for method_id, method in methods_config.get("methods", {}).items(): afk_results.extend(evaluate_method(str(method_id), method, records, exempt_ids, settings, generated_at))
     alchemy_candidates = []
-    if preliminary and (nature_record := records.get(nature_id)) is not None:
-        latest_nature = latest.get(nature_id, LatestPrice.from_api(None)); fire_record = records.get(fire_id) if not use_fire_staff else None; latest_fire = latest.get(fire_id, LatestPrice.from_api(None)) if not use_fire_staff else None
+    if preliminary:
+        nature_record = records[nature_id]
+        latest_nature = latest.get(nature_id, LatestPrice.from_api(None)); fire_record = records[fire_id] if not use_fire_staff else None; latest_fire = latest.get(fire_id, LatestPrice.from_api(None)) if not use_fire_staff else None
         for row in preliminary:
             item_id = int(row["itemId"]); item = mapping[item_id]
             alchemy_candidates.append(build_alchemy_candidate(item, latest.get(item_id, LatestPrice.from_api(None)), latest_nature, item_windows(history, item_id), nature_record["windows"], generated_at, settings, latest_fire=latest_fire, fire_windows=fire_record["windows"] if fire_record else None))
