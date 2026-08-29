@@ -1,7 +1,7 @@
 methods:
   steel_cannonballs_double_mould:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
     checks:
@@ -14,7 +14,7 @@ methods:
 
   sapphire_bolt_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Sapphire_bolt_tips
     checks:
@@ -27,7 +27,7 @@ methods:
 
   emerald_bolt_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Emerald_bolt_tips
     checks:
@@ -40,7 +40,7 @@ methods:
 
   ruby_bolt_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Money_making_guide/Cutting_ruby_bolt_tips
     checks:
@@ -53,7 +53,7 @@ methods:
 
   diamond_bolt_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Money_making_guide/Cutting_diamond_bolt_tips
     checks:
@@ -66,7 +66,7 @@ methods:
 
   mahogany_plank_make_afk:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, autocast]
     source: https://oldschool.runescape.wiki/w/Plank_Make
     checks:
@@ -80,7 +80,7 @@ methods:
 
   camphor_plank_make_afk:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, autocast]
     source: https://oldschool.runescape.wiki/w/Plank_Make
     checks:
@@ -94,7 +94,7 @@ methods:
 
   bronze_dart_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
     checks:
@@ -107,7 +107,7 @@ methods:
 
   iron_dart_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
     checks:
@@ -120,7 +120,7 @@ methods:
 
   steel_dart_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
     checks:
@@ -133,7 +133,7 @@ methods:
 
   mithril_dart_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
     checks:
@@ -146,7 +146,7 @@ methods:
 
   adamant_dart_tips:
     status: verified
-    verified_at: 2026-08-29
+    verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
     source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
     checks:
