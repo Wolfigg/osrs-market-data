@@ -46,7 +46,7 @@ jobs:
             osrs-history-${{ runner.os }}-${{ github.ref_name }}-
 
       - name: Refresh live prices and rebuild public site
-        run: python -m osrs_market.cli collect --mode live --output build --cache-dir .market-cache
+        run: /usr/bin/time -v python -m osrs_market.cli collect --mode live --output build --cache-dir .market-cache
 
       - name: Upload maintainer diagnostics
         if: always() && hashFiles('build/internal-report/**') != ''
