@@ -11,6 +11,62 @@ from .api import ApiSettings
 from .catalog import generated_method_catalog
 
 
+def _infer_method_types(method: dict[str, Any]) -> list[str]:
+    explicit = method.get("method_types")
+    if isinstance(explicit, list) and explicit:
+        return sorted({str(value) for value in explicit})
+
+    category = str(method.get("category") or "").lower()
+    prefix = category.split("/", 1)[0]
+    types: set[str] = set()
+    if prefix == "gathering":
+        types.add("gathering")
+    elif prefix == "bankstanding":
+        types.add("bankstanding")
+    elif prefix == "strict_afk":
+        types.update(("bankstanding", "make-x"))
+
+    name = str(method.get("name") or "").lower()
+    description = str((method.get("afk") or {}).get("description") or "").lower()
+    if "autocast" in name or "auto-cast" in description:
+        types.add("autocast")
+    return sorted(types)
+
+
+def _validate_method_catalog(methods: dict[str, Any]) -> None:
+    errors: list[str] = []
+    for method_id, method in methods.items():
+        if method.get("enabled", True) is False:
+            continue
+        cph = float(method.get("cycles_per_hour", 0) or 0)
+        theoretical = method.get("theoretical_cycles_per_hour")
+        interval = (method.get("afk") or {}).get("interval_seconds")
+        reference = str(method.get("reference") or "")
+        outputs = method.get("outputs") or []
+        if cph <= 0:
+            errors.append(f"{method_id}: cycles_per_hour must be > 0")
+        if theoretical is not None and float(theoretical) + 1e-9 < cph:
+            errors.append(f"{method_id}: theoretical_cycles_per_hour is below cycles_per_hour")
+        if interval is None or float(interval) <= 0:
+            errors.append(f"{method_id}: afk.interval_seconds must be > 0")
+        if not outputs:
+            errors.append(f"{method_id}: at least one output is required")
+        for side in ("inputs", "outputs"):
+            for entry in method.get(side, []):
+                if float(entry.get("quantity", 0) or 0) <= 0:
+                    errors.append(f"{method_id}: {side} quantity must be > 0")
+                if int(entry.get("item_id", 0) or 0) <= 0:
+                    errors.append(f"{method_id}: {side} item_id must be > 0")
+        if not reference.startswith("https://oldschool.runescape.wiki/"):
+            errors.append(f"{method_id}: reference must point to the OSRS Wiki")
+        method_types = _infer_method_types(method)
+        if not method_types:
+            errors.append(f"{method_id}: method_types could not be determined")
+        method["method_types"] = method_types
+    if errors:
+        raise ValueError("invalid method catalog: " + "; ".join(errors))
+
+
 def load_yaml(path: str | Path) -> dict[str, Any]:
     source = Path(path)
     payload = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
@@ -18,6 +74,24 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         generated = generated_method_catalog()
         configured = payload.get("methods", {}) or {}
         generated.update(configured)
+
+        audit_path = source.with_name("method_audit.yaml")
+        audit_payload = yaml.safe_load(audit_path.read_text(encoding="utf-8")) or {} if audit_path.exists() else {}
+        audits = audit_payload.get("methods", {}) or {}
+        for method_id, audit in audits.items():
+            if method_id not in generated:
+                raise ValueError(f"method audit references unknown method: {method_id}")
+            if isinstance(audit, dict):
+                if audit.get("method_types"):
+                    generated[method_id]["method_types"] = list(audit["method_types"])
+                generated[method_id]["audit"] = {
+                    "status": audit.get("status"),
+                    "verified_at": audit.get("verified_at"),
+                    "source": audit.get("source"),
+                    "notes": audit.get("notes"),
+                }
+
+        _validate_method_catalog(generated)
         payload["methods"] = generated
     return payload
 
