@@ -88,7 +88,7 @@ def _capital_options() -> str:
 
 
 def _skill_fields() -> str:
-    skills = ("smithing", "fletching", "crafting", "magic", "cooking", "fishing", "mining", "woodcutting")
+    skills = ("smithing", "fletching", "crafting", "magic", "cooking", "fishing", "mining", "woodcutting", "sailing")
     return "".join(
         f'<label class="field"><span>{skill.title()}</span><input class="skill-level" data-skill="{skill}" type="number" min="1" max="99" step="1" placeholder="99"></label>'
         for skill in skills
