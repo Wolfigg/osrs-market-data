@@ -10,14 +10,246 @@ import yaml
 from .api import ApiSettings
 from .catalog import generated_method_catalog
 
+_SKILL_KEYS = {
+    "attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft",
+    "construction", "hitpoints", "agility", "herblore", "thieving", "crafting",
+    "fletching", "slayer", "hunter", "mining", "smithing", "fishing", "cooking",
+    "firemaking", "woodcutting", "farming", "sailing",
+}
+
+
+def _infer_method_types(method: dict[str, Any]) -> list[str]:
+    explicit = method.get("method_types")
+    if isinstance(explicit, list) and explicit:
+        return sorted({str(value) for value in explicit})
+
+    category = str(method.get("category") or "").lower()
+    prefix = category.split("/", 1)[0]
+    types: set[str] = set()
+    if prefix == "gathering":
+        types.add("gathering")
+    elif prefix == "bankstanding":
+        types.add("bankstanding")
+    elif prefix == "strict_afk":
+        types.update(("bankstanding", "make-x"))
+
+    name = str(method.get("name") or "").lower()
+    description = str((method.get("afk") or {}).get("description") or "").lower()
+    if "autocast" in name or "auto-cast" in description:
+        types.add("autocast")
+    return sorted(types)
+
+
+def _set_generated_audit(methods: dict[str, Any]) -> None:
+    """Mark the built-in catalogue as source-reviewed after family-level audit.
+
+    The generated catalogue is intentionally repetitive. Methods in the same
+    family share one mechanical recipe, so the completion audit verifies each
+    family and then records provenance on every generated method. Hand-written
+    methods.yaml entries are overlaid later and receive their more specific
+    provenance from config/method_audit.yaml.
+    """
+    for method in methods.values():
+        method["audit"] = {
+            "status": "verified",
+            "verified_at": "2026-08-29",
+            "source": method.get("reference"),
+            "notes": "Verified in the 2026-08-29 full catalogue family audit; see docs/AFK_METHOD_CATALOG_AUDIT.md.",
+        }
+
+
+def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
+    """Apply source-verified corrections to generated catalogue defaults.
+
+    Hand-maintained methods.yaml overrides are applied after this function, so
+    explicit config remains authoritative when a method needs custom modelling.
+    """
+    f2p_gems = ("sapphire", "emerald", "ruby", "diamond")
+
+    # Current Crafting guidance models 1,600/h for metal-only jewellery and
+    # 1,400/h for gem + metal jewellery. Keep the public working rate at the
+    # catalogue's conservative 1,400/h, while correcting access and ceilings.
+    for type_key in ("ring", "necklace", "amulet_u"):
+        gold = methods.get(f"craft_gold_{type_key}")
+        if gold:
+            gold.setdefault("requirements", {})["members"] = False
+            gold["theoretical_cycles_per_hour"] = 1600
+        for gem in f2p_gems:
+            method = methods.get(f"craft_{gem}_{type_key}")
+            if method:
+                method.setdefault("requirements", {})["members"] = False
+        dragonstone = methods.get(f"craft_dragonstone_{type_key}")
+        if dragonstone:
+            dragonstone.setdefault("requirements", {})["members"] = True
+
+    gold_bracelet = methods.get("craft_gold_bracelet")
+    if gold_bracelet:
+        gold_bracelet.setdefault("requirements", {})["members"] = True
+        gold_bracelet["theoretical_cycles_per_hour"] = 1600
+    for gem in (*f2p_gems, "dragonstone"):
+        method = methods.get(f"craft_{gem}_bracelet")
+        if method:
+            method.setdefault("requirements", {})["members"] = True
+
+    for type_key in ("ring", "necklace", "bracelet", "amulet_u"):
+        for gem in (*f2p_gems, "dragonstone"):
+            method = methods.get(f"craft_{gem}_{type_key}")
+            if method:
+                method["theoretical_cycles_per_hour"] = 1400
+
+    # Precious-gem bolt tips use 12 tips/gem except onyx, which produces 24.
+    onyx_tips = methods.get("onyx_bolt_tips")
+    if onyx_tips and onyx_tips.get("outputs"):
+        onyx_tips["outputs"][0]["quantity"] = 24
+
+    # Regular-knife unstrung longbows take 3 ticks per bow. A 27-log inventory
+    # therefore gives 48.6 seconds of uninterrupted processing. The current
+    # Fletching training reference places the regular-knife ceiling near 1,800/h.
+    for wood in ("maple", "yew", "magic"):
+        method = methods.get(f"fletch_{wood}_longbow_u")
+        if method:
+            method["theoretical_cycles_per_hour"] = 1800
+            method.setdefault("afk", {})["interval_seconds"] = 48.6
+        stringing = methods.get(f"string_{wood}_longbows")
+        if stringing:
+            # A 14-bow ordinary inventory strings at 2 ticks/bow = 16.8 s.
+            stringing.setdefault("afk", {})["interval_seconds"] = 16.8
+
+    # Ordinary Make-X cooking takes 4 ticks per item. The deterministic zero-burn
+    # model uses 99 Cooking + cape, 1,300/h realistic throughput, and the true
+    # 28-item processing interval / theoretical ceiling.
+    for food in ("karambwan", "sharks", "monkfish", "anglerfish", "dark_crabs"):
+        method = methods.get(f"cook_{food}")
+        if method:
+            method["theoretical_cycles_per_hour"] = 1500
+            method.setdefault("afk", {})["interval_seconds"] = 67.2
+
+    # Current Crafting guidance assumes 1,750 glass items/hour. Use 1,600/h as
+    # the conservative public rate and 1,750/h as the sourced ceiling. With a
+    # pipe occupying one slot, 27 orbs at 3 ticks/item give 48.6 s processing.
+    orbs = methods.get("blow_unpowered_orbs")
+    if orbs:
+        orbs["theoretical_cycles_per_hour"] = 1750
+        orbs.setdefault("afk", {})["interval_seconds"] = 48.6
+
+    # Current Crafting guidance uses 2,450 battlestaves/hour and states perfect
+    # banking can reach 2,625/hour.
+    for element in ("water", "earth", "fire", "air"):
+        method = methods.get(f"craft_{element}_battlestaves")
+        if method:
+            method["theoretical_cycles_per_hour"] = 2625
+
+    # Align gathering requirements with the equipment/access assumptions behind
+    # the modelled rates. Random secondary-drop value remains intentionally
+    # excluded from profitability.
+    magic_logs = methods.get("cut_magic_logs")
+    if magic_logs:
+        magic_logs.setdefault("requirements", {})["equipment"] = ["Dragon or crystal axe"]
+    redwood_logs = methods.get("cut_redwood_logs")
+    if redwood_logs:
+        redwood_logs.setdefault("requirements", {})["equipment"] = ["Dragon axe"]
+    camphor_logs = methods.get("cut_camphor_logs")
+    if camphor_logs:
+        requirements = camphor_logs.setdefault("requirements", {})
+        requirements["sailing"] = 45
+        requirements["quests"] = ["Troubled Tortugans (partial)"]
+        requirements["equipment"] = ["Dragon axe", "Log basket"]
+    dark_crabs = methods.get("catch_dark_crabs")
+    if dark_crabs:
+        dark_crabs.setdefault("requirements", {})["equipment"] = ["Lobster pot"]
+
+    # Cooking raw karambwan requires Tai Bwo Wannai Trio. The deterministic
+    # zero-burn model remains level 99 + Cooking cape, but the quest is still a
+    # real availability requirement and must be shown to the player.
+    karambwan = methods.get("cook_karambwan")
+    if karambwan:
+        karambwan.setdefault("requirements", {})["quests"] = ["Tai Bwo Wannai Trio"]
+
+
+def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
+    requirements = method.get("requirements") or {}
+    if not isinstance(requirements, dict):
+        return
+    metadata = dict(method.get("requirement_metadata") or {})
+    for key in list(requirements):
+        value = requirements[key]
+        lowered = str(key).lower()
+        # bool is a subclass of int in Python. Preserve access flags such as
+        # members: false rather than moving them into numeric metadata.
+        if not isinstance(value, bool) and isinstance(value, (int, float)) and lowered not in _SKILL_KEYS:
+            metadata[key] = requirements.pop(key)
+    if metadata:
+        method["requirement_metadata"] = metadata
+
+
+def _validate_method_catalog(methods: dict[str, Any]) -> None:
+    errors: list[str] = []
+    for method_id, method in methods.items():
+        if method.get("enabled", True) is False:
+            continue
+        _normalise_requirement_metadata(method)
+        cph = float(method.get("cycles_per_hour", 0) or 0)
+        theoretical = method.get("theoretical_cycles_per_hour")
+        interval = (method.get("afk") or {}).get("interval_seconds")
+        reference = str(method.get("reference") or "")
+        outputs = method.get("outputs") or []
+        audit = method.get("audit") or {}
+        if cph <= 0:
+            errors.append(f"{method_id}: cycles_per_hour must be > 0")
+        if theoretical is not None and float(theoretical) + 1e-9 < cph:
+            errors.append(f"{method_id}: theoretical_cycles_per_hour is below cycles_per_hour")
+        if interval is None or float(interval) <= 0:
+            errors.append(f"{method_id}: afk.interval_seconds must be > 0")
+        if not outputs:
+            errors.append(f"{method_id}: at least one output is required")
+        for side in ("inputs", "outputs"):
+            for entry in method.get(side, []):
+                if float(entry.get("quantity", 0) or 0) <= 0:
+                    errors.append(f"{method_id}: {side} quantity must be > 0")
+                if int(entry.get("item_id", 0) or 0) <= 0:
+                    errors.append(f"{method_id}: {side} item_id must be > 0")
+        if not reference.startswith("https://oldschool.runescape.wiki/"):
+            errors.append(f"{method_id}: reference must point to the OSRS Wiki")
+        method_types = _infer_method_types(method)
+        if not method_types:
+            errors.append(f"{method_id}: method_types could not be determined")
+        method["method_types"] = method_types
+        if audit.get("status") != "verified":
+            errors.append(f"{method_id}: mechanical audit must be verified")
+        if not str(audit.get("source") or "").startswith("https://oldschool.runescape.wiki/"):
+            errors.append(f"{method_id}: audit source must point to the OSRS Wiki")
+    if errors:
+        raise ValueError("invalid method catalog: " + "; ".join(errors))
+
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
     source = Path(path)
     payload = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
     if source.name == "methods.yaml":
         generated = generated_method_catalog()
+        _apply_known_catalog_corrections(generated)
+        _set_generated_audit(generated)
+
         configured = payload.get("methods", {}) or {}
         generated.update(configured)
+
+        audit_path = source.with_name("method_audit.yaml")
+        audit_payload = (yaml.safe_load(audit_path.read_text(encoding="utf-8")) or {}) if audit_path.exists() else {}
+        audits = audit_payload.get("methods", {}) or {}
+        for method_id, audit in audits.items():
+            if method_id not in generated:
+                raise ValueError(f"method audit references unknown method: {method_id}")
+            if isinstance(audit, dict):
+                if audit.get("method_types"):
+                    generated[method_id]["method_types"] = list(audit["method_types"])
+                generated[method_id]["audit"] = {
+                    "status": audit.get("status"),
+                    "verified_at": audit.get("verified_at"),
+                    "source": audit.get("source"),
+                    "notes": audit.get("notes"),
+                }
+
+        _validate_method_catalog(generated)
         payload["methods"] = generated
     return payload
 

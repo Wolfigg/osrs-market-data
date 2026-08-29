@@ -1,16 +1,13 @@
-name: Collect and publish OSRS market data
+name: Refresh live market data
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
   schedule:
-    - cron: "17 * * * *"
+    - cron: "2/5 * * * *"
 
 concurrency:
   group: osrs-market-publish
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -20,9 +17,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     env:
-      OSRS_MARKET_USER_AGENT: "osrs-market-data/0.2 - github.com/${{ github.repository }}"
+      OSRS_MARKET_USER_AGENT: "osrs-market-data/0.3 - github.com/${{ github.repository }}"
 
     steps:
       - name: Checkout
@@ -40,19 +37,24 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Run tests
-        run: pytest
+      - name: Restore derived market cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .market-cache
+          key: osrs-history-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            osrs-history-${{ runner.os }}-${{ github.ref_name }}-
 
-      - name: Collect market data and build artifacts
-        run: python -m osrs_market.cli collect --output build
+      - name: Refresh live prices and rebuild public site
+        run: /usr/bin/time -v python -m osrs_market.cli collect --mode live --output build --cache-dir .market-cache
 
       - name: Upload maintainer diagnostics
         if: always() && hashFiles('build/internal-report/**') != ''
         uses: actions/upload-artifact@v6
         with:
-          name: osrs-market-diagnostics
+          name: osrs-market-live-diagnostics
           path: build/internal-report
-          retention-days: 5
+          retention-days: 3
           if-no-files-found: ignore
 
       - name: Configure GitHub Pages

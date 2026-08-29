@@ -1,72 +1,161 @@
-# V2 implementation checklist
+# OSRS Profit Finder - Completion Checklist
 
-This checklist reflects the current product split: shared market core, AFK Money Makers, standalone High Alch, and Market Explorer.
+Updated: 2026-08-29
 
-## Shared market core
+This checklist supersedes the obsolete V2 checklist that described the removed public Market Explorer and monolithic hourly publisher.
 
-- [x] `/mapping` fetched and parsed.
-- [x] `/latest` fetched in bulk.
-- [x] Descriptive User-Agent required.
-- [x] Tracked/configured items fetch 5m, 1h, 6h and 24h time series.
-- [x] 6H, 24H, 7D, 30D, 6M and 1Y windows are reconstructed by timestamp.
-- [x] High-side and low-side volume is preserved.
-- [x] High-side and low-side VWAP is calculated.
-- [x] Current observation ages and freshness labels are exposed.
-- [x] Crossed observations are flagged without swapping values.
-- [x] Null prices remain null.
-- [x] GE tax uses 2% floor rounding, 5,000,000 gp per-item cap and external exemptions.
-- [x] Liquidity warnings, market share, volatility, spread and data-quality diagnostics are exposed.
+The production product has exactly two public tools:
 
-## AFK Money Makers
+1. AFK Money Makers at `/`
+2. High Alch at `/alchemy.html`
 
-- [x] AFK profitability is a separate branch from High Alch.
-- [x] High Alch cannot be configured as an AFK method exit.
-- [x] AFK outputs are sold through the GE and seller tax is applied.
-- [x] Current instant, current patient proxy, and 6H/24H/7D/30D historical instant scenarios are separate.
-- [x] Mechanical and GE-buy-limit sustainable rates are exposed separately.
-- [x] AFK interval is exposed.
-- [x] Interaction windows/hour is exposed.
-- [x] GP per interaction window is exposed.
-- [x] Requirements, notes and source references are part of each configured method.
-- [x] Initial catalog contains double-mould steel cannonballs, Mahogany Plank Make autocast and Camphor Plank Make autocast.
-- [x] AFK rankings are published independently under `afk/`.
+## Public product boundary
+
+- [x] AFK Money Makers is the homepage.
+- [x] High Alch is the only secondary public tool.
+- [x] High Alch is not an AFK method or AFK exit strategy.
+- [x] Market Explorer is removed from the public product.
+- [x] Ledger and About navigation are removed.
+- [x] Public generation is restricted to `build/public-site`.
+- [x] Maintainer diagnostics are restricted to `build/internal-report` and Actions artifacts.
+- [x] Public-site validation rejects internal fields and forbidden paths.
+- [x] Pages workflows upload exactly `build/public-site`.
+
+Expected public artifact:
+
+```text
+index.html
+alchemy.html
+assets/app.css
+assets/app.js
+data/afk.json
+data/alchemy.json
+data/status.json
+```
+
+## Refresh architecture
+
+- [x] `collect --mode live|short|long|full` exists.
+- [x] Live refresh uses `/latest` and performs zero time-series requests.
+- [x] Mapping is cached and refreshed by full/recovery collection.
+- [x] 6H/24H use 5m data.
+- [x] 7D uses 1h data.
+- [x] 30D uses 6h data.
+- [x] Derived history is persisted between runs.
+- [x] Cache metadata records source, status, generated time and separate short/long timestamps.
+- [x] Failed time-series fetches retain the previously valid derived window.
+- [x] CI is separate from scheduled market collection.
+- [x] Live workflow is scheduled every five minutes.
+- [x] Short history is scheduled hourly.
+- [x] Long history is scheduled every six hours.
+- [x] Full/mapping recovery is scheduled daily.
+- [x] Shared `(item_id, timestep)` requests are deduplicated by `SeriesCollector`.
+- [x] Obsolete per-item 24h time-series requests were removed from the public 30D-only product.
+
+## AFK catalogue
+
+- [x] Every enabled method has positive throughput and interaction interval.
+- [x] Every enabled method has valid input/output quantities and item IDs.
+- [x] Every enabled method has an OSRS Wiki source.
+- [x] Every enabled method has a verified audit marker.
+- [x] Realistic and theoretical throughput are separate.
+- [x] Method type is explicit/inferred from catalogue semantics, not frontend copy.
+- [x] Category is skill/domain while method type is interaction pattern.
+- [x] Reusable equipment is represented as requirements rather than consumed capital.
+- [x] Fixed coin costs are included in public capital calculations.
+- [x] GE buy-limit sustainable throughput is used for public profit/capital calculations.
+- [x] Jewellery F2P/members access is corrected.
+- [x] Onyx bolt tips produce 24 tips per onyx.
+- [x] Battlestaff practical/theoretical rates are 2,450/2,625 per hour.
+- [x] Cooking uses conservative 1,300/hour zero-burn modelling with Make-X timing.
+- [x] Karambwan includes Tai Bwo Wannai Trio.
+- [x] Camphor logging includes current Sailing/Troubled Tortugans access requirements.
+- [x] Gathering equipment assumptions are published with the method.
+
+See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
+
+## AFK ranking and confidence
+
+- [x] Current, 24H, 7D and 30D GP/hour are retained separately.
+- [x] Stability states are Stable, Watch, Volatile, Thin market, Stale and Unavailable.
+- [x] Current-vs-history deviation metrics are calculated.
+- [x] Historical reference spread is calculated.
+- [x] Missing historical windows do not produce a Stable classification.
+- [x] High liquidity pressure is surfaced as high market risk.
+- [x] Recommended GP/hour uses explicit 50/30/20 historical weights.
+- [x] Stable/Watch/Volatile/Thin-market behavior is deterministic and tested.
+- [x] Stale/Unavailable recommendation is null.
+- [x] Recommended GP/hour is the default AFK ranking while Current remains visible/sortable.
+
+## AFK filtering
+
+- [x] Search.
+- [x] Skill/category.
+- [x] F2P/Members.
+- [x] Profitable/all.
+- [x] AFK classification.
+- [x] Bankstanding/Make-X/Autocast/Gathering.
+- [x] Stability state.
+- [x] Strict-under capital filters.
+- [x] Sort by Recommended, Current, 24H, 7D, 30D, GP/interaction, interval, capital and name.
+- [x] Browser-local skill profile.
+- [x] Skill gate checks all published skill requirements.
+- [x] Sailing is included in the local profile for current 2026 content.
+- [x] Quest and equipment requirements remain visible and are never inferred as completed.
 
 ## High Alch
 
-- [x] Standalone full-universe preliminary scan is implemented.
-- [x] Historical validation is limited to the configured top candidate count.
+- [x] Independent preliminary scanner over current `/mapping` + `/latest` data.
 - [x] Nature rune cost is included.
-- [x] Fire staff assumption is configurable.
-- [x] Fire rune cost is included automatically when a fire staff is disabled.
-- [x] 1,200 casts/hour and 65 XP/cast are exposed.
-- [x] GE item buy limits and optional capital constraints are calculated.
-- [x] Current-price freshness and historical liquidity are included.
-- [x] Alchemy has no dependency on the AFK method engine.
-- [x] High Alch is not used as an exit for AFK methods.
+- [x] Fire-rune cost is included when a fire staff is disabled.
+- [x] Current profit/cast and practical 4H profit are exposed.
+- [x] 24H, 7D and 30D profit/cast use matching historical item/rune windows.
+- [x] Candidate history can be unavailable without blocking current scanning.
+- [x] Capital filtering uses strict-under semantics.
+- [x] Search, membership, profitability, minimum-profit and unavailable filters exist.
+- [x] Current/24H/7D/30D and practical-profit sorting exists.
 
-## Publishing
+## Freshness and reliability
 
-- [x] Schema version 2 separates `market/`, `afk/` and `alchemy/` outputs.
-- [x] `index.json` is the machine-readable discovery entry point.
-- [x] `health.json` reports collection status.
-- [x] `market/summary.json` powers Market Explorer consumers.
-- [x] `afk/methods.json` contains complete AFK calculations.
-- [x] `afk/rankings.json` contains compact sortable AFK results.
-- [x] `alchemy/candidates.json` and `alchemy/rankings.json` contain standalone High Alch data.
-- [x] `index.html` provides a simple human entry point to each branch.
-- [x] Generated `site/` remains outside Git history.
+- [x] Public status uses actual dataset timestamps rather than assumed cron timing.
+- [x] Under 90 minutes is Current.
+- [x] 90 minutes through exactly 2.5 hours is Delayed.
+- [x] Older than 2.5 hours is Stale.
+- [x] Exact local market-scan time and relative age are displayed in the browser.
+- [x] Short- and long-history ages are displayed separately.
+- [x] Individual stale/crossed observations invalidate unsafe current calculations.
+- [x] A failed collector/build does not deploy a replacement Pages artifact.
+- [x] A partial history failure does not erase previously valid cached history.
 
-## CI / deployment
+## Repository cleanup
 
-- [x] Tests run before market collection.
-- [x] Live Prices API collection has run successfully on GitHub-hosted runners.
-- [x] Manual workflow trigger is available.
-- [x] Push validation on `master` is available.
-- [x] Hourly collection runs at minute 17.
-- [x] Concurrency cancellation prevents stale runs racing newer runs.
-- [x] Critical collection/build failures prevent deployment of a bad dataset.
-- [x] GitHub Pages artifact deployment is configured.
+- [x] README describes the current two-tool architecture.
+- [x] Obsolete dashboard helpers are removed.
+- [x] Obsolete legacy publisher and its tests are removed.
+- [x] Old public dashboard/Market Explorer output contracts are removed.
+- [x] Generated build/cache directories remain outside Git history.
 
-## Live validation history
+## Automated acceptance
 
-The first GitHub-hosted integration run confirmed that the application can reach the live OSRS Wiki Prices API. That run fetched 4,652 mapping items and 4,520 latest-price records, performed 208 time-series requests with zero time-series failures, and completed collection successfully. The initial deployment issue was repository Pages configuration rather than market-data or Python code.
+- [x] Unit tests cover price windows, tax, liquidity, methods, alchemy, cache and recommendations.
+- [x] Catalogue tests enforce verified source provenance and corrected method mechanics.
+- [x] Public leakage validation is tested.
+- [x] Capital boundary behavior is tested.
+- [x] Recommendation/stability boundaries are tested.
+- [x] Chromium browser acceptance is part of CI.
+- [x] Firefox browser acceptance is part of CI.
+- [x] Responsive browser acceptance covers 360, 390, 768 and desktop widths.
+- [x] Browser tests cover search, filters, URL restoration, local skill storage, details and unavailable High Alch rows.
+- [x] Browser tests verify the exactly-2.5-hour Delayed boundary.
+
+## Explicit non-goals
+
+These are not unfinished backlog items:
+
+- public Market Explorer
+- public raw market/API diagnostics
+- account/authentication system
+- RuneLite or Jagex account integration
+- High Alch as an AFK exit strategy
+- 6M/1Y public history while the simplified product does not expose it
+- bulk `/5m`/`/1h` rolling-store replacement for per-item time series, which remains a future infrastructure optimization only if API scale requires it

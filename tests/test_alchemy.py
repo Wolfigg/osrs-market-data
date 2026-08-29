@@ -73,8 +73,16 @@ def test_stale_current_candidate_does_not_publish_current_profit():
     it = item()
     latest_item = LatestPrice(700, 1, 690, 1)
     latest_nature = LatestPrice(100, 1, 95, 1)
-    windows = {"24h": {"highVwap": 700, "totalVolume": 10000, "changePct": 0}, "7d": {"totalVolume": 50000}}
-    nature_windows = {"24h": {"highVwap": 100}}
+    windows = {
+        "24h": {"highVwap": 700, "totalVolume": 10000, "changePct": 0},
+        "7d": {"highVwap": 680, "totalVolume": 50000},
+        "30d": {"highVwap": 660},
+    }
+    nature_windows = {
+        "24h": {"highVwap": 100},
+        "7d": {"highVwap": 95},
+        "30d": {"highVwap": 90},
+    }
     settings = {
         "alchemy": {"use_fire_staff": True, "casts_per_hour": 1200, "xp_per_cast": 65, "preliminary_max_age_seconds": 86400},
         "liquidity": {"notice_market_share_pct": 1, "caution_market_share_pct": 5, "high_risk_market_share_pct": 10},
@@ -84,17 +92,31 @@ def test_stale_current_candidate_does_not_publish_current_profit():
     assert result["currentInstant"]["valid"] is False
     assert result["currentInstant"]["profitPerCast"] is None
     assert result["historicalInstant24h"]["profitPerCast"] == 200
+    assert result["historicalInstant7d"]["profitPerCast"] == 225
+    assert result["historicalInstant30d"]["profitPerCast"] == 250
 
 
-def test_no_fire_staff_candidate_uses_fire_runes():
+def test_no_fire_staff_candidate_uses_matching_fire_rune_windows():
     from osrs_market.alchemy import build_alchemy_candidate
     it = item()
     latest_item = LatestPrice(700, 9900, 690, 9900)
     latest_nature = LatestPrice(100, 9900, 95, 9900)
     latest_fire = LatestPrice(5, 9900, 4, 9900)
-    windows = {"24h": {"highVwap": 700, "totalVolume": 10000, "changePct": 0}, "7d": {"totalVolume": 50000}}
-    nature_windows = {"24h": {"highVwap": 100}}
-    fire_windows = {"24h": {"highVwap": 5}}
+    windows = {
+        "24h": {"highVwap": 700, "totalVolume": 10000, "changePct": 0},
+        "7d": {"highVwap": 680, "totalVolume": 50000},
+        "30d": {"highVwap": 660},
+    }
+    nature_windows = {
+        "24h": {"highVwap": 100},
+        "7d": {"highVwap": 95},
+        "30d": {"highVwap": 90},
+    }
+    fire_windows = {
+        "24h": {"highVwap": 5},
+        "7d": {"highVwap": 4},
+        "30d": {"highVwap": 3},
+    }
     settings = {
         "alchemy": {"use_fire_staff": False, "fire_runes_per_cast": 5, "casts_per_hour": 1200, "xp_per_cast": 65, "preliminary_max_age_seconds": 86400},
         "liquidity": {"notice_market_share_pct": 1, "caution_market_share_pct": 5, "high_risk_market_share_pct": 10},
@@ -103,3 +125,5 @@ def test_no_fire_staff_candidate_uses_fire_runes():
     result = build_alchemy_candidate(it, latest_item, latest_nature, windows, nature_windows, 10_000, settings, latest_fire, fire_windows)
     assert result["currentInstant"]["profitPerCast"] == 175
     assert result["historicalInstant24h"]["profitPerCast"] == 175
+    assert result["historicalInstant7d"]["profitPerCast"] == 205
+    assert result["historicalInstant30d"]["profitPerCast"] == 235

@@ -1,0 +1,158 @@
+methods:
+  steel_cannonballs_double_mould:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+    checks:
+      cycles_per_hour: 1080
+      theoretical_cycles_per_hour: 1200
+      afk_interval_seconds: 80
+      input_units_per_cycle: 1
+      output_units_per_cycle: 4
+    notes: Cycle basis is one steel bar. The double ammo mould physically processes two bars into eight cannonballs per action, which is economically equivalent to one configured cycle producing four cannonballs. The configured 4,320 cannonballs/hour is conservative against the Wiki's 4,800/hour table rate.
+
+  sapphire_bolt_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Sapphire_bolt_tips
+    checks:
+      cycles_per_hour: 1150
+      theoretical_cycles_per_hour: 1200
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 12
+    notes: One sapphire becomes 12 tips at level 56 Fletching. Creation takes 3 seconds per gem; 27-gem inventories give about 81 seconds of uninterrupted processing.
+
+  emerald_bolt_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Emerald_bolt_tips
+    checks:
+      cycles_per_hour: 1150
+      theoretical_cycles_per_hour: 1200
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 12
+    notes: Same gem-cutting interaction pattern as the other standard gem bolt tips; level 58 Fletching and 12 tips per emerald.
+
+  ruby_bolt_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Cutting_ruby_bolt_tips
+    checks:
+      cycles_per_hour: 1150
+      theoretical_cycles_per_hour: 1200
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 12
+    notes: Wiki money-making guidance explicitly uses about 1,150 rubies/hour, 27 per inventory, 3 seconds per gem, and 12 tips per ruby.
+
+  diamond_bolt_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Cutting_diamond_bolt_tips
+    checks:
+      cycles_per_hour: 1150
+      theoretical_cycles_per_hour: 1200
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 12
+    notes: Wiki money-making guidance explicitly uses about 1,150 diamonds/hour, 27 per inventory, 3 seconds per gem, and 12 tips per diamond.
+
+  mahogany_plank_make_afk:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, autocast]
+    source: https://oldschool.runescape.wiki/w/Plank_Make
+    checks:
+      cycles_per_hour: 833
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 90
+      input_units_per_cycle: 4
+      output_units_per_cycle: 1
+      fixed_cost_gp_per_cycle: 1050
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune, two Astral runes and 15 Earth runes; an Earth-supplying staff makes Earth runes reusable equipment rather than consumed capital. Plank Make charges 1,050 coins for mahogany. The 833/hour rate is the conservative 75k XP/hour AFK rate divided by 90 XP/cast.
+
+  camphor_plank_make_afk:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, autocast]
+    source: https://oldschool.runescape.wiki/w/Plank_Make
+    checks:
+      cycles_per_hour: 833
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 90
+      input_units_per_cycle: 4
+      output_units_per_cycle: 1
+      fixed_cost_gp_per_cycle: 1750
+    notes: Same autocast mechanics as mahogany. Current Wiki spell data lists 1,750 coins per Camphor log, one Nature rune, two Astral runes and 15 Earth runes. Earth runes are supplied by the assumed staff.
+
+  bronze_dart_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+    checks:
+      cycles_per_hour: 1060
+      theoretical_cycles_per_hour: 1300
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 10
+    notes: The Wiki states 10 dart tips per bar, 81 seconds per Make-X inventory, about 1,060 bars/hour without Smiths' Uniform and 1,300 with it.
+
+  iron_dart_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+    checks:
+      cycles_per_hour: 1060
+      theoretical_cycles_per_hour: 1300
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 10
+    notes: Same audited dart-tip production mechanics; level 19 Smithing after The Tourist Trap.
+
+  steel_dart_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+    checks:
+      cycles_per_hour: 1060
+      theoretical_cycles_per_hour: 1300
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 10
+    notes: Same audited dart-tip production mechanics; level 34 Smithing after The Tourist Trap.
+
+  mithril_dart_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+    checks:
+      cycles_per_hour: 1060
+      theoretical_cycles_per_hour: 1300
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 10
+    notes: Same audited dart-tip production mechanics; level 54 Smithing after The Tourist Trap. The current training table may prefer mithril nails economically, but mithril dart tips remain a valid Make-X product and are intentionally market-ranked here.
+
+  adamant_dart_tips:
+    status: verified
+    verified_at: 2026-08-29
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+    checks:
+      cycles_per_hour: 1060
+      theoretical_cycles_per_hour: 1300
+      afk_interval_seconds: 81
+      input_units_per_cycle: 1
+      output_units_per_cycle: 10
+    notes: Same audited dart-tip production mechanics; level 74 Smithing after The Tourist Trap.
