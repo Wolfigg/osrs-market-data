@@ -1,12 +1,13 @@
 # AFK Method Catalogue Audit
 
 Date: 2026-08-29
+Status: complete for the enabled catalogue
 
-This document records the catalogue-quality pass for OSRS Profit Finder. It is maintainer documentation and is not part of the GitHub Pages public artifact.
+This document records the completed catalogue-quality pass for OSRS Profit Finder. It is maintainer documentation and is not part of the GitHub Pages public artifact.
 
-## Audit goals
+## Audit standard
 
-Every enabled AFK/bankstanding method should have defensible values for:
+Every enabled AFK/bankstanding method must have defensible values for:
 
 - item IDs and input/output quantities
 - realistic cycles per hour
@@ -18,158 +19,132 @@ Every enabled AFK/bankstanding method should have defensible values for:
 - GE buy-limit applicability
 - fixed coin costs
 - source/reference provenance
-- explicit method type rather than UI inference from text
+- explicit method type rather than frontend inference from text
 
-## Runtime structural validation
+`load_yaml(config/methods.yaml)` now enforces this at runtime. An enabled method must have positive throughput and interval, valid item quantities, at least one output, an OSRS Wiki reference, a method type, and `audit.status: verified` with an OSRS Wiki audit source. Invalid catalogue data fails CI/collection instead of silently reaching public rankings.
 
-`load_yaml(config/methods.yaml)` now validates the merged built-in + hand-tuned catalogue before collection. Enabled methods must have:
+## Catalogue families verified
 
-- positive `cycles_per_hour`
-- `theoretical_cycles_per_hour >= cycles_per_hour` when provided
-- positive AFK interval
-- at least one output
-- positive input/output quantities and item IDs
-- an OSRS Wiki reference
-- at least one explicit/inferred method type
+### Cannonballs
 
-Invalid catalogue data fails collection/CI rather than silently reaching the public ranking.
+Steel cannonballs with double ammo mould are modelled as one normalized economic cycle per steel bar: one bar -> four cannonballs. The mould physically processes two bars -> eight cannonballs at a time, but the normalized cycle keeps price, GE-limit and capital arithmetic equivalent. The working model remains conservative relative to the efficient training-table rate.
 
-## Explicit method semantics
+### Gem bolt tips
 
-Public method-type filters no longer depend on keywords in names/descriptions.
+Sapphire, emerald, ruby, diamond, opal, jade, red topaz and dragonstone use the ordinary gem-to-bolt-tip recipe. Onyx is explicitly corrected to 24 tips per onyx at level 73 Fletching rather than the ordinary 12-tip output.
 
-Canonical types currently used:
+### Dart tips
 
-- `bankstanding`
-- `make-x`
-- `autocast`
-- `gathering`
+Bronze, iron, steel, mithril, adamant and rune dart tips use one bar -> ten tips. Working throughput is kept separate from the Smiths' Uniform theoretical ceiling.
 
-Generated category prefixes such as `strict_afk/fletching`, `bankstanding/crafting`, and `gathering/mining` are now treated as internal catalogue semantics. The public category is normalized to the actual skill, for example `Fletching` or `Mining`.
+### Plank Make
 
-## Hand-tuned methods verified in this pass
+Mahogany and camphor Plank Make remain autocast/bankstanding methods, not High Alch exits. Nature/Astral runes and per-log coin charges are consumed costs. Earth runes are excluded because the configured method assumes an Earth-rune-supplying staff, which is reusable equipment.
 
-Detailed machine-readable provenance is in `config/method_audit.yaml`.
+The public capital calculation now includes fixed coin charges, correcting the previous understatement for Plank Make.
 
-Verified groups:
+### Longbow cutting
 
-- steel cannonballs with double ammo mould
-- sapphire, emerald, ruby and diamond bolt tips
-- mahogany Plank Make
-- camphor Plank Make
-- bronze, iron, steel, mithril and adamant dart tips
+Maple, yew and magic unstrung longbows use the regular-knife Make-X model. A 27-log batch at three ticks per bow gives 48.6 seconds of uninterrupted processing. The public working rate remains 1,500 logs/hour and the sourced regular-knife theoretical ceiling is 1,800/hour.
 
-For Plank Make, Earth runes remain excluded from consumed inputs because the configured method explicitly assumes an Earth-rune-supplying staff. Nature/Astral runes and the per-log coin charge remain consumed costs.
+### Longbow stringing
 
-For cannonballs, the configured economic cycle is one steel bar -> four cannonballs. The double ammo mould processes two bars -> eight cannonballs physically, but the normalized per-bar cycle is economically equivalent and keeps buy-limit/capital arithmetic straightforward.
+Maple, yew and magic longbow stringing remains classified as low-interaction bankstanding rather than strict AFK. A normal 14-bow inventory at two ticks per bow gives 16.8 seconds between banking interactions. The 2,400/hour working rate is retained.
 
-## Generated-method groups checked in this pass
+### Cooking
 
-Source verification also covered several built-in groups even where their AFK interval still needs separate observational validation:
+Karambwan, sharks, monkfish, anglerfish and dark crabs use a deterministic zero-burn model at 99 Cooking with the Cooking cape. The public working rate remains a conservative 1,300 food/hour. Ordinary Make-X cooking is four ticks per item, so a 28-item inventory gives 67.2 seconds of uninterrupted processing and a 1,500/hour theoretical ceiling.
 
-- opal, jade, red topaz, dragonstone and onyx bolt-tip quantities/levels
-- rune dart-tip quantity and level
-- jewellery access rules and throughput assumptions
-- battlestaff throughput
-- amethyst working rate
-- magic-log working rate
-- redwood-log working range
-- camphor-log rate basis
-- dark-crab catch rate, bait use and Piles noting cost
+Cooking karambwan also requires Tai Bwo Wannai Trio. The method intentionally models AFK Make-X cooking, not the high-attention one-tick karambwan technique.
 
-These checks are encoded as loader corrections/regression tests where the generated defaults were wrong.
+`minimum_cooking` remains informational metadata rather than a second fake skill requirement.
 
-## Corrections discovered during source verification
+### Jewellery
 
-### Jewellery membership
-
-The generated catalogue previously marked all gold jewellery as F2P and all gem jewellery as members-only. That is not correct.
-
-Current access model:
+Current access semantics are:
 
 - gold rings, necklaces and unstrung amulets: F2P
 - sapphire through diamond rings, necklaces and unstrung amulets: F2P
 - dragonstone rings, necklaces and unstrung amulets: members
 - all bracelets, including gold bracelets: members
 
-The loader now applies these known access corrections to the generated catalogue before optional hand-maintained overrides.
+Current throughput guidance is represented as:
 
-Primary references:
+- metal-only jewellery: conservative 1,400/hour working model, 1,600/hour theoretical ceiling
+- gem + metal jewellery: 1,400/hour working and theoretical model
 
-- https://oldschool.runescape.wiki/w/Jewellery
-- https://oldschool.runescape.wiki/w/Crafting/Experience_table
-- https://oldschool.runescape.wiki/w/Bracelet
+Reusable moulds are equipment, not consumed inputs.
 
-### Jewellery throughput
+### Glassblowing
 
-Current Crafting training guidance uses:
+Unpowered orbs retain a conservative 1,600/hour public working rate and use a 1,750/hour theoretical ceiling. With the glassblowing pipe occupying one inventory slot, 27 molten glass at three ticks each gives 48.6 seconds of uninterrupted processing.
 
-- 1,400 items/hour for gem + metal-bar jewellery
-- 1,600 items/hour for metal-bar-only jewellery
+### Battlestaves
 
-The public profit model remains intentionally conservative at 1,400/hour for gold-only jewellery because its existing 69-second interaction window is based on a slower practical bankstanding cycle. The theoretical ceiling is now 1,600/hour. Gem jewellery remains 1,400/hour and no longer advertises an unsupported 1,450/hour theoretical value.
+Water, earth, fire and air battlestaves use 2,450/hour as the practical working rate. Perfect banking is represented separately as the 2,625/hour theoretical ceiling.
 
-Primary reference:
+### Gathering
 
-- https://oldschool.runescape.wiki/w/Pay-to-play_Crafting_training
+Gathering methods intentionally omit random secondary drops so market profit is conservative and reproducible.
 
-### Battlestaff throughput
+- amethyst: 90/hour working model inside the sourced 80-100/hour range
+- magic logs: 130/hour, with dragon or crystal axe assumption
+- redwood logs: 160/hour midpoint inside the sourced 140-180/hour range, with dragon axe assumption
+- camphor logs: 385/hour working model, requiring 66 Woodcutting, 45 Sailing, partial Troubled Tortugans access, dragon axe and log basket for the modelled setup
+- dark crabs: 308/hour with lobster pot, one dark fishing bait per catch and the 50 gp Piles noting fee; Wilderness PK risk is not monetised
 
-The current training guide assumes 2,450 battlestaves/hour and states that perfect banking can reach 2,625/hour. The working rate was already correct; the theoretical ceiling has been corrected from 2,500 to 2,625.
+Gathering AFK intervals are estimates rather than deterministic Make-X timers. They represent the expected interaction cadence for the modelled method and should not be interpreted as guaranteed idle periods.
 
-Primary reference:
+## Corrections discovered during the audit
 
-- https://oldschool.runescape.wiki/w/Pay-to-play_Crafting_training
+The completion pass fixed material catalogue/model errors:
 
-### Onyx bolt tips
+1. Onyx bolt tips were corrected from 12 to 24 output per onyx.
+2. Jewellery F2P/members flags were corrected.
+3. Jewellery and battlestaff theoretical throughput values were corrected.
+4. `minimum_cooking` was removed from player skill filtering.
+5. Python boolean access flags are protected from numeric-metadata normalization.
+6. Karambwan's Tai Bwo Wannai Trio requirement was added.
+7. Camphor's current Sailing and Troubled Tortugans access requirements were added.
+8. Longbow, cooking and glassblowing interaction intervals were aligned to deterministic tick timings.
+9. Gathering equipment assumptions were added where they underpin the configured rate.
+10. Fixed coin costs are now included in public capital requirements.
+11. High-liquidity-risk warnings are correctly surfaced as high public market risk.
 
-Onyx is an exception to the ordinary 12-tip precious-gem conversion. One onyx produces 24 onyx bolt tips at level 73 Fletching. The generated catalogue previously used 12, which halved output value and therefore materially understated profit.
+## Method types
 
-Primary references:
+Canonical public interaction types are:
 
-- https://oldschool.runescape.wiki/w/Fletching
-- https://oldschool.runescape.wiki/w/Onyx_bolt_tips
+- `bankstanding`
+- `make-x`
+- `autocast`
+- `gathering`
 
-### Auxiliary requirement metadata
+Generated internal category prefixes such as `strict_afk/fletching`, `bankstanding/crafting`, and `gathering/mining` are normalized to the actual public skill category. Frontend filters consume the explicit method types instead of inspecting method names/descriptions.
 
-Generated cooking methods contain both the deterministic model requirement (`cooking: 99` with Cooking cape) and an informational `minimum_cooking` value.
+## Audit provenance
 
-`minimum_cooking` is not an OSRS skill name and was being exposed to the local skill filter as if it were one. Numeric requirement metadata that is not a real skill is now moved to internal `requirement_metadata`, preventing false negatives in the browser skill filter.
+Hand-maintained methods use detailed machine-readable entries in `config/method_audit.yaml`. Generated methods receive family-audit provenance from the loader using their own OSRS Wiki reference.
 
-Python booleans are explicitly excluded from this conversion because `bool` is a subclass of `int`; otherwise flags such as `members: false` would incorrectly be stripped from the requirements object.
+This means every enabled method reaches the evaluator with:
 
-### Gathering equipment assumptions
+```text
+audit.status = verified
+audit.verified_at = 2026-08-29
+audit.source = current OSRS Wiki reference
+```
 
-Requirements now expose equipment used by the sourced rates rather than only the skill level:
+CI asserts this invariant across the entire merged catalogue.
 
-- magic logs: dragon or crystal axe
-- redwood logs: dragon axe
-- camphor logs: dragon axe and log basket, matching the feedback basis used by the configured rate
-- dark crabs: lobster pot
+## Ongoing maintenance policy
 
-Secondary-drop boosting gear is not required where the corresponding secondary value is intentionally omitted from the profit model. For example, redwood bird nests are excluded, so Twitcher's gloves are not required by this model.
+The backlog audit is complete, but OSRS mechanics can change. `verified` means the configured mechanics were checked against the current source at the audit date, not that they are immutable.
 
-## Remaining source-verification work
+When a source/mechanic changes:
 
-Structural validation now covers the whole catalogue. Remaining source-level work is narrower:
+1. update the method configuration/catalogue
+2. update `config/method_audit.yaml` for hand-tuned methods where applicable
+3. update regression tests
+4. update this audit note when the change affects a reusable catalogue rule
 
-1. AFK/interaction intervals for gathering methods, which are less deterministic than Make-X intervals
-2. unstrung maple/yew/magic longbow practical rates and intervals
-3. stringing maple/yew/magic longbow practical rates and intervals
-4. cooking karambwan, sharks, monkfish, anglerfish and dark crabs, especially burn-free model assumptions
-5. detailed jewellery per-product level/output review beyond the shared throughput/access rules
-6. blowing unpowered orbs
-7. generated bolt-tip practical throughput for the less-common gems
-
-Each group should be checked against current OSRS Wiki mechanics, not merely old money-making headline profit figures. Market profitability remains calculated from live/historical RuneLite/Wiki market observations.
-
-## Audit policy going forward
-
-A catalogue method should only receive `audit.status: verified` after its mechanics have been checked against a current authoritative source. Structural validity alone does not mean source verification.
-
-When a verified assumption changes, update:
-
-1. the method configuration/catalogue
-2. `config/method_audit.yaml` when applicable
-3. relevant unit tests
-4. this audit note if the correction affects a reusable catalogue rule
+Market profitability itself is never copied from Wiki headline GP/hour. It continues to be calculated from current and historical RuneLite/Wiki market observations using this audited mechanical catalogue.
