@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from osrs_market.public_models import PUBLIC_SCHEMA_VERSION, build_dashboard, build_public_afk, build_public_alchemy, build_public_status, classify_afk
+from osrs_market.public_models import PUBLIC_SCHEMA_VERSION, build_public_afk, build_public_alchemy, build_public_status, classify_afk
 from osrs_market.public_site import validate_public_site, write_public_site
 
 
@@ -57,6 +57,8 @@ def test_public_afk_contains_curated_fields_and_history():
     method = payload["methods"][0]
     assert payload["schemaVersion"] == PUBLIC_SCHEMA_VERSION
     assert method["history"]["24hGpPerHour"] == 80_000
+    assert method["history"]["7dGpPerHour"] == 70_000
+    assert method["history"]["30dGpPerHour"] == 60_000
     assert method["economics"]["capitalOneHour"] == 900_000
     assert "warnings" not in method
     assert "scenario" not in method
@@ -71,23 +73,12 @@ def test_unavailable_alchemy_never_emits_numeric_profit():
     assert item["risk"]["level"] == "unavailable"
 
 
-def test_dashboard_handles_empty_and_populated_data():
-    empty = build_dashboard(123, {"methods": []}, {"items": []})
-    assert empty["featuredAfk"] is None
-    assert empty["featuredAlchemy"] is None
-    afk = build_public_afk(123, [_afk_result()])
-    alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
-    populated = build_dashboard(123, afk, alch)
-    assert populated["featuredAfk"]["methodId"] == "ruby_bolt_tips"
-    assert populated["featuredAlchemy"]["itemId"] == 1
-
-
 def test_status_hides_internal_health_details():
     payload = build_public_status(123, {"status": "degraded", "api": {"timeseriesFailed": 2}, "warnings": ["SECRET_CODE"]})
     assert payload == {"schemaVersion": 1, "generatedAt": 123, "state": "delayed", "ageSeconds": 0}
 
 
-def test_public_site_generation_and_sanitization(tmp_path):
+def test_public_site_is_two_section_afk_first_site(tmp_path):
     assets = tmp_path / "assets-source"
     assets.mkdir()
     (assets / "app.css").write_text("body{}", encoding="utf-8")
@@ -95,25 +86,40 @@ def test_public_site_generation_and_sanitization(tmp_path):
     afk = build_public_afk(123, [_afk_result()])
     alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
     site = tmp_path / "site"
-    write_public_site(site, build_dashboard(123, afk, alch), afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
+    write_public_site(site, afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
     validate_public_site(site)
-    assert (site / "afk.html").is_file()
-    assert (site / "alchemy.html").is_file()
+
+    index = (site / "index.html").read_text(encoding="utf-8")
+    alchemy = (site / "alchemy.html").read_text(encoding="utf-8")
+    assert "AFK Money Makers" in index
+    assert "High Alch" in index
+    assert "Ledger" not in index
+    assert ">About<" not in index
+    assert "AFK Money Makers" in alchemy
+    assert not (site / "afk.html").exists()
+    assert not (site / "about.html").exists()
+    assert not (site / "data" / "dashboard.json").exists()
     assert not (site / "market").exists()
-    assert "Market Explorer" not in (site / "index.html").read_text(encoding="utf-8")
+
+
+def test_client_supports_long_history_sorting_and_age_based_freshness():
+    app = open("web/assets/app.js", encoding="utf-8").read()
+    assert '"gp-7d": m.history?.["7dGpPerHour"]' in app
+    assert '"gp-30d": m.history?.["30dGpPerHour"]' in app
+    assert 'age < 5400 ? "current" : age < 9000 ? "delayed" : "stale"' in app
+    assert "Last market scan" in app
 
 
 def test_sanitizer_rejects_internal_key(tmp_path):
     site = tmp_path / "site"
     (site / "assets").mkdir(parents=True)
     (site / "data").mkdir()
-    for page in ("index.html", "afk.html", "alchemy.html", "about.html"):
+    for page in ("index.html", "alchemy.html"):
         (site / page).write_text("ok", encoding="utf-8")
     (site / "assets" / "app.css").write_text("", encoding="utf-8")
     (site / "assets" / "app.js").write_text("", encoding="utf-8")
     base = {"schemaVersion": 1, "generatedAt": 123}
-    (site / "data" / "dashboard.json").write_text(json.dumps({**base, "series": []}), encoding="utf-8")
-    (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": []}), encoding="utf-8")
+    (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": [], "series": []}), encoding="utf-8")
     (site / "data" / "alchemy.json").write_text(json.dumps({**base, "items": []}), encoding="utf-8")
     (site / "data" / "status.json").write_text(json.dumps({**base, "state": "current"}), encoding="utf-8")
     with pytest.raises(ValueError, match="internal fields leaked"):
