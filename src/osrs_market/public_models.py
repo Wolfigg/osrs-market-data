@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 PUBLIC_SCHEMA_VERSION = 1
-LOW_CAPITAL_THRESHOLD_GP = 1_000_000
 
 _HISTORY_SCENARIOS = {
     "HISTORICAL_INSTANT_6H": "6hGpPerHour",
@@ -223,6 +222,11 @@ def _freshness(age_seconds: int | float | None) -> str:
     return "Stale"
 
 
+def _history_profit(row: dict[str, Any], key: str) -> float | None:
+    history = row.get(key) or {}
+    return _number(history.get("profitPerCast")) if history.get("valid") else None
+
+
 def build_public_alchemy(
     generated_at: int,
     candidates: list[dict[str, Any]],
@@ -236,7 +240,9 @@ def build_public_alchemy(
         rune_cost = _number(current.get("natureRunePrice")) or 0.0
         if not use_fire_staff:
             rune_cost += _number(current.get("fireRunePrice")) or 0.0
-        history = row.get("historicalInstant24h") or {}
+        history24 = _history_profit(row, "historicalInstant24h")
+        history7 = _history_profit(row, "historicalInstant7d")
+        history30 = _history_profit(row, "historicalInstant30d")
         risk = public_risk(row.get("warnings"), valid=valid)
         items.append(
             {
@@ -254,7 +260,12 @@ def build_public_alchemy(
                 "capitalRequired": _number(row.get("capitalRequired")) if valid else None,
                 "volume24h": _intish(row.get("volume24h")),
                 "freshness": _freshness(row.get("buyPriceAgeSeconds")),
-                "history24hProfitPerCast": _number(history.get("profitPerCast")) if history.get("valid") else None,
+                "history": {
+                    "24hProfitPerCast": history24,
+                    "7dProfitPerCast": history7,
+                    "30dProfitPerCast": history30,
+                },
+                "history24hProfitPerCast": history24,
                 "risk": risk,
             }
         )
@@ -272,7 +283,12 @@ def build_public_alchemy(
     }
 
 
-def build_public_status(generated_at: int, internal_health: dict[str, Any]) -> dict[str, Any]:
+def build_public_status(
+    generated_at: int,
+    internal_health: dict[str, Any],
+    short_history_generated_at: int | None = None,
+    long_history_generated_at: int | None = None,
+) -> dict[str, Any]:
     status = str(internal_health.get("status", "ok"))
     warnings = internal_health.get("warnings") or []
     api = internal_health.get("api") or {}
@@ -283,103 +299,12 @@ def build_public_status(generated_at: int, internal_health: dict[str, Any]) -> d
         state = "delayed"
     else:
         state = "data_issue"
-    return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "state": state, "ageSeconds": 0}
-
-
-def _featured_afk(methods: list[dict[str, Any]]) -> dict[str, Any] | None:
-    valid = [m for m in methods if m["current"]["valid"] and m["current"]["gpPerHour"] is not None]
-    if not valid:
-        return None
-    method = max(valid, key=lambda row: row["current"]["gpPerHour"])
-    current = method["current"]["gpPerHour"]
-    ref24 = method["history"].get("24hGpPerHour")
-    reason = "Highest valid current AFK GP/hour in the public ledger."
-    if ref24 and current and current > ref24:
-        reason = "Current profit is above its 24-hour reference while remaining a valid AFK method."
-    return {
-        "methodId": method["methodId"],
-        "name": method["name"],
-        "category": method["category"],
-        "currentGpPerHour": current,
-        "reference24hGpPerHour": ref24,
-        "afkIntervalSeconds": method["afk"]["intervalSeconds"],
-        "gpPerInteraction": method["afk"]["gpPerInteraction"],
-        "capitalOneHour": method["economics"]["capitalOneHour"],
-        "members": method["members"],
-        "risk": method["risk"]["level"],
-        "reason": reason,
-    }
-
-
-def _featured_alchemy(items: list[dict[str, Any]]) -> dict[str, Any] | None:
-    valid = [i for i in items if i["profit4h"] is not None and i["profitPerCast"] is not None]
-    if not valid:
-        return None
-    item = max(valid, key=lambda row: row["profit4h"])
-    return {
-        "itemId": item["itemId"],
-        "name": item["name"],
-        "profitPerCast": item["profitPerCast"],
-        "profit4h": item["profit4h"],
-        "quantity4h": item["quantity4h"],
-        "capitalRequired": item["capitalRequired"],
-        "members": item["members"],
-        "freshness": item["freshness"],
-        "risk": item["risk"]["level"],
-    }
-
-
-def _notice(kind: str, title: str, text: str, method_id: str | None = None) -> dict[str, Any]:
-    payload = {"kind": kind, "title": title, "text": text}
-    if method_id:
-        payload["methodId"] = method_id
-    return payload
-
-
-def build_dashboard(generated_at: int, afk_payload: dict[str, Any], alchemy_payload: dict[str, Any]) -> dict[str, Any]:
-    methods = afk_payload.get("methods") or []
-    items = alchemy_payload.get("items") or []
-    valid = [m for m in methods if m["current"]["valid"] and m["current"]["gpPerHour"] is not None]
-    notices: list[dict[str, Any]] = []
-
-    if valid:
-        best = max(valid, key=lambda row: row["current"]["gpPerHour"])
-        notices.append(_notice("MARKET NOTICE", "Highest current AFK", f"{best['name']} leads at {best['current']['gpPerHour']:,.0f} GP/hour.", best["methodId"]))
-
-        interaction = [m for m in valid if m["afk"]["gpPerInteraction"] is not None]
-        if interaction:
-            top = max(interaction, key=lambda row: row["afk"]["gpPerInteraction"])
-            notices.append(_notice("AFK VALUE", "Best GP per interaction", f"{top['name']} yields about {top['afk']['gpPerInteraction']:,.0f} GP per interaction window.", top["methodId"]))
-
-        low_capital = [m for m in valid if (m["economics"]["capitalOneHour"] or 0) <= LOW_CAPITAL_THRESHOLD_GP]
-        if low_capital:
-            top = max(low_capital, key=lambda row: row["current"]["gpPerHour"])
-            notices.append(_notice("LOW CAPITAL", "Best under 1m", f"{top['name']} is the strongest valid method below 1,000,000 GP one-hour capital.", top["methodId"]))
-
-        changes = []
-        for m in valid:
-            ref = m["history"].get("24hGpPerHour")
-            cur = m["current"]["gpPerHour"]
-            if ref not in (None, 0) and cur is not None:
-                changes.append((cur - ref, (cur - ref) / abs(ref), m))
-        stronger = [x for x in changes if x[0] > 0]
-        if stronger:
-            delta, pct, top = max(stronger, key=lambda x: x[0])
-            notices.append(_notice("ABOVE 24H", "Stronger than reference", f"{top['name']} is {pct * 100:.0f}% above its 24-hour GP/hour reference.", top["methodId"]))
-        weaker = [x for x in changes if x[1] <= -0.10]
-        if weaker:
-            delta, pct, top = min(weaker, key=lambda x: x[1])
-            notices.append(_notice("WATCH", "Below 24H reference", f"{top['name']} is {abs(pct) * 100:.0f}% below its 24-hour GP/hour reference.", top["methodId"]))
-
-        f2p = [m for m in valid if not m["members"]]
-        if f2p:
-            top = max(f2p, key=lambda row: row["current"]["gpPerHour"])
-            notices.append(_notice("F2P", "Best free-to-play", f"{top['name']} leads the current F2P AFK list.", top["methodId"]))
-
     return {
         "schemaVersion": PUBLIC_SCHEMA_VERSION,
         "generatedAt": generated_at,
-        "featuredAfk": _featured_afk(methods),
-        "featuredAlchemy": _featured_alchemy(items),
-        "notices": notices[:6],
+        "liveGeneratedAt": generated_at,
+        "shortHistoryGeneratedAt": short_history_generated_at,
+        "longHistoryGeneratedAt": long_history_generated_at,
+        "state": state,
+        "ageSeconds": 0,
     }
