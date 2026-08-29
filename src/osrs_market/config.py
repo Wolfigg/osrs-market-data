@@ -40,13 +40,14 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
     return sorted(types)
 
 
-def _apply_known_access_corrections(methods: dict[str, Any]) -> None:
-    """Correct generated jewellery membership semantics from current OSRS content.
+def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
+    """Apply source-verified corrections to generated catalogue defaults.
 
-    F2P supports gold plus sapphire-through-diamond rings, necklaces and
-    unstrung amulets. Bracelets and dragonstone jewellery are members-only.
-    Hand-maintained methods.yaml overrides are applied after this function.
+    Hand-maintained methods.yaml overrides are applied after this function, so
+    explicit config remains authoritative when a method needs custom modelling.
     """
+    # F2P supports gold plus sapphire-through-diamond rings, necklaces and
+    # unstrung amulets. Bracelets and dragonstone jewellery are members-only.
     f2p_gems = ("sapphire", "emerald", "ruby", "diamond")
     for type_key in ("ring", "necklace", "amulet_u"):
         gold = methods.get(f"craft_gold_{type_key}")
@@ -67,6 +68,12 @@ def _apply_known_access_corrections(methods: dict[str, Any]) -> None:
         method = methods.get(f"craft_{gem}_bracelet")
         if method:
             method.setdefault("requirements", {})["members"] = True
+
+    # An onyx is the exception among the standard precious-gem bolt tips: it
+    # produces 24 tips per gem, not 12.
+    onyx_tips = methods.get("onyx_bolt_tips")
+    if onyx_tips and onyx_tips.get("outputs"):
+        onyx_tips["outputs"][0]["quantity"] = 24
 
 
 def _normalise_requirement_metadata(method: dict[str, Any]) -> None:
@@ -123,7 +130,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
     payload = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
     if source.name == "methods.yaml":
         generated = generated_method_catalog()
-        _apply_known_access_corrections(generated)
+        _apply_known_catalog_corrections(generated)
         configured = payload.get("methods", {}) or {}
         generated.update(configured)
 
