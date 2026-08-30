@@ -73,15 +73,6 @@ jobs:
           text = text.replace('for name in ("app.css", "app.js", "enhancements.js"):', 'for name in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):')
           text = text.replace('for asset in ("app.css", "app.js", "enhancements.js"):', 'for asset in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):')
           tests.write_text(text, encoding="utf-8")
-
-          ci = Path(".github/workflows/ci.yml")
-          text = ci.read_text(encoding="utf-8")
-          marker = '      - name: Install Playwright browsers\n'
-          insertion = '      - name: Run cooking backend/frontend parity\n        run: node tests/cooking_parity.mjs\n\n'
-          if marker not in text:
-              raise SystemExit("CI Node integration marker missing")
-          text = text.replace(marker, insertion + marker, 1)
-          ci.write_text(text, encoding="utf-8")
           PY
       - name: Install project
         run: |
@@ -94,11 +85,10 @@ jobs:
         run: node tests/cooking_parity.mjs
       - name: Build deterministic public fixture
         run: python tests/build_browser_fixture.py
-      - name: Commit integration and remove temporary workflow
+      - name: Commit verified integration
         run: |
-          rm .github/workflows/apply-wave6-pr1.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/osrs_market/public_site.py src/osrs_market/catalog_wave5.py src/osrs_market/personalisation.py web/assets/profile.js tests/test_public_site.py .github/workflows/ci.yml .github/workflows/apply-wave6-pr1.yml
+          git add src/osrs_market/public_site.py src/osrs_market/catalog_wave5.py src/osrs_market/personalisation.py web/assets/profile.js tests/test_public_site.py
           git commit -m "Integrate Wave 6 player profile foundation [wave6-pr1-integrated]"
           git push origin HEAD:wave6/player-profile-foundation
