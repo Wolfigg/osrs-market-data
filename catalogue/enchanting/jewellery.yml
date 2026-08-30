@@ -77,6 +77,8 @@ tiers:
   dragonstone:
     magicLevel: 68
     members: true
+    inputNames:
+      necklace: Dragon necklace
     runes:
       - item: Cosmic rune
         quantity: 1
