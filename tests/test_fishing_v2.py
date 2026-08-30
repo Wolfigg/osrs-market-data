@@ -59,12 +59,25 @@ def test_fish_barrel_changes_bank_frequency_not_catch_distribution():
     assert "fish_barrel" in barrel.applied_modifiers
 
 
-def test_radas_blessing_changes_expected_outputs():
+@pytest.mark.parametrize(
+    ("blessing", "multiplier"),
+    [
+        ("Rada's blessing 1", 1.02),
+        ("Rada's blessing 2", 1.04),
+        ("Rada's blessing 3", 1.06),
+        ("Rada's blessing 4", 1.08),
+    ],
+)
+def test_radas_blessing_tiers_use_documented_extra_fish_chances(blessing, multiplier):
     base = materialise_fishing(mixed_model(), player(), pacing="active")
-    blessed = materialise_fishing(mixed_model(), player("Rada's blessing 4"), pacing="active")
+    blessed = materialise_fishing(mixed_model(), player(blessing), pacing="active")
+    assert sum(blessed.outputs_per_hour.values()) == pytest.approx(sum(base.outputs_per_hour.values()) * multiplier)
 
-    assert blessed.outputs_per_hour["Raw tuna"] > base.outputs_per_hour["Raw tuna"]
-    assert blessed.outputs_per_hour["Raw swordfish"] > base.outputs_per_hour["Raw swordfish"]
+
+def test_radas_blessing_stable_profile_id_is_accepted():
+    base = materialise_fishing(mixed_model(), player(), pacing="active")
+    blessed = materialise_fishing(mixed_model(), player("radas_blessing_4"), pacing="active")
+    assert sum(blessed.outputs_per_hour.values()) == pytest.approx(sum(base.outputs_per_hour.values()) * 1.08)
     assert "radas_blessing_4" in blessed.applied_modifiers
 
 
@@ -75,6 +88,13 @@ def test_spirit_flakes_add_output_and_expected_flake_cost():
     assert sum(flakes.outputs_per_hour.values()) == pytest.approx(sum(base.outputs_per_hour.values()) * 1.5)
     assert flakes.inputs_per_hour["Spirit flakes"] == pytest.approx(sum(base.outputs_per_hour.values()) * 0.5)
     assert "spirit_flakes" in flakes.applied_modifiers
+
+
+def test_rada_and_spirit_flakes_stack_without_charging_flakes_for_rada_fish():
+    base = materialise_fishing(mixed_model(), player(), pacing="active")
+    combined = materialise_fishing(mixed_model(), player("Rada's blessing 4", "Spirit flakes"), pacing="active")
+    assert sum(combined.outputs_per_hour.values()) == pytest.approx(sum(base.outputs_per_hour.values()) * 1.58)
+    assert combined.inputs_per_hour["Spirit flakes"] == pytest.approx(sum(base.outputs_per_hour.values()) * 0.5)
 
 
 def test_pacing_profiles_do_not_claim_one_universal_rate():

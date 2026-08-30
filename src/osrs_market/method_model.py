@@ -105,6 +105,10 @@ def all_method_item_ids(method: dict[str, Any]) -> set[int]:
             for entry in variant.get(side, []):
                 if entry.get("item_id") is not None:
                     ids.add(int(entry["item_id"]))
+    for modifier in method.get("modifiers") or []:
+        for entry in modifier.get("added_items") or []:
+            if entry.get("item_id") is not None:
+                ids.add(int(entry["item_id"]))
     return ids
 
 
