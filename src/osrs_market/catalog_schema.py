@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,8 @@ def load_catalogue_document(path: str | Path) -> dict[str, Any]:
         raise ValueError(f"catalogue document must be an object: {source}")
     if int(payload.get("schemaVersion", 0)) != 1:
         raise ValueError(f"unsupported catalogue schema version in {source}")
+    if not str(payload.get("family") or "").strip():
+        raise ValueError(f"catalogue document family is required: {source}")
     return payload
 
 
@@ -82,3 +85,84 @@ def compile_jewellery_enchanting(path: str | Path) -> dict[str, dict[str, Any]]:
                 "source": dict(payload.get("source") or {}),
             }
     return methods
+
+
+def _matches_selector(method_id: str, method: dict[str, Any], selector: dict[str, Any]) -> bool:
+    prefix = selector.get("idPrefix")
+    if prefix is not None and not method_id.startswith(str(prefix)):
+        return False
+    category_contains = selector.get("categoryContains")
+    if category_contains is not None and str(category_contains).casefold() not in str(method.get("category") or "").casefold():
+        return False
+    return bool(prefix is not None or category_contains is not None)
+
+
+def _paced_variant(base_rate: float, multiplier: float, variant_id: str, label: str, description: str, requirements: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": variant_id,
+        "label": label,
+        "description": description,
+        "overrides": {
+            "cycles_per_hour": round(base_rate * multiplier, 3),
+            "requirements": deepcopy(requirements),
+        },
+    }
+
+
+def compile_gathering_pacing(path: str | Path, base_methods: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    payload = load_catalogue_document(path)
+    if payload.get("family") != "gathering_pacing":
+        raise ValueError("expected gathering_pacing family")
+    rules = payload.get("rules") or {}
+    source = dict(payload.get("source") or {})
+    compiled: dict[str, dict[str, Any]] = {}
+
+    for method_id, base_method in base_methods.items():
+        matching = [(rule_id, rule) for rule_id, rule in rules.items() if _matches_selector(method_id, base_method, rule.get("selector") or {})]
+        if not matching:
+            continue
+        if len(matching) != 1:
+            raise ValueError(f"{method_id}: gathering pacing matched {len(matching)} rules")
+        rule_id, rule = matching[0]
+        method = deepcopy(base_method)
+        if method.get("enabled", True) is False:
+            compiled[method_id] = method
+            continue
+        base_rate = float(method.get("cycles_per_hour") or 0)
+        if base_rate <= 0:
+            raise ValueError(f"{method_id}: gathering pacing requires cycles_per_hour > 0")
+        requirements = deepcopy(method.get("requirements") or {})
+        realistic = float(rule.get("realisticMultiplier", 0.90))
+        afk = float(rule.get("afkMultiplier", 0.75))
+        if not (0 < afk <= realistic <= 1):
+            raise ValueError(f"{method_id}: invalid pacing multipliers")
+        method["variants"] = [
+            _paced_variant(base_rate, 1.0, "active", "Active", "Source-backed baseline throughput with sustained attention.", requirements),
+            _paced_variant(base_rate, realistic, "realistic", "Realistic", "Continuous normal play with reaction, movement and banking losses.", requirements),
+            _paced_variant(base_rate, afk, "afk", "AFK", "Lower-attention pacing. This is deliberately below the active guide baseline.", requirements),
+        ]
+        method["include_base_variant"] = False
+        gathering = method.setdefault("model", {}).setdefault("gatheringV2", {})
+        gathering.update(deepcopy(rule.get("model") or {}))
+        gathering.update({
+            "activityType": str(rule.get("activityType") or rule_id),
+            "baselineCyclesPerHour": base_rate,
+            "pacingProfiles": {"active": 1.0, "realistic": realistic, "afk": afk},
+            "policySource": source,
+        })
+        if gathering.get("supportsAccountFishingModifiers"):
+            equipment = list(requirements.get("equipment") or [])
+            gathering.update({
+                "minimumLevel": requirements.get("fishing"),
+                "toolOptions": equipment,
+                "supportsFishBarrel": bool(requirements.get("members", True)),
+                "supportsRadasBlessing": bool(requirements.get("members", True)),
+                "supportsSpiritFlakes": bool(requirements.get("members", True)),
+                "mixedCatch": len(method.get("outputs") or []) > 1,
+            })
+            gathering.pop("supportsAccountFishingModifiers", None)
+        types = set(method.get("method_types") or [])
+        types.update(("gathering", "variants"))
+        method["method_types"] = sorted(types)
+        compiled[method_id] = method
+    return compiled

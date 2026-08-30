@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .catalogue_intelligence import build_assumption_registry, build_catalogue_quality_report
+
 
 KNOWN_TARGETS: tuple[dict[str, Any], ...] = (
     {"key": "tanning", "label": "Tanning hides", "matchPrefixes": ["tan_"], "engine": "deterministic", "priority": "high", "reference": "https://oldschool.runescape.wiki/w/Tanning"},
@@ -28,7 +30,21 @@ def build_catalog_gap_report(methods: dict[str, dict[str, Any]], discovery_audit
         matches = sorted(method_id for method_id in ids if any(method_id.startswith(prefix) for prefix in prefixes))
         rows.append({"key": target["key"], "label": target["label"], "status": "covered" if matches else "missing", "engineCompatibility": target["engine"], "priority": target["priority"], "reference": target["reference"], "matchedMethodIds": matches})
     missing = [row for row in rows if row["status"] == "missing"]
-    result = {"schemaVersion": 2, "catalogueMethodCount": len(ids), "targetFamilyCount": len(rows), "coveredFamilyCount": len(rows) - len(missing), "missingFamilyCount": len(missing), "coveragePct": round((len(rows) - len(missing)) / len(rows) * 100, 1) if rows else 100.0, "families": rows, "missing": missing, "discoveryPolicy": "Known-family coverage is deterministic. Wiki discovery is advisory and never auto-promotes a page or changed assumption into production."}
+    registry = build_assumption_registry(methods)
+    quality = build_catalogue_quality_report(methods, registry)
+    result = {
+        "schemaVersion": 3,
+        "catalogueMethodCount": len(ids),
+        "targetFamilyCount": len(rows),
+        "coveredFamilyCount": len(rows) - len(missing),
+        "missingFamilyCount": len(missing),
+        "coveragePct": round((len(rows) - len(missing)) / len(rows) * 100, 1) if rows else 100.0,
+        "families": rows,
+        "missing": missing,
+        "modelQuality": quality,
+        "coverageInterpretation": "Family coverage only answers whether a method family exists. It does not assert that throughput, requirements, stochastic outputs, routes, or source assumptions are high confidence.",
+        "discoveryPolicy": "Known-family coverage is deterministic. Wiki discovery is advisory and never auto-promotes a page or changed assumption into production.",
+    }
     if discovery_audit is not None:
         result["wikiDiscovery"] = {"pageCount": discovery_audit.get("pageCount"), "findingCount": discovery_audit.get("findingCount"), "requiresReview": discovery_audit.get("requiresReview"), "findings": discovery_audit.get("findings", [])}
     return result

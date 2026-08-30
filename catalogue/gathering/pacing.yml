@@ -1,0 +1,41 @@
+schemaVersion: 1
+family: gathering_pacing
+source:
+  type: catalogue_policy
+  verifiedAt: '2026-08-30'
+  notes: Source-backed catalogue throughput remains the active anchor. Scenario multipliers are explicit modelling assumptions.
+rules:
+  fishing:
+    selector:
+      idPrefix: gather_fishing_
+    activityType: fishing
+    realisticMultiplier: 0.90
+    afkMultiplier: 0.75
+    model:
+      throughputPolicy: Guide/catalogue baseline is the active anchor. Realistic and AFK profiles are explicit scenario multipliers, not claims of universal player rates.
+      secondaryOutputPolicy: Only source-backed deterministic or statistically defensible outputs are valued. Unverified random secondaries remain excluded.
+      bankingModel: Capacity and bank frequency are setup-dependent. Fish barrel changes capacity, not catch probability.
+      modifierPolicy: Rada's blessing and Spirit flakes are account modifiers and must not be silently assumed in generic baseline profit.
+      supportsAccountFishingModifiers: true
+  woodcutting:
+    selector:
+      categoryContains: woodcutting
+    activityType: woodcutting
+    realisticMultiplier: 0.88
+    afkMultiplier: 0.70
+    model:
+      throughputPolicy: Guide/catalogue baseline is the active anchor. Realistic and AFK profiles are explicit scenario multipliers, not claims of universal player rates.
+      secondaryOutputPolicy: Only source-backed deterministic or statistically defensible outputs are valued. Unverified random secondaries remain excluded.
+      depletionModel: Tree-specific depletion and respawn effects are represented through pacing profiles until a source-backed per-tree stochastic model is available.
+      forestryOutputsIncluded: false
+  mining:
+    selector:
+      idPrefix: gather_mining_
+    activityType: mining
+    realisticMultiplier: 0.88
+    afkMultiplier: 0.68
+    model:
+      throughputPolicy: Guide/catalogue baseline is the active anchor. Realistic and AFK profiles are explicit scenario multipliers, not claims of universal player rates.
+      secondaryOutputPolicy: Only source-backed deterministic or statistically defensible outputs are valued. Unverified random secondaries remain excluded.
+      successModel: Catalogue baseline remains the source anchor; player-level and pickaxe-specific success functions can replace pacing multipliers without changing the public method contract.
+      randomSecondariesIncluded: false
