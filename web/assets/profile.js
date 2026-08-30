@@ -19,7 +19,7 @@
       return { ...defaults(), ...stored, skills: { ...defaults().skills, ...(stored.skills || {}) }, methodSettings: { ...defaults().methodSettings, ...(stored.methodSettings || {}) }, filters: { ...defaults().filters, ...(stored.filters || {}) } };
     } catch (_) { return defaults(); }
   };
-  const save = profile => localStorage.setItem(KEY, JSON.stringify(profile));
+  const save = value => localStorage.setItem(KEY, JSON.stringify(value));
   let profile = load();
   let methods = [];
 
@@ -46,18 +46,6 @@
     return { available: missing.length === 0, missing };
   }
 
-  function cookingChance(model, level, location, gauntlets, cape) {
-    level = Math.max(Number(model.minimumLevel || 1), Math.min(99, Number(level || 1)));
-    if (cape && level >= 99) return 1;
-    let key = location || "range";
-    if (gauntlets && model.gauntletsAffected && model.curves?.[`gauntlets_${key}`]) key = `gauntlets_${key}`;
-    const curve = model.curves?.[key] || model.curves?.range;
-    if (!curve) return 1;
-    const low = Number(curve.low), high = Number(curve.high);
-    const value = Math.floor(low * (99 - level) / 98 + high * (level - 1) / 98 + 0.5) + 1;
-    return Math.max(0, Math.min(1, value / 256));
-  }
-
   function accountPanel() {
     const existing = document.querySelector("#my-account-panel");
     if (existing) return existing;
@@ -65,7 +53,7 @@
     if (!anchor) return null;
     const panel = document.createElement("section");
     panel.id = "my-account-panel";
-    panel.className = "profile-panel account-panel";
+    panel.className = "account-panel";
     panel.innerHTML = `
       <details><summary><strong>My Account</strong> <span class="muted">stored only in this browser</span></summary>
         <div class="account-grid">
@@ -73,10 +61,19 @@
           ${Object.keys(profile.skills).map(skill => `<label class="field"><span>${skill[0].toUpperCase()}${skill.slice(1)}</span><input data-profile-skill="${skill}" type="number" min="1" max="99" value="${Number(profile.skills[skill] || 1)}"></label>`).join("")}
         </div>
         <h3>Equipment</h3><div class="account-checks">
-          ${[["cooking_gauntlets","Cooking gauntlets"],["cooking_cape","Cooking cape"],["prescription_goggles","Prescription goggles"],["amulet_of_chemistry","Amulet of chemistry"],["fish_barrel","Fish barrel"],["radas_blessing_4","Rada's blessing 4"]].map(([id,label]) => `<label><input data-profile-set="equipment" value="${id}" type="checkbox" ${has("equipment", id) ? "checked" : ""}> ${label}</label>`).join("")}
+          ${[
+            ["cooking_gauntlets","Cooking gauntlets"],["cooking_cape","Cooking cape"],
+            ["prescription_goggles","Prescription goggles"],["amulet_of_chemistry","Amulet of chemistry"],
+            ["water_rune_supplying_staff","Water-rune supplying staff"],["earth_rune_supplying_staff","Earth-rune supplying staff"],
+            ["fire_rune_supplying_staff","Fire-rune supplying staff"],["air_rune_supplying_staff","Air-rune supplying staff"],
+            ["fish_barrel","Fish barrel"],["radas_blessing_4","Rada's blessing 4"]
+          ].map(([id,label]) => `<label><input data-profile-set="equipment" value="${id}" type="checkbox" ${has("equipment", id) ? "checked" : ""}> ${label}</label>`).join("")}
         </div>
         <h3>Spellbooks and POH</h3><div class="account-checks">
           ${[["unlocks","ancient_spellbook","Ancient"],["unlocks","lunar_spellbook","Lunar"],["unlocks","arceuus_spellbook","Arceuus"],["pohFeatures","oak_lectern","Oak lectern"],["pohFeatures","eagle_lectern","Eagle lectern"],["pohFeatures","teak_eagle_lectern","Teak eagle lectern"],["pohFeatures","mahogany_eagle_lectern","Mahogany eagle lectern"],["pohFeatures","marble_lectern","Marble lectern"],["pohFeatures","restoration_pool","Restoration pool"]].map(([set,id,label]) => `<label><input data-profile-set="${set}" value="${id}" type="checkbox" ${has(set, id) ? "checked" : ""}> ${label}</label>`).join("")}
+        </div>
+        <h3>Quest access</h3><div class="account-checks">
+          ${[["desert_treasure_i","Desert Treasure I"],["lunar_diplomacy","Lunar Diplomacy"]].map(([id,label]) => `<label><input data-profile-set="quests" value="${id}" type="checkbox" ${has("quests", id) ? "checked" : ""}> ${label}</label>`).join("")}
         </div>
         <h3>Cooking setup</h3><label class="field"><span>Location</span><select data-profile-cooking="location"><option value="fire">Fire</option><option value="range">Range</option><option value="hosidius_5">Hosidius 5%</option><option value="hosidius_10">Hosidius 10%</option></select></label>
         <h3>Personalisation</h3><div class="account-checks">
@@ -117,7 +114,7 @@
       groups.get(base).push({ record, method, state });
 
       const cooking = method.model?.cooking;
-      if (cooking) {
+      if (cooking && window.OsrsCookingMath) {
         record.querySelector(".profile-cooking-result")?.remove();
         const gauntlets = has("equipment", "cooking_gauntlets"), cape = has("equipment", "cooking_cape");
         const success = window.OsrsCookingMath.successProbability(cooking, profile.skills.cooking, profile.methodSettings?.cooking?.location || "range", gauntlets, cape);
