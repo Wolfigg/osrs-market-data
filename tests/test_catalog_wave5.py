@@ -64,9 +64,10 @@ def test_untradeable_digsite_pendant_conversion_is_not_ranked():
     assert "untradeable Digsite pendant" in method["notes"]
 
 
-def test_catalog_gap_v2_reports_requested_families_covered():
+def test_catalog_gap_v3_reports_requested_families_covered_and_quality_separately():
     report = build_catalog_gap_report(load_yaml(Path("config/methods.yaml"))["methods"])
-    assert report["schemaVersion"] == 2
+    assert report["schemaVersion"] == 3
+    assert report["modelQuality"]["coverageIsNotQuality"] is True
     by_key = {row["key"]: row for row in report["families"]}
     for key in ("enchant_jewellery", "teleport_tablets", "orb_charging", "potion_v2", "cooking_burns", "more_gathering", "forestry_outputs"): assert by_key[key]["status"] == "covered"
 
