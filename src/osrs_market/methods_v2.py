@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import math
 from copy import deepcopy
+from itertools import combinations
 from typing import Any
 
 from .method_model import effective_cycles_per_hour, input_quantity, iter_method_variants, method_has_probabilistic_quantities, output_quantity
 from .methods import evaluate_method as evaluate_legacy_method
+from .modifiers import MethodModifier, apply_modifiers, modifiers_from_method
 from .personalisation import materialise_method_for_player
 from .player_profile import PlayerProfile
 
@@ -71,6 +73,72 @@ def _materialise_method(method: dict[str, Any], basis: str) -> dict[str, Any]:
     return materialised
 
 
+def _merge_requirements(base: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
+    merged = deepcopy(base)
+    list_keys = {"equipment", "quests", "diaries", "unlocks", "poh_features", "pohFeatures", "supplies"}
+    for key, value in (extra or {}).items():
+        if key in list_keys:
+            current = list(merged.get(key) or [])
+            for item in value or []:
+                if item not in current:
+                    current.append(item)
+            merged[key] = current
+        elif isinstance(value, bool):
+            merged[key] = bool(merged.get(key, False) or value)
+        elif isinstance(value, (int, float)) and not isinstance(value, bool):
+            merged[key] = max(float(merged.get(key, 0) or 0), float(value))
+            if float(merged[key]).is_integer():
+                merged[key] = int(merged[key])
+        elif isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_requirements(dict(merged[key]), value)
+        else:
+            merged[key] = deepcopy(value)
+    return merged
+
+
+def _generic_modifier_materialisations(method_id: str, method: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    """Expand independent modifier declarations for generic, no-profile output.
+
+    The catalogue declares each mechanic once. The collector still needs rows for
+    useful equipment combinations so the static public site can price and filter
+    them without hard-coded combination variants in catalogue content.
+    """
+    bases = iter_method_variants(method_id, method)
+    rows: list[tuple[str, dict[str, Any]]] = []
+    for base_method_id, base in bases:
+        modifiers = modifiers_from_method(base)
+        if not modifiers:
+            rows.append((base_method_id, base))
+            continue
+        if len(modifiers) > 8:
+            raise ValueError(f"{method_id}: refusing to expand more than 8 independent modifiers")
+
+        # Always expose the unmodified setup, then every independent combination.
+        clean_base = deepcopy(base)
+        rows.append((base_method_id, clean_base))
+        for count in range(1, len(modifiers) + 1):
+            for selected_tuple in combinations(modifiers, count):
+                selected = list(selected_tuple)
+                materialised, applied = apply_modifiers(base, selected)
+                requirements = deepcopy(materialised.get("requirements") or {})
+                for modifier in selected:
+                    requirements = _merge_requirements(requirements, modifier.requirements)
+                materialised["requirements"] = requirements
+                base_variant = materialised.get("variant") or {}
+                prefix = str(base_variant.get("id") or "")
+                combo_id = "+".join(applied)
+                variant_id = f"{prefix}+{combo_id}" if prefix else combo_id
+                materialised["variant"] = {
+                    "baseMethodId": method_id,
+                    "id": variant_id,
+                    "label": " + ".join(str(modifier.id).replace("_", " ").title() for modifier in selected),
+                    "description": "Automatically composed independent method modifiers.",
+                }
+                materialised.setdefault("model", {})["appliedModifierIds"] = applied
+                rows.append((f"{base_method_id}__mods_{'_'.join(applied)}", materialised))
+    return rows
+
+
 def evaluate_method(
     method_id: str,
     method: dict[str, Any],
@@ -82,7 +150,7 @@ def evaluate_method(
 ) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     if player_profile is None:
-        variants = iter_method_variants(method_id, method)
+        variants = _generic_modifier_materialisations(method_id, method)
     else:
         materialised = materialise_method_for_player(method_id, method, player_profile)
         if not materialised.available:
@@ -113,8 +181,9 @@ def evaluate_method(
                 "probabilisticOutputs": probabilistic,
                 "expectedValueUsed": probabilistic,
                 "conservativeUsesLowerBound": probabilistic,
-                "workflow": {"processSeconds": workflow.get("process_seconds"), "bankSeconds": workflow.get("bank_seconds"), "travelSeconds": workflow.get("travel_seconds"), "inventorySize": workflow.get("inventory_size"), "itemsPerInventory": workflow.get("items_per_inventory")},
+                "workflow": {"processSeconds": workflow.get("process_seconds"), "bankSeconds": workflow.get("bank_seconds"), "travelSeconds": workflow.get("travel_seconds"), "inventorySize": workflow.get("inventory_size"), "inventoryCapacity": workflow.get("inventory_capacity"), "itemsPerInventory": workflow.get("items_per_inventory")},
                 "variant": variant_meta or None,
+                "appliedModifierIds": model_meta.get("appliedModifierIds") or [row.get("id") for row in model_meta.get("appliedModifiers") or [] if row.get("id")],
                 "cooking": model_meta.get("cooking"),
                 "cookingResult": model_meta.get("cookingResult"),
                 "doseModel": model_meta.get("doseModel"),
