@@ -4,26 +4,38 @@
 
   const INVENTORY_KEY = "osrs-profit-finder.owned-inputs.v1";
   const PLANNER_KEY = "osrs-profit-finder.session-planner.v1";
+  const DEFAULT_BANKROLL = 2000000;
   const gp = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
   const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
 
-  // A visible placeholder looked like an entered value while the old planner
-  // treated it as zero. Seed a real 2m GP default only for first-time users.
+  function safeStorageGet(key) {
+    try { return localStorage.getItem(key); }
+    catch (_) { return null; }
+  }
+
+  function safeStorageSet(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch (_) { return false; }
+  }
+
+  // Seed the same key consumed by app.js so the first render uses a real value,
+  // not a placeholder. Storage failure is non-fatal; the HTML value remains the
+  // fallback. This runs once and never mutates the field while the user types.
   try {
-    const saved = JSON.parse(localStorage.getItem(PLANNER_KEY) || "null");
+    const saved = JSON.parse(safeStorageGet(PLANNER_KEY) || "null");
     if (!saved || !(Number(saved.bankroll) > 0)) {
-      localStorage.setItem(PLANNER_KEY, JSON.stringify({ bankroll: 2000000, hours: Number(saved?.hours) > 0 ? Number(saved.hours) : 4 }));
+      safeStorageSet(PLANNER_KEY, JSON.stringify({ bankroll: DEFAULT_BANKROLL, hours: Number(saved?.hours) > 0 ? Number(saved.hours) : 4 }));
     }
   } catch (_) {
-    localStorage.setItem(PLANNER_KEY, JSON.stringify({ bankroll: 2000000, hours: 4 }));
+    safeStorageSet(PLANNER_KEY, JSON.stringify({ bankroll: DEFAULT_BANKROLL, hours: 4 }));
   }
 
   function loadInventory() {
-    try { return JSON.parse(localStorage.getItem(INVENTORY_KEY) || "{}"); }
+    try { return JSON.parse(safeStorageGet(INVENTORY_KEY) || "{}"); }
     catch (_) { return {}; }
   }
-  function saveInventory(value) { localStorage.setItem(INVENTORY_KEY, JSON.stringify(value)); }
+  function saveInventory(value) { safeStorageSet(INVENTORY_KEY, JSON.stringify(value)); }
 
   function directionalRate(method, side) {
     const rows = method.liquidity?.[side] || [];
@@ -136,8 +148,7 @@
     if (!methods.length) return;
     const bankrollNode = document.querySelector("#planner-bankroll");
     const hoursNode = document.querySelector("#planner-hours");
-    if (bankrollNode && !(Number(bankrollNode.value) > 0)) bankrollNode.value = "2000000";
-    const bankroll = Math.max(0, Number(bankrollNode?.value || 2000000));
+    const bankroll = Math.max(0, Number(bankrollNode?.value || 0));
     const hours = clamp(hoursNode?.value || 4, 0.25, 24);
     const map = new Map(methods.map(m => [m.methodId, m]));
     const rows = [...document.querySelectorAll("#afk-list [data-method-id]")].map(record => {
@@ -153,8 +164,11 @@
     });
     const summary = document.querySelector("#planner-summary");
     if (summary) {
-      const best = rows.filter(r => r.plan?.profit != null).sort((a,b) => b.plan.profit - a.plan.profit)[0];
-      summary.textContent = best ? `${best.method.name}: ${gp.format(best.plan.profit)} gp over ${hours}h · ${best.plan.limitingFactor.replaceAll("_", " ")}` : "No displayed method is fundable with the current filters.";
+      if (!(bankroll > 0)) summary.textContent = "Enter a bankroll to rank what you can actually fund.";
+      else {
+        const best = rows.filter(r => r.plan?.profit != null).sort((a,b) => b.plan.profit - a.plan.profit)[0];
+        summary.textContent = best ? `${best.method.name}: ${gp.format(best.plan.profit)} gp over ${hours}h · ${best.plan.limitingFactor.replaceAll("_", " ")}` : "No displayed method is fundable with the current filters.";
+      }
     }
     if (document.querySelector("#afk-sort")?.value === "session-profit") {
       [...rows].sort((a,b) => (b.plan?.profit ?? -Infinity) - (a.plan?.profit ?? -Infinity)).forEach(row => row.record.parentNode?.appendChild(row.record));
@@ -177,7 +191,12 @@
 
   fetch("data/afk.json", { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject()).then(data => {
     methods = data.methods || [];
-    renderInventoryInputs(); apply();
+    renderInventoryInputs();
+    // app.js may have restored an old empty planner state while this module was
+    // loading. Apply the default once on initialization, never during editing.
+    const bankrollNode = document.querySelector("#planner-bankroll");
+    if (bankrollNode && bankrollNode.value === "") bankrollNode.value = String(DEFAULT_BANKROLL);
+    apply();
     const list = document.querySelector("#afk-list");
     if (list) new MutationObserver(() => setTimeout(apply, 0)).observe(list, { childList: true, subtree: false });
   }).catch(() => {});
