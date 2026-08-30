@@ -1,4 +1,7 @@
-from osrs_market.ranking import rank_methods
+import json
+import math
+
+from osrs_market.ranking import RANKING_MODES, rank_methods
 
 
 def method(name, expected, conservative, capital, afk, fill, stability="stable", sustainability="strong", confidence=90):
@@ -30,3 +33,11 @@ def test_best_stable_can_prefer_lower_headline_profit():
 def test_best_low_capital_penalises_large_working_capital():
     rows = [method("cheap", 500_000, 450_000, 200_000, 30, 90), method("expensive", 550_000, 500_000, 5_000_000, 30, 90)]
     assert rank_methods(rows, "best_low_capital")[0]["name"] == "cheap"
+
+
+def test_unavailable_methods_never_emit_non_finite_json_scores():
+    unavailable = method("unavailable", None, None, 0, 0, None, "unknown", "unknown", 50)
+    for mode in RANKING_MODES:
+        row = rank_methods([unavailable], mode)[0]
+        assert math.isfinite(row["ranking"]["score"])
+        json.dumps(row, allow_nan=False)
