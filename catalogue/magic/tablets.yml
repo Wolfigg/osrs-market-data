@@ -1,0 +1,58 @@
+schemaVersion: 1
+family: teleport_tablets
+source:
+  url: https://oldschool.runescape.wiki/w/Magic_tablet
+  verifiedAt: '2026-08-30'
+defaults:
+  category: bankstanding/magic
+  cyclesPerHour: 1200
+  theoreticalCyclesPerHour: 1500
+  intervalSeconds: 2.4
+  workflow: {process_seconds: 2.4, bank_seconds: 0.6, travel_seconds: 0}
+standard:
+  - {id: varrock, product: Varrock teleport (tablet), magic: 25, runes: [[Law rune,1],[Air rune,3],[Fire rune,1]], lectern: Oak lectern, construction: 40}
+  - {id: lumbridge, product: Lumbridge teleport (tablet), magic: 31, runes: [[Law rune,1],[Air rune,3],[Earth rune,1]], lectern: Eagle lectern, construction: 47}
+  - {id: falador, product: Falador teleport (tablet), magic: 37, runes: [[Law rune,1],[Air rune,3],[Water rune,1]], lectern: Eagle lectern, construction: 47}
+  - {id: house, product: Teleport to house (tablet), magic: 40, runes: [[Law rune,1],[Air rune,1],[Earth rune,1]], lectern: Mahogany eagle lectern, construction: 67}
+  - {id: camelot, product: Camelot teleport (tablet), magic: 45, runes: [[Law rune,1],[Air rune,5]], lectern: Teak eagle lectern, construction: 57}
+  - {id: kourend_castle, product: Kourend castle teleport (tablet), magic: 48, runes: [[Law rune,2],[Water rune,1],[Fire rune,1]], lectern: Teak eagle lectern, construction: 57}
+  - {id: ardougne, product: Ardougne teleport (tablet), magic: 51, runes: [[Law rune,2],[Water rune,2]], lectern: Teak eagle lectern, construction: 57}
+  - {id: civitas_illa_fortis, product: Civitas illa fortis teleport, magic: 54, runes: [[Law rune,2],[Earth rune,1],[Fire rune,1]], lectern: Mahogany eagle lectern, construction: 67}
+  - {id: watchtower, product: Watchtower teleport (tablet), magic: 58, runes: [[Law rune,2],[Earth rune,2]], lectern: Mahogany eagle lectern, construction: 67}
+  - {id: summon_boat, product: Summon boat, magic: 56, runes: [[Law rune,2],[Earth rune,1],[Water rune,1]], lectern: Mahogany eagle lectern, construction: 67}
+  - {id: teleport_to_boat, product: Teleport to boat, magic: 67, runes: [[Law rune,2],[Earth rune,2],[Water rune,2]], lectern: Mahogany eagle lectern, construction: 67}
+ancient:
+  quest: Desert Treasure I
+  rows:
+    - {id: paddewwa, product: Paddewwa teleport (tablet), magic: 54, runes: [[Law rune,2],[Air rune,1],[Fire rune,1]]}
+    - {id: senntisten, product: Senntisten teleport (tablet), magic: 60, runes: [[Law rune,2],[Soul rune,1]]}
+    - {id: kharyrll, product: Kharyrll teleport (tablet), magic: 66, runes: [[Law rune,2],[Blood rune,1]]}
+    - {id: lassar, product: Lassar teleport (tablet), magic: 72, runes: [[Law rune,2],[Water rune,4]]}
+    - {id: dareeyak, product: Dareeyak teleport (tablet), magic: 78, runes: [[Law rune,2],[Air rune,2],[Fire rune,3]]}
+    - {id: carrallanger, product: Carrallanger teleport (tablet), magic: 84, runes: [[Law rune,2],[Soul rune,2]]}
+    - {id: annakarl, product: Annakarl teleport (tablet), magic: 90, runes: [[Law rune,2],[Blood rune,2]]}
+    - {id: ghorrock, product: Ghorrock teleport (tablet), magic: 96, runes: [[Law rune,2],[Water rune,8]]}
+lunar:
+  quest: Lunar Diplomacy
+  rows:
+    - {id: moonclan, product: Moonclan teleport (tablet), magic: 69, runes: [[Law rune,1],[Astral rune,2],[Earth rune,2]]}
+    - {id: ourania, product: Ourania teleport (tablet), magic: 71, runes: [[Law rune,1],[Astral rune,2],[Earth rune,6]]}
+    - {id: waterbirth, product: Waterbirth teleport (tablet), magic: 72, runes: [[Law rune,1],[Astral rune,2],[Water rune,1]]}
+    - {id: barbarian, product: Barbarian teleport (tablet), magic: 75, runes: [[Law rune,2],[Astral rune,2],[Fire rune,3]]}
+    - {id: khazard, product: Khazard teleport (tablet), magic: 78, runes: [[Law rune,2],[Astral rune,2],[Water rune,4]]}
+    - {id: fishing_guild, product: Fishing guild teleport (tablet), magic: 85, runes: [[Law rune,3],[Astral rune,3],[Water rune,10]]}
+    - {id: catherby, product: Catherby teleport (tablet), magic: 87, runes: [[Law rune,3],[Astral rune,3],[Water rune,10]]}
+    - {id: ice_plateau, product: Ice plateau teleport (tablet), magic: 89, runes: [[Law rune,3],[Astral rune,3],[Water rune,8]]}
+arceuus:
+  rows:
+    - {id: arceuus_library, product: Arceuus library teleport (tablet), magic: 6}
+    - {id: draynor_manor, product: Draynor manor teleport (tablet), magic: 17}
+    - {id: battlefront, product: Battlefront teleport (tablet), magic: 23}
+    - {id: mind_altar, product: Mind altar teleport (tablet), magic: 28}
+    - {id: salve_graveyard, product: Salve graveyard teleport (tablet), magic: 40}
+    - {id: fenkenstrain, product: Fenkenstrain's castle teleport (tablet), magic: 48}
+    - {id: west_ardougne, product: West ardougne teleport (tablet), magic: 61}
+    - {id: harmony_island, product: Harmony island teleport (tablet), magic: 65}
+    - {id: cemetery, product: Cemetery teleport (tablet), magic: 71}
+    - {id: barrows, product: Barrows teleport (tablet), magic: 83}
+    - {id: ape_atoll, product: Ape atoll teleport (tablet), magic: 90}

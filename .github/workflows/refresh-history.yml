@@ -79,20 +79,6 @@ jobs:
       - name: Persist recommendation snapshots and evaluate matured forecasts
         run: python tools/recommendation_history.py --public-afk build/public-site/data/afk.json --cache .market-cache/recommendation-history.json --summary build/internal-report/backtesting-summary.json
 
-      - name: Install Session Planner V3 browser module
-        run: |
-          cp web/assets/planner_v3.js build/public-site/assets/planner_v3.js
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('build/public-site/index.html')
-          text = path.read_text(encoding='utf-8')
-          marker = '</head>'
-          script = '  <script defer src="assets/planner_v3.js?v=20260830-2"></script>\n'
-          if 'assets/planner_v3.js' not in text:
-              text = text.replace(marker, script + marker)
-          path.write_text(text, encoding='utf-8')
-          PY
-
       - name: Save derived market cache
         uses: actions/cache/save@v4
         with:

@@ -1,0 +1,35 @@
+schemaVersion: 1
+family: probabilistic_cooking
+source:
+  url: https://oldschool.runescape.wiki/w/Cooking
+  verifiedAt: '2026-08-30'
+defaults:
+  category: strict_afk/cooking
+  cyclesPerHour: 1300
+  theoreticalCyclesPerHour: 1500
+  intervalSeconds: 67.2
+foods:
+  monkfish:
+    raw: Raw monkfish
+    cooked: Monkfish
+    minimumLevel: 62
+    gauntletsAffected: true
+    curves: {fire: [11,275], range: [13,280], hosidius_5: [25,292], hosidius_10: [38,305], gauntlets_fire: [24,290], gauntlets_range: [24,290], gauntlets_hosidius_5: [36,302], gauntlets_hosidius_10: [49,315]}
+  shark:
+    raw: Raw shark
+    cooked: Shark
+    minimumLevel: 80
+    gauntletsAffected: true
+    curves: {fire: [1,202], range: [1,232], hosidius_5: [13,244], hosidius_10: [26,257], gauntlets_fire: [15,270], gauntlets_range: [15,270], gauntlets_hosidius_5: [27,282], gauntlets_hosidius_10: [40,295]}
+  anglerfish:
+    raw: Raw anglerfish
+    cooked: Anglerfish
+    minimumLevel: 84
+    gauntletsAffected: true
+    curves: {fire: [1,200], range: [1,220], hosidius_5: [13,232], hosidius_10: [26,245], gauntlets_fire: [12,260], gauntlets_range: [12,260], gauntlets_hosidius_5: [24,272], gauntlets_hosidius_10: [37,285]}
+  dark_crabs:
+    raw: Raw dark crab
+    cooked: Dark crab
+    minimumLevel: 90
+    gauntletsAffected: false
+    curves: {fire: [10,222], range: [10,222], hosidius_5: [22,234], hosidius_10: [35,247]}

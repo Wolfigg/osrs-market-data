@@ -1,0 +1,31 @@
+schemaVersion: 1
+catalogueVersion: 8
+policy:
+  duplicateIds: error
+  discoveryAutoPromote: false
+  sourceOfTruth: data-first
+families:
+  - id: jewellery_enchanting
+    path: enchanting/jewellery.yml
+    compiler: jewellery_enchanting
+    mode: replace
+  - id: orb_charging
+    path: magic/orbs.yml
+    compiler: orb_charging
+    mode: replace
+  - id: teleport_tablets
+    path: magic/tablets.yml
+    compiler: teleport_tablets
+    mode: replace
+  - id: potion_v2
+    path: herblore/potions.yml
+    compiler: potion_v2
+    mode: replace
+  - id: probabilistic_cooking
+    path: cooking/foods.yml
+    compiler: probabilistic_cooking
+    mode: replace
+  - id: gathering_pacing
+    path: gathering/pacing.yml
+    compiler: gathering_pacing
+    mode: transform
