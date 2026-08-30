@@ -1,21 +1,24 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 
 RANKING_MODES = {"best_profit", "best_afk", "best_low_capital", "best_stable", "best_overall"}
+_UNAVAILABLE_SCORE = -1.0e30
 
 
 def _num(value: Any, default: float = 0.0) -> float:
     try:
-        return float(value) if value is not None else default
+        result = float(value) if value is not None else default
     except (TypeError, ValueError):
         return default
+    return result if math.isfinite(result) else default
 
 
 def _method_score(method: dict[str, Any], mode: str) -> float:
     scenarios = method.get("scenarios") or {}
-    expected = _num(scenarios.get("expectedGpPerHour"), float("-inf"))
+    expected = _num(scenarios.get("expectedGpPerHour"), _UNAVAILABLE_SCORE)
     conservative = _num(scenarios.get("conservativeGpPerHour"), expected)
     capital = max(0.0, _num((method.get("economics") or {}).get("capitalOneHour")))
     afk_seconds = max(0.0, _num((method.get("afk") or {}).get("intervalSeconds")))
@@ -27,16 +30,18 @@ def _method_score(method: dict[str, Any], mode: str) -> float:
     sustainability = {"strong": 100, "moderate": 82, "watch": 68, "constrained": 50, "thin": 38, "limited": 25, "unknown": 50}.get(sustainability_state, 50)
 
     if mode == "best_profit":
-        return expected
-    if mode == "best_afk":
-        return expected * 0.55 + conservative * 0.15 + afk_seconds * 1500 + fill * 250 + confidence * 250
-    if mode == "best_low_capital":
-        return expected * 0.45 + conservative * 0.25 + fill * 300 + confidence * 200 - capital * 0.08
-    if mode == "best_stable":
-        return conservative * 0.55 + expected * 0.15 + stability * 1200 + fill * 500 + confidence * 400
-    if mode == "best_overall":
-        return expected * 0.35 + conservative * 0.25 + fill * 450 + stability * 350 + sustainability * 350 + confidence * 450 + min(afk_seconds, 300) * 250 - capital * 0.015
-    raise ValueError(f"unknown ranking mode: {mode}")
+        score = expected
+    elif mode == "best_afk":
+        score = expected * 0.55 + conservative * 0.15 + afk_seconds * 1500 + fill * 250 + confidence * 250
+    elif mode == "best_low_capital":
+        score = expected * 0.45 + conservative * 0.25 + fill * 300 + confidence * 200 - capital * 0.08
+    elif mode == "best_stable":
+        score = conservative * 0.55 + expected * 0.15 + stability * 1200 + fill * 500 + confidence * 400
+    elif mode == "best_overall":
+        score = expected * 0.35 + conservative * 0.25 + fill * 450 + stability * 350 + sustainability * 350 + confidence * 450 + min(afk_seconds, 300) * 250 - capital * 0.015
+    else:
+        raise ValueError(f"unknown ranking mode: {mode}")
+    return score if math.isfinite(score) else _UNAVAILABLE_SCORE
 
 
 def rank_methods(methods: list[dict[str, Any]], mode: str = "best_overall") -> list[dict[str, Any]]:
