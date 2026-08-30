@@ -48,6 +48,11 @@ def _candidate(valid=True):
     }
 
 
+def _write_test_assets(assets):
+    for name in ("app.css", "app.js", "enhancements.js", "planner_v3.js", "cooking_math.js", "profile.js"):
+        (assets / name).write_text("void 0;", encoding="utf-8")
+
+
 def test_afk_classification_boundaries():
     assert classify_afk(29.9) == "Low interaction"
     assert classify_afk(30) == "Light AFK"
@@ -136,11 +141,7 @@ def test_status_hides_internal_health_details_and_tracks_history_age():
 
 def test_public_site_contains_session_planner_and_sustainability_filters(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
-    (assets / "app.css").write_text("body{}", encoding="utf-8")
-    (assets / "app.js").write_text("void 0;", encoding="utf-8")
-    (assets / "enhancements.js").write_text("void 0;", encoding="utf-8")
-    (assets / "cooking_math.js").write_text("void 0;", encoding="utf-8")
-    (assets / "profile.js").write_text("void 0;", encoding="utf-8")
+    _write_test_assets(assets)
     afk = build_public_afk(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
     site = tmp_path / "site"
     write_public_site(site, afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
@@ -148,12 +149,15 @@ def test_public_site_contains_session_planner_and_sustainability_filters(tmp_pat
     index = (site / "index.html").read_text(encoding="utf-8")
     assert "Bankroll & time planner" in index
     assert 'id="planner-bankroll"' in index
+    assert 'value="2000000"' in index
     assert 'id="planner-hours"' in index
     assert "Market capacity" in index
     assert "My session profit" in index
-    assert "My skill levels" in index
+    assert "More filters & skill levels" in index
     assert "High Alch" in index
     assert "enhancements.js" in index
+    assert "planner_v3.js" in index
+    assert (site / "assets" / "planner_v3.js").is_file()
     assert "Ledger" not in index and ">About<" not in index
     assert not (site / "market").exists()
 
@@ -161,6 +165,7 @@ def test_public_site_contains_session_planner_and_sustainability_filters(tmp_pat
 def test_client_supports_planner_sustainability_breakdowns_and_history():
     app = open("web/assets/app.js", encoding="utf-8").read()
     enhancements = open("web/assets/enhancements.js", encoding="utf-8").read()
+    planner = open("web/assets/planner_v3.js", encoding="utf-8").read()
     assert 'osrs-profit-finder.session-planner.v1' in app
     assert 'function sessionPlan' in app
     assert 'ge_buy_limit' in app
@@ -173,15 +178,18 @@ def test_client_supports_planner_sustainability_breakdowns_and_history():
     assert 'age < 5400 ? "current" : age <= 9000 ? "delayed" : "stale"' in app
     assert 'osrs-profit-finder.favourites.v1' in enhancements
     assert 'osrs-profit-finder.compare.v1' in enhancements
-    assert 'function correctedSessionPlan' in enhancements
-    assert 'bankroll / (cost * turnoverHours)' in enhancements
     assert 'Current' in enhancements and 'Expected' in enhancements and 'Conservative' in enhancements
-    assert 'Price source' in enhancements
+    assert 'Full breakdown: requirements, recipe, calculation, liquidity and history' in enhancements
+    assert 'function sessionPlan' in planner
+    assert 'osrs-profit-finder.owned-inputs.v1' in planner
+    assert 'input_fill_delay' in planner
+    assert 'bankrollRate' in planner
+    assert '2000000' in planner
 
 
 def test_production_validator_rejects_incomplete_decision_model(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
-    for name in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"): (assets / name).write_text("", encoding="utf-8")
+    _write_test_assets(assets)
     afk = build_public_afk(123, [_afk_result()])
     del afk["methods"][0]["fillConfidence"]
     with pytest.raises(ValueError, match="fill confidence"):
@@ -191,7 +199,8 @@ def test_production_validator_rejects_incomplete_decision_model(tmp_path):
 def test_sanitizer_rejects_internal_key(tmp_path):
     site = tmp_path / "site"; (site / "assets").mkdir(parents=True); (site / "data").mkdir()
     for page in ("index.html", "alchemy.html"): (site / page).write_text("ok", encoding="utf-8")
-    for asset in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"): (site / "assets" / asset).write_text("", encoding="utf-8")
+    for asset in ("app.css", "app.js", "enhancements.js", "planner_v3.js", "cooking_math.js", "profile.js"):
+        (site / "assets" / asset).write_text("", encoding="utf-8")
     base = {"schemaVersion": 1, "generatedAt": 123}
     (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": [], "series": []}), encoding="utf-8")
     (site / "data" / "alchemy.json").write_text(json.dumps({**base, "items": []}), encoding="utf-8")
