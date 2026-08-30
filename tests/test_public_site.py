@@ -139,6 +139,8 @@ def test_public_site_contains_session_planner_and_sustainability_filters(tmp_pat
     (assets / "app.css").write_text("body{}", encoding="utf-8")
     (assets / "app.js").write_text("void 0;", encoding="utf-8")
     (assets / "enhancements.js").write_text("void 0;", encoding="utf-8")
+    (assets / "cooking_math.js").write_text("void 0;", encoding="utf-8")
+    (assets / "profile.js").write_text("void 0;", encoding="utf-8")
     afk = build_public_afk(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
     site = tmp_path / "site"
     write_public_site(site, afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
@@ -179,7 +181,7 @@ def test_client_supports_planner_sustainability_breakdowns_and_history():
 
 def test_production_validator_rejects_incomplete_decision_model(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
-    for name in ("app.css", "app.js", "enhancements.js"): (assets / name).write_text("", encoding="utf-8")
+    for name in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"): (assets / name).write_text("", encoding="utf-8")
     afk = build_public_afk(123, [_afk_result()])
     del afk["methods"][0]["fillConfidence"]
     with pytest.raises(ValueError, match="fill confidence"):
@@ -189,7 +191,7 @@ def test_production_validator_rejects_incomplete_decision_model(tmp_path):
 def test_sanitizer_rejects_internal_key(tmp_path):
     site = tmp_path / "site"; (site / "assets").mkdir(parents=True); (site / "data").mkdir()
     for page in ("index.html", "alchemy.html"): (site / page).write_text("ok", encoding="utf-8")
-    for asset in ("app.css", "app.js", "enhancements.js"): (site / "assets" / asset).write_text("", encoding="utf-8")
+    for asset in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"): (site / "assets" / asset).write_text("", encoding="utf-8")
     base = {"schemaVersion": 1, "generatedAt": 123}
     (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": [], "series": []}), encoding="utf-8")
     (site / "data" / "alchemy.json").write_text(json.dumps({**base, "items": []}), encoding="utf-8")

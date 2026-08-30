@@ -120,9 +120,9 @@
       if (cooking) {
         record.querySelector(".profile-cooking-result")?.remove();
         const gauntlets = has("equipment", "cooking_gauntlets"), cape = has("equipment", "cooking_cape");
-        const success = cookingChance(cooking, profile.skills.cooking, profile.methodSettings?.cooking?.location || "range", gauntlets, cape);
+        const success = window.OsrsCookingMath.successProbability(cooking, profile.skills.cooking, profile.methodSettings?.cooking?.location || "range", gauntlets, cape);
         const rate = Number(method.mechanics?.cyclesPerHour || 0), raw = method.inputs?.[0], cooked = method.outputs?.[0];
-        const profit = ((Number(cooked?.geNetPerItem ?? cooked?.gePrice ?? 0) * success) - Number(raw?.price || 0)) * rate;
+        const profit = ((Number(cooked?.geNetPerItem ?? cooked?.gePrice ?? 0) * success) - Number(raw?.gePrice ?? raw?.price ?? 0)) * rate;
         const result = document.createElement("div");
         result.className = "profile-cooking-result";
         result.textContent = `My setup: ${(success * 100).toFixed(1)}% success · ${gp.format(rate * success)} cooked/h · ${gp.format(profit)} gp/h`;

@@ -73,7 +73,7 @@ def _apply_profile_settings(method: dict[str, Any], profile: PlayerProfile) -> d
 
 def materialise_method_for_player(method_id: str, method: dict[str, Any], profile: PlayerProfile | dict[str, Any] | None) -> MaterialisedMethod:
     if profile is None:
-        generic = _apply_profile_settings(method, PlayerProfile()) if False else deepcopy(method)
+        generic = deepcopy(method)
         return MaterialisedMethod(
             method_id=method_id,
             available=bool(generic.get("enabled", True)),
