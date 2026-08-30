@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .player_profile import PlayerProfile, evaluate_requirements, stable_id
-from .routes_v2 import MethodRoute, banking_frequency, select_fastest_route
+from .routes_v2 import MethodRoute, select_fastest_route
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,16 +84,16 @@ def _pacing_multiplier(profiles: tuple[PacingProfile, ...], pacing: str) -> floa
 
 
 def _rada_extra_probability(profile: PlayerProfile) -> tuple[str | None, float]:
-    # Keep the public modifier IDs stable while checking the canonical in-game
-    # names through PlayerProfile's normal stable-ID conversion.
+    # Kourend & Kebos diary blessing tiers use a 2/4/6/8% extra-fish chance.
+    # Keep public modifier IDs stable while accepting canonical item names.
     tiers = (
         ("radas_blessing_4", "Rada's blessing 4", 0.08),
-        ("radas_blessing_3", "Rada's blessing 3", 0.08),
-        ("radas_blessing_2", "Rada's blessing 2", 0.06),
+        ("radas_blessing_3", "Rada's blessing 3", 0.06),
+        ("radas_blessing_2", "Rada's blessing 2", 0.04),
         ("radas_blessing_1", "Rada's blessing 1", 0.02),
     )
     for modifier_id, equipment_name, chance in tiers:
-        if profile.owns(equipment_name):
+        if profile.owns(equipment_name) or profile.owns(modifier_id):
             return modifier_id, chance
     return None, 0.0
 
@@ -119,23 +119,26 @@ def materialise_fishing(model: FishingModel, profile: PlayerProfile, *, pacing: 
         applied.append("fish_barrel")
         capacity = (capacity or 28) + 28
 
-    outputs = {entry.item_name: actions * entry.expected_quantity() for entry in model.catches}
+    # Keep the unmodified catch count separate. Rada and Spirit flakes are
+    # independent expected extra-output rolls. Flake consumption is based on
+    # successful flake procs, not on fish added by Rada's blessing.
+    base_outputs = {entry.item_name: actions * entry.expected_quantity() for entry in model.catches}
+    outputs = dict(base_outputs)
     inputs: dict[str, float] = {}
 
     if model.supports_radas_blessing:
         blessing_id, chance = _rada_extra_probability(profile)
         if blessing_id and chance > 0:
             applied.append(blessing_id)
-            for item_name, quantity in list(outputs.items()):
-                outputs[item_name] = quantity * (1.0 + chance)
+            for item_name, quantity in base_outputs.items():
+                outputs[item_name] += quantity * chance
 
     if model.supports_spirit_flakes and profile.owns("spirit_flakes"):
         chance = float((model.source or {}).get("spiritFlakeProcChance", 0.50))
         applied.append("spirit_flakes")
-        base_successes = sum(outputs.values())
-        for item_name, quantity in list(outputs.items()):
-            outputs[item_name] = quantity * (1.0 + chance)
-        inputs["Spirit flakes"] = base_successes * chance
+        for item_name, quantity in base_outputs.items():
+            outputs[item_name] += quantity * chance
+        inputs["Spirit flakes"] = sum(base_outputs.values()) * chance
 
     banks_per_hour = None
     if capacity:
