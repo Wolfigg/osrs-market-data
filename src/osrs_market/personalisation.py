@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .method_model import effective_cycles_per_hour, iter_method_variants
+from .modifiers import apply_modifiers, resolve_modifiers
 from .player_profile import PlayerProfile, evaluate_requirements, stable_id
 
 
@@ -51,9 +52,6 @@ def select_best_variant(method_id: str, method: dict[str, Any], profile: PlayerP
     variants = available_variants(method_id, method, profile)
     if not variants:
         return None
-    # Route variants primarily compete on sustainable throughput. For equal-rate
-    # equipment variants prefer the most specific setup the player actually owns,
-    # which selects e.g. chemistry+goggles over either single-equipment variant.
     return max(variants, key=lambda row: (effective_cycles_per_hour(row[1]), _variant_specificity(row[1]), row[0]))
 
 
@@ -101,10 +99,12 @@ def materialise_method_for_player(method_id: str, method: dict[str, Any], profil
 
     selected_method_id, selected_method = selected
     selected_method = _apply_profile_settings(selected_method, account)
+    selected_method, generic_modifier_ids = apply_modifiers(selected_method, resolve_modifiers(selected_method, account))
     met, reasons = evaluate_requirements(selected_method.get("requirements"), account)
     variant_id = _variant_id(selected_method)
     equipment = (selected_method.get("requirements") or {}).get("equipment") or []
-    modifier_ids = [stable_id(value) for value in equipment if stable_id(value) in account.equipment]
+    equipment_modifier_ids = [stable_id(value) for value in equipment if stable_id(value) in account.equipment]
+    modifier_ids = list(dict.fromkeys([*generic_modifier_ids, *equipment_modifier_ids]))
     cycles = effective_cycles_per_hour(selected_method)
     selected_method.setdefault("personalisation", {}).update({
         "available": met,
