@@ -23,8 +23,20 @@ jobs:
       - run: |
           pip install -r requirements.txt
           pip install -e .
+      - name: Restore previous Wiki discovery snapshot
+        uses: actions/cache/restore@v4
+        with:
+          path: .wiki-audit-state
+          key: wiki-catalogue-audit-${{ github.run_id }}
+          restore-keys: |
+            wiki-catalogue-audit-
       - name: Discover and compare Wiki money-making guides
         run: python tools/wiki_catalog_audit.py --output build/wiki-catalogue-audit.json
+      - name: Save current Wiki discovery snapshot
+        uses: actions/cache/save@v4
+        with:
+          path: .wiki-audit-state
+          key: wiki-catalogue-audit-${{ github.run_id }}
       - name: Upload review report
         uses: actions/upload-artifact@v6
         with:
