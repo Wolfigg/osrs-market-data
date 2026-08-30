@@ -1,0 +1,56 @@
+schemaVersion: 1
+family: potion_v2
+source:
+  url: https://oldschool.runescape.wiki/w/Herblore
+  verifiedAt: '2026-08-30'
+defaults:
+  category: bankstanding/herblore
+  cyclesPerHour: 2500
+  theoreticalCyclesPerHour: 2500
+  intervalSeconds: 16.8
+  chemistryProcChance: 0.05
+  gogglesSaveChance: 0.10
+rows:
+  - [attack, Guam potion (unf), Eye of newt, Attack potion(3), 3]
+  - [antipoison, Marrentill potion (unf), Unicorn horn dust, Antipoison(3), 5]
+  - [strength, Tarromin potion (unf), Limpwurt root, Strength potion(3), 12]
+  - [restore, Harralander potion (unf), Red spiders' eggs, Restore potion(3), 22]
+  - [energy, Harralander potion (unf), Chocolate dust, Energy potion(3), 26]
+  - [agility, Toadflax potion (unf), Toad's legs, Agility potion(3), 34]
+  - [combat, Harralander potion (unf), Goat horn dust, Combat potion(3), 36]
+  - [prayer, Ranarr potion (unf), Snape grass, Prayer potion(3), 38]
+  - [super_attack, Irit potion (unf), Eye of newt, Super attack(3), 45]
+  - [superantipoison, Irit potion (unf), Unicorn horn dust, Superantipoison(3), 48]
+  - [fishing, Avantoe potion (unf), Snape grass, Fishing potion(3), 50]
+  - [super_energy, Avantoe potion (unf), Mort myre fungus, Super energy(3), 52]
+  - [hunter, Avantoe potion (unf), Kebbit teeth dust, Hunter potion(3), 53]
+  - [super_strength, Kwuarm potion (unf), Limpwurt root, Super strength(3), 55]
+  - [weapon_poison, Kwuarm potion (unf), Dragon scale dust, Weapon poison, 60]
+  - [super_restore, Snapdragon potion (unf), Red spiders' eggs, Super restore(3), 63]
+  - [super_defence, Cadantine potion (unf), White berries, Super defence(3), 66]
+  - [antifire, Lantadyme potion (unf), Dragon scale dust, Antifire potion(3), 69]
+  - [ranging, Dwarf weed potion (unf), Wine of zamorak, Ranging potion(3), 72]
+  - [magic, Lantadyme potion (unf), Potato cactus, Magic potion(3), 76]
+  - [zamorak_brew, Torstol potion (unf), Jangerberries, Zamorak brew(3), 78]
+  - [saradomin_brew, Toadflax potion (unf), Crushed nest, Saradomin brew(3), 81]
+special:
+  stamina:
+    methodId: make_stamina_potions_v2
+    name: Make stamina potion(4)
+    inputs: [[Super energy(4),1],[Amylase crystal,4]]
+    outputs: [[Stamina potion(4),1]]
+    cyclesPerHour: 2400
+    theoreticalCyclesPerHour: 2500
+    intervalSeconds: 18
+    requirements: {members: true, herblore: 77}
+    reference: https://oldschool.runescape.wiki/w/Stamina_potion
+  super_combat:
+    methodId: make_super_combat_potions_v2
+    name: Make super combat potion(4)
+    inputs: [[Super attack(4),1],[Super strength(4),1],[Super defence(4),1],[Torstol,1]]
+    outputs: [[Super combat potion(4),1],[Vial,2]]
+    cyclesPerHour: 2166
+    theoreticalCyclesPerHour: 2400
+    intervalSeconds: 8.6
+    requirements: {members: true, herblore: 90}
+    reference: https://oldschool.runescape.wiki/w/Super_combat_potion
