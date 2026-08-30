@@ -84,18 +84,17 @@ def _pacing_multiplier(profiles: tuple[PacingProfile, ...], pacing: str) -> floa
 
 
 def _rada_extra_probability(profile: PlayerProfile) -> tuple[str | None, float]:
-    # Stable IDs are deliberately used here so future tiers can be added without
-    # changing catalogue item names. Percentages are supplied by catalogue/source
-    # metadata when available; these defaults cover the current blessing tiers.
+    # Keep the public modifier IDs stable while checking the canonical in-game
+    # names through PlayerProfile's normal stable-ID conversion.
     tiers = (
-        ("radas_blessing_4", 0.08),
-        ("radas_blessing_3", 0.08),
-        ("radas_blessing_2", 0.06),
-        ("radas_blessing_1", 0.02),
+        ("radas_blessing_4", "Rada's blessing 4", 0.08),
+        ("radas_blessing_3", "Rada's blessing 3", 0.08),
+        ("radas_blessing_2", "Rada's blessing 2", 0.06),
+        ("radas_blessing_1", "Rada's blessing 1", 0.02),
     )
-    for item_id, chance in tiers:
-        if profile.owns(item_id):
-            return item_id, chance
+    for modifier_id, equipment_name, chance in tiers:
+        if profile.owns(equipment_name):
+            return modifier_id, chance
     return None, 0.0
 
 
@@ -117,8 +116,6 @@ def materialise_fishing(model: FishingModel, profile: PlayerProfile, *, pacing: 
     applied: list[str] = []
 
     if model.supports_fish_barrel and profile.owns("fish_barrel"):
-        # A fish barrel adds 28 raw-fish slots. It affects route/banking overhead,
-        # not the probability of catching fish.
         applied.append("fish_barrel")
         capacity = (capacity or 28) + 28
 
@@ -133,8 +130,6 @@ def materialise_fishing(model: FishingModel, profile: PlayerProfile, *, pacing: 
                 outputs[item_name] = quantity * (1.0 + chance)
 
     if model.supports_spirit_flakes and profile.owns("spirit_flakes"):
-        # Spirit flakes consume one flake on each successful proc. The extra fish
-        # is modeled as an expected-output multiplier rather than throughput.
         chance = float((model.source or {}).get("spiritFlakeProcChance", 0.50))
         applied.append("spirit_flakes")
         base_successes = sum(outputs.values())
@@ -149,8 +144,9 @@ def materialise_fishing(model: FishingModel, profile: PlayerProfile, *, pacing: 
         if route and route.bank_seconds > 0:
             bank_overhead = banks_per_hour * route.bank_seconds
             available_seconds = max(0.0, 3600.0 - bank_overhead)
+            base_actions = model.base_catches_per_hour * _pacing_multiplier(model.pacing_profiles, pacing)
             actions *= available_seconds / 3600.0
-            scale = actions / (model.base_catches_per_hour * _pacing_multiplier(model.pacing_profiles, pacing)) if model.base_catches_per_hour > 0 else 1.0
+            scale = actions / base_actions if base_actions > 0 else 1.0
             outputs = {name: qty * scale for name, qty in outputs.items()}
             inputs = {name: qty * scale for name, qty in inputs.items()}
             banks_per_hour = sum(outputs.values()) / capacity
