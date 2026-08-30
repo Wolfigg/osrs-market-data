@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from .confidence import ConfidenceComponents, method_confidence
 from .public_models import build_public_afk as build_public_afk_legacy
+from .ranking import RANKING_MODES, rank_methods
 
 _HISTORY_SCENARIOS = {
     "HISTORICAL_INSTANT_24H": "24h",
@@ -28,6 +30,33 @@ def _model_lookup(afk_results: list[dict[str, Any]]) -> dict[str, dict[str, Any]
         if method_id not in result and row.get("model"):
             result[method_id] = row["model"]
     return result
+
+
+def _confidence_for(method: dict[str, Any], model: dict[str, Any]) -> dict[str, object]:
+    valid = bool((method.get("current") or {}).get("valid"))
+    fill = (method.get("fillConfidence") or {}).get("score")
+    fill_score = float(fill) if fill is not None else 50.0
+    stability = str((method.get("stability") or {}).get("state") or "unknown")
+    stability_score = {"stable": 95, "watch": 75, "volatile": 50, "thin_market": 40, "stale": 35, "unknown": 55}.get(stability, 55)
+    probabilistic = bool(model.get("probabilisticOutputs"))
+    source = method.get("priceSource") or {}
+    generated = source.get("generatedAt")
+    return method_confidence(ConfidenceComponents(
+        mechanical=100.0 if valid else 65.0,
+        price=95.0 if valid else 45.0,
+        liquidity=fill_score,
+        throughput=float(stability_score),
+        output_model=88.0 if probabilistic else 96.0,
+        source_freshness=95.0 if generated else 60.0,
+    ))
+
+
+def _ranking_scores(methods: list[dict[str, Any]]) -> dict[str, dict[str, float]]:
+    scores: dict[str, dict[str, float]] = {str(method["methodId"]): {} for method in methods}
+    for mode in sorted(RANKING_MODES):
+        for row in rank_methods(methods, mode):
+            scores[str(row["methodId"])][mode] = float((row.get("ranking") or {}).get("score") or 0.0)
+    return scores
 
 
 def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -67,4 +96,10 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
                 "label": variant.get("label"),
                 "description": variant.get("description"),
             }
+        method["confidence"] = _confidence_for(method, model)
+
+    ranking_scores = _ranking_scores(payload.get("methods", []))
+    for method in payload.get("methods", []):
+        method["rankingScores"] = ranking_scores.get(str(method["methodId"]), {})
+    payload["rankingModes"] = sorted(RANKING_MODES)
     return payload
