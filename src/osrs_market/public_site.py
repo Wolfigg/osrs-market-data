@@ -8,10 +8,10 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260829-4"
+PUBLIC_ASSET_VERSION = "20260830-1"
 
 PUBLIC_REQUIRED_FILES = (
-    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js",
+    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js", "assets/profile.js",
     "data/afk.json", "data/alchemy.json", "data/status.json",
 )
 
@@ -56,6 +56,8 @@ def _base(title: str, active: str, page: str, main: str) -> str:
   <link rel="stylesheet" href="assets/app.css?v={version}">
   <script defer src="assets/app.js?v={version}"></script>
   <script defer src="assets/enhancements.js?v={version}"></script>
+  <script defer src="assets/cooking_math.js?v={version}"></script>
+  <script defer src="assets/profile.js?v={version}"></script>
 </head>
 <body data-page="{_esc(page)}">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -157,7 +159,7 @@ def write_public_site(output_dir: str | Path, afk: dict[str, Any], alchemy: dict
     write_json(root / "data" / "afk.json", afk); write_json(root / "data" / "alchemy.json", alchemy); write_json(root / "data" / "status.json", status)
     (root / "index.html").write_text(_afk_page(), encoding="utf-8"); (root / "alchemy.html").write_text(_alchemy_page(), encoding="utf-8")
     assets = Path(assets_dir)
-    for filename in ("app.css", "app.js", "enhancements.js"): shutil.copy2(assets / filename, root / "assets" / filename)
+    for filename in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"): shutil.copy2(assets / filename, root / "assets" / filename)
     validate_public_site(root)
 
 

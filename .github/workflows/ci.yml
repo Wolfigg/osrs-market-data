@@ -57,6 +57,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Run cooking backend/frontend parity
+        run: node tests/cooking_parity.mjs
+
       - name: Install Playwright browsers
         run: |
           npm install --no-save playwright@1.55.0

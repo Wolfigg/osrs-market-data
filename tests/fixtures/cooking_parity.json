@@ -1,0 +1,8 @@
+[
+  {"name":"shark_range_80","model":{"minimumLevel":80,"gauntletsAffected":true,"curves":{"range":{"low":1,"high":232}}},"level":80,"location":"range","gauntlets":false,"cookingCape":false,"expected":0.734375},
+  {"name":"shark_hosidius_92","model":{"minimumLevel":80,"gauntletsAffected":true,"curves":{"hosidius_10":{"low":26,"high":257}}},"level":92,"location":"hosidius_10","gauntlets":false,"cookingCape":false,"expected":0.9453125},
+  {"name":"shark_gauntlets_hosidius_92","model":{"minimumLevel":80,"gauntletsAffected":true,"curves":{"hosidius_10":{"low":26,"high":257},"gauntlets_hosidius_10":{"low":40,"high":295}}},"level":92,"location":"hosidius_10","gauntlets":true,"cookingCape":false,"expected":1.0},
+  {"name":"monkfish_gauntlets_fire_70","model":{"minimumLevel":62,"gauntletsAffected":true,"curves":{"fire":{"low":11,"high":275},"gauntlets_fire":{"low":24,"high":290}}},"level":70,"location":"fire","gauntlets":true,"cookingCape":false,"expected":0.828125},
+  {"name":"anglerfish_gauntlets_range_90","model":{"minimumLevel":84,"gauntletsAffected":true,"curves":{"range":{"low":1,"high":220},"gauntlets_range":{"low":12,"high":260}}},"level":90,"location":"range","gauntlets":true,"cookingCape":false,"expected":0.9296875},
+  {"name":"cape_99","model":{"minimumLevel":80,"gauntletsAffected":true,"curves":{"range":{"low":1,"high":232}}},"level":99,"location":"range","gauntlets":false,"cookingCape":true,"expected":1.0}
+]
