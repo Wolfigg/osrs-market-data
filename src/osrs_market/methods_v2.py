@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import math
 from copy import deepcopy
 from typing import Any
 
 from .method_model import effective_cycles_per_hour, input_quantity, iter_method_variants, method_has_probabilistic_quantities, output_quantity
 from .methods import evaluate_method as evaluate_legacy_method
+from .personalisation import materialise_method_for_player
+from .player_profile import PlayerProfile
 
 
 def cooking_success_probability(profile: dict[str, Any], level: int, location: str, gauntlets: bool, cooking_cape: bool = False) -> float:
@@ -22,8 +25,8 @@ def cooking_success_probability(profile: dict[str, Any], level: int, location: s
         return 1.0
     low = float(curve["low"])
     high = float(curve["high"])
-    roll = low + (high - low) * (level - 1) / 98.0
-    return max(0.0, min(1.0, roll / 256.0))
+    value = math.floor(low * (99 - level) / 98 + high * (level - 1) / 98 + 0.5) + 1
+    return max(0.0, min(1.0, value / 256.0))
 
 
 def _apply_cooking_model(method: dict[str, Any]) -> dict[str, Any]:
@@ -39,9 +42,6 @@ def _apply_cooking_model(method: dict[str, Any]) -> dict[str, Any]:
     success = cooking_success_probability(profile, level, location, gauntlets, cape)
     if cooked.get("outputs"):
         cooked["outputs"][0]["quantity_expected"] = success
-        # A probabilistic cook is not guaranteed to produce a cooked item on a
-        # single cycle. Conservative profitability therefore uses zero as the
-        # deterministic lower bound unless the selected setup is zero-burn.
         cooked["outputs"][0]["quantity_minimum"] = 1.0 if success >= 1.0 else 0.0
         cooked["outputs"][0]["quantity_maximum"] = 1.0
     cooked.setdefault("model", {})["cookingResult"] = {
@@ -71,9 +71,25 @@ def _materialise_method(method: dict[str, Any], basis: str) -> dict[str, Any]:
     return materialised
 
 
-def evaluate_method(method_id: str, method: dict[str, Any], item_records: dict[int, dict[str, Any]], exempt_item_ids: set[int], settings: dict[str, Any], generated_at: int) -> list[dict[str, Any]]:
+def evaluate_method(
+    method_id: str,
+    method: dict[str, Any],
+    item_records: dict[int, dict[str, Any]],
+    exempt_item_ids: set[int],
+    settings: dict[str, Any],
+    generated_at: int,
+    player_profile: PlayerProfile | dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
-    for variant_method_id, raw_variant in iter_method_variants(method_id, method):
+    if player_profile is None:
+        variants = iter_method_variants(method_id, method)
+    else:
+        materialised = materialise_method_for_player(method_id, method, player_profile)
+        if not materialised.available:
+            return []
+        variants = [(materialised.method_id, materialised.method)]
+
+    for variant_method_id, raw_variant in variants:
         variant = _apply_cooking_model(raw_variant)
         expected_method = _materialise_method(variant, "expected")
         expected_results = evaluate_legacy_method(variant_method_id, expected_method, item_records, exempt_item_ids, settings, generated_at)
@@ -86,11 +102,13 @@ def evaluate_method(method_id: str, method: dict[str, Any], item_records: dict[i
         workflow = variant.get("workflow") or {}
         variant_meta = variant.get("variant") or {}
         model_meta = variant.get("model") or {}
+        personalised = variant.get("personalisation") or {}
         for row in expected_results:
             lower = lower_by_scenario.get(str(row["scenario"]))
             economics = row.setdefault("economics", {})
             economics["profitGpPerCycleLowerBound"] = ((lower.get("economics") or {}).get("profitGpPerCycle") if lower else economics.get("profitGpPerCycle"))
             economics["profitGpPerHourLowerBoundSustainable"] = ((lower.get("economics") or {}).get("profitGpPerHourBuyLimitSustainable") if lower else economics.get("profitGpPerHourBuyLimitSustainable"))
+            row["personalisation"] = personalised or None
             row["model"] = {
                 "probabilisticOutputs": probabilistic,
                 "expectedValueUsed": probabilistic,
