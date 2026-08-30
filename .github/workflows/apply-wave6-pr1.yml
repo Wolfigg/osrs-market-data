@@ -40,26 +40,16 @@ jobs:
 
           catalog = Path("src/osrs_market/catalog_wave5.py")
           text = catalog.read_text(encoding="utf-8")
-          old_standard = '"requirements": {"members": True, "magic": level, "construction": construction, "equipment": [lectern]}'
-          new_standard = '"requirements": {"members": True, "magic": level, "construction": construction, "poh_features": [lectern]}'
-          if old_standard not in text:
-              raise SystemExit("standard-tablet requirements marker missing")
-          text = text.replace(old_standard, new_standard)
-          old_marble = '"requirements": {"members": True, "magic": level, "construction": 77, "equipment": ["Marble lectern"]}'
-          new_marble = '"requirements": {"members": True, "magic": level, "construction": 77, "poh_features": ["Marble lectern"]}'
-          if old_marble not in text:
-              raise SystemExit("marble-tablet requirements marker missing")
-          text = text.replace(old_marble, new_marble)
-          old_book = '"requirements": {"members": True, "magic": level, "quests": [quest], "equipment": [equipment]}'
-          new_book = '"requirements": {"members": True, "magic": level, "quests": [quest], "unlocks": [f"{book}_spellbook"]}'
-          if old_book not in text:
-              raise SystemExit("ancient/lunar requirements marker missing")
-          text = text.replace(old_book, new_book)
-          old_arceuus = '"requirements": {"members": True, "magic": level, "mining": 38, "equipment": ["Arceuus lectern"], "supplies": ["Self-supplied dark essence block and spell runes"]}'
-          new_arceuus = '"requirements": {"members": True, "magic": level, "mining": 38, "unlocks": ["arceuus_spellbook"], "supplies": ["Self-supplied dark essence block and spell runes"]}'
-          if old_arceuus not in text:
-              raise SystemExit("Arceuus requirements marker missing")
-          text = text.replace(old_arceuus, new_arceuus)
+          replacements = {
+              '{"members": True, "magic": level, "construction": construction, "equipment": [lectern]}': '{"members": True, "magic": level, "construction": construction, "poh_features": [lectern]}',
+              '{"members": True, "magic": level, "construction": 77, "equipment": ["Marble lectern"]}': '{"members": True, "magic": level, "construction": 77, "poh_features": ["Marble lectern"]}',
+              '{"members": True, "magic": level, "quests": [quest], "equipment": [equipment]}': '{"members": True, "magic": level, "quests": [quest], "unlocks": [f"{book}_spellbook"]}',
+              '{"members": True, "magic": level, "mining": 38, "equipment": ["Arceuus lectern"], "supplies": ["Self-supplied dark essence block and spell runes"]}': '{"members": True, "magic": level, "mining": 38, "unlocks": ["arceuus_spellbook"], "supplies": ["Self-supplied dark essence block and spell runes"]}',
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f"catalogue integration marker missing: {old}")
+              text = text.replace(old, new)
           catalog.write_text(text, encoding="utf-8")
 
           profile = Path("web/assets/profile.js")
@@ -68,15 +58,23 @@ jobs:
           new = 'const success = window.OsrsCookingMath.successProbability(cooking, profile.skills.cooking, profile.methodSettings?.cooking?.location || "range", gauntlets, cape);'
           if old not in text:
               raise SystemExit("profile cooking integration marker missing")
-          profile.write_text(text.replace(old, new, 1), encoding="utf-8")
+          text = text.replace(old, new, 1)
+          text = text.replace('Number(raw?.price || 0)', 'Number(raw?.gePrice ?? raw?.price ?? 0)')
+          profile.write_text(text, encoding="utf-8")
+
+          personalisation = Path("src/osrs_market/personalisation.py")
+          text = personalisation.read_text(encoding="utf-8")
+          text = text.replace('generic = _apply_profile_settings(method, PlayerProfile()) if False else deepcopy(method)', 'generic = deepcopy(method)')
+          personalisation.write_text(text, encoding="utf-8")
 
           ci = Path(".github/workflows/ci.yml")
           text = ci.read_text(encoding="utf-8")
-          old = '      - name: Run tests\n        run: pytest\n'
-          new = '      - name: Run tests\n        run: pytest\n\n      - name: Run cooking backend/frontend parity\n        run: node tests/cooking_parity.mjs\n'
-          if old not in text:
-              raise SystemExit("CI test marker missing")
-          ci.write_text(text.replace(old, new, 1), encoding="utf-8")
+          marker = '      - name: Install Playwright browsers\n'
+          insertion = '      - name: Run cooking backend/frontend parity\n        run: node tests/cooking_parity.mjs\n\n'
+          if marker not in text:
+              raise SystemExit("CI Node integration marker missing")
+          text = text.replace(marker, insertion + marker, 1)
+          ci.write_text(text, encoding="utf-8")
           PY
       - name: Install project
         run: |
@@ -94,6 +92,6 @@ jobs:
           rm .github/workflows/apply-wave6-pr1.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/osrs_market/public_site.py src/osrs_market/catalog_wave5.py web/assets/profile.js .github/workflows/ci.yml .github/workflows/apply-wave6-pr1.yml
+          git add src/osrs_market/public_site.py src/osrs_market/catalog_wave5.py src/osrs_market/personalisation.py web/assets/profile.js .github/workflows/ci.yml .github/workflows/apply-wave6-pr1.yml
           git commit -m "Integrate Wave 6 player profile foundation [wave6-pr1-integrated]"
           git push origin HEAD:wave6/player-profile-foundation
