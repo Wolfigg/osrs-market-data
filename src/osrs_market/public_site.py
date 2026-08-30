@@ -8,10 +8,10 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260830-1"
+PUBLIC_ASSET_VERSION = "20260830-3"
 
 PUBLIC_REQUIRED_FILES = (
-    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js", "assets/profile.js",
+    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/planner_v3.js", "assets/cooking_math.js", "assets/profile.js",
     "data/afk.json", "data/alchemy.json", "data/status.json",
 )
 
@@ -56,6 +56,7 @@ def _base(title: str, active: str, page: str, main: str) -> str:
   <link rel="stylesheet" href="assets/app.css?v={version}">
   <script defer src="assets/app.js?v={version}"></script>
   <script defer src="assets/enhancements.js?v={version}"></script>
+  <script defer src="assets/planner_v3.js?v={version}"></script>
   <script defer src="assets/cooking_math.js?v={version}"></script>
   <script defer src="assets/profile.js?v={version}"></script>
 </head>
@@ -104,33 +105,37 @@ def _afk_page() -> str:
   <p>Compare low-interaction methods using live prices, Expected profit, session affordability and market capacity.</p>
 </section>
 <section class="planner-frame" aria-label="Session planner">
-  <div class="planner-heading"><div><p class="eyebrow">My session</p><h2>Bankroll & time planner</h2></div><p class="muted">Optional. Values stay in this browser.</p></div>
+  <div class="planner-heading"><div><p class="eyebrow">My session</p><h2>Bankroll & time planner</h2></div><p class="muted">Change only if you want account-specific session estimates.</p></div>
   <div class="planner-grid">
-    <label class="field"><span>Available cash</span><input id="planner-bankroll" type="number" min="0" step="10000" placeholder="2,000,000"></label>
+    <label class="field"><span>Available cash</span><input id="planner-bankroll" type="number" min="0" step="10000" value="2000000"></label>
     <label class="field"><span>Session length</span><input id="planner-hours" type="number" min="0.25" max="24" step="0.25" value="4"></label>
-    <div class="planner-summary"><span>Planner result</span><strong id="planner-summary">Enter a bankroll to rank what you can actually fund.</strong></div>
+    <div class="planner-summary"><span>Planner result</span><strong id="planner-summary">Calculating what 2m GP can fund...</strong></div>
   </div>
 </section>
-<section class="filter-frame" aria-label="AFK filters">
-  <div class="filter-grid">
+<section class="filter-frame compact-filter-frame" aria-label="AFK filters">
+  <div class="filter-grid primary-filter-grid">
     <label class="field search-field"><span>Search</span><input id="afk-search" type="search" placeholder="Method name" autocomplete="off"></label>
     <label class="field"><span>Category</span><select id="afk-category"><option value="all">All categories</option></select></label>
     <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="afk-membership" value="all" checked><span>All</span></label><label><input type="radio" name="afk-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="afk-membership" value="members"><span>Members</span></label></fieldset>
     <label class="field"><span>Profitability</span><select id="afk-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
-    <label class="field"><span>AFK level</span><select id="afk-level"><option value="all">All levels</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option></select></label>
-    <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option><option value="gathering">Gathering</option></select></label>
-    <label class="field"><span>Price stability</span><select id="afk-stability"><option value="all">All states</option><option value="stable">Stable</option><option value="watch">Watch</option><option value="volatile">Volatile</option><option value="thin_market">Thin market</option><option value="stale">Stale</option></select></label>
-    <label class="field"><span>Market capacity</span><select id="afk-sustainability"><option value="all">All levels</option><option value="strong">Strong</option><option value="moderate">Moderate</option><option value="watch">Liquidity watch</option><option value="constrained">Constrained</option><option value="thin">Thin market</option><option value="limited">GE limited</option><option value="unknown">Unknown</option></select></label>
-    <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
     <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="session-profit">My session profit</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
   </div>
-  <details class="profile-panel">
-    <summary>My skill levels</summary>
-    <p class="muted">Stored only in this browser. Quest and equipment requirements are still shown separately.</p>
-    <div class="filter-grid">{_skill_fields()}<label class="checkbox-field"><input id="afk-can-do" type="checkbox"><span>Only show methods I can do by skill level</span></label></div>
+  <details class="advanced-filters">
+    <summary>More filters & skill levels</summary>
+    <div class="filter-grid advanced-filter-grid">
+      <label class="field"><span>AFK level</span><select id="afk-level"><option value="all">All levels</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option></select></label>
+      <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option><option value="gathering">Gathering</option></select></label>
+      <label class="field"><span>Price stability</span><select id="afk-stability"><option value="all">All states</option><option value="stable">Stable</option><option value="watch">Watch</option><option value="volatile">Volatile</option><option value="thin_market">Thin market</option><option value="stale">Stale</option></select></label>
+      <label class="field"><span>Market capacity</span><select id="afk-sustainability"><option value="all">All levels</option><option value="strong">Strong</option><option value="moderate">Moderate</option><option value="watch">Liquidity watch</option><option value="constrained">Constrained</option><option value="thin">Thin market</option><option value="limited">GE limited</option><option value="unknown">Unknown</option></select></label>
+      <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
+    </div>
+    <div class="profile-panel compact-profile-panel">
+      <p class="muted">Skill levels stay in this browser. Quest and equipment requirements remain visible inside each method.</p>
+      <div class="filter-grid">{_skill_fields()}<label class="checkbox-field"><input id="afk-can-do" type="checkbox"><span>Only methods I can do by skill level</span></label></div>
+    </div>
   </details>
 </section>
-<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Session estimates use bankroll, GE limits and directional fill confidence. Observed volume is not guaranteed market depth.</p></div>
+<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Open a method for three profit scenarios. Full calculation and liquidity details stay collapsed until requested.</p></div>
 <section id="afk-list" class="ranking-ledger" aria-live="polite"></section>
 """
     return _base("AFK Money Makers", "afk", "afk", main)
@@ -159,7 +164,7 @@ def write_public_site(output_dir: str | Path, afk: dict[str, Any], alchemy: dict
     write_json(root / "data" / "afk.json", afk); write_json(root / "data" / "alchemy.json", alchemy); write_json(root / "data" / "status.json", status)
     (root / "index.html").write_text(_afk_page(), encoding="utf-8"); (root / "alchemy.html").write_text(_alchemy_page(), encoding="utf-8")
     assets = Path(assets_dir)
-    for filename in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"): shutil.copy2(assets / filename, root / "assets" / filename)
+    for filename in ("app.css", "app.js", "enhancements.js", "planner_v3.js", "cooking_math.js", "profile.js"): shutil.copy2(assets / filename, root / "assets" / filename)
     validate_public_site(root)
 
 
@@ -223,6 +228,6 @@ def validate_public_site(output_dir: str | Path) -> None:
         text = (root / page).read_text(encoding="utf-8")
         if "Market Explorer" in text: raise ValueError(f"public Market Explorer found in {page}")
         if ">Ledger<" in text or ">About<" in text: raise ValueError(f"removed navigation item found in {page}")
-        for asset in ("app.js", "app.css", "enhancements.js"):
+        for asset in ("app.js", "app.css", "enhancements.js", "planner_v3.js"):
             if f"assets/{asset}?v={PUBLIC_ASSET_VERSION}" not in text:
                 raise ValueError(f"versioned {asset} missing in {page}")
