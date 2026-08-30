@@ -13,6 +13,7 @@ from .catalog_expansion import expanded_method_catalog
 from .catalog_wave4 import wave4_method_catalog
 from .catalog_wave5 import wave5_method_catalog
 from .catalog_wave6 import wave6_method_catalog
+from .catalog_wave7 import wave7_method_catalog
 
 _SKILL_KEYS = {"attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft", "construction", "hitpoints", "agility", "herblore", "thieving", "crafting", "fletching", "slayer", "hunter", "mining", "smithing", "fishing", "cooking", "firemaking", "woodcutting", "farming", "sailing"}
 
@@ -149,6 +150,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         generated.update(wave4_method_catalog())
         generated.update(wave5_method_catalog())
         generated.update(wave6_method_catalog())
+        generated.update(wave7_method_catalog())
         _apply_known_catalog_corrections(generated)
         _set_generated_audit(generated)
         generated.update(payload.get("methods", {}) or {})

@@ -12,6 +12,7 @@ def test_live_refresh_is_lightweight_and_public_only():
     assert "/usr/bin/time -v" in workflow
     assert "actions/cache/restore@v4" in workflow
     assert "rm -f .market-cache/mapping.json" in workflow
+    assert "planner_v3.js" in workflow
     assert "path: build/public-site" in workflow
     assert "path: build/internal-report" in workflow
     assert "actions/cache/save@v4" not in workflow
@@ -28,6 +29,10 @@ def test_history_refresh_has_short_long_full_tiers_and_cache_persistence():
     assert "/usr/bin/time -v" in workflow
     assert "actions/cache/restore@v4" in workflow
     assert "actions/cache/save@v4" in workflow
+    assert "recommendation_history.py" in workflow
+    assert ".market-cache/recommendation-history.json" in workflow
+    assert "backtesting-summary.json" in workflow
+    assert "planner_v3.js" in workflow
     assert "path: build/public-site" in workflow
     assert "path: build/internal-report" in workflow
     assert "group: osrs-market-publish" in workflow
