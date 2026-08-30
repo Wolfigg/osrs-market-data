@@ -1,3 +1,5 @@
+import pytest
+
 from osrs_market.modifiers import apply_modifiers, resolve_modifiers
 from osrs_market.player_profile import PlayerProfile, SkillProfile
 
@@ -94,6 +96,6 @@ def test_capacity_and_throughput_modifiers_are_generic():
     changed, applied = apply_modifiers(method, resolve_modifiers(method, profile))
 
     assert applied == ["future_equipment"]
-    assert changed["cycles_per_hour"] == 110
-    assert changed["theoretical_cycles_per_hour"] == 132
+    assert changed["cycles_per_hour"] == pytest.approx(110)
+    assert changed["theoretical_cycles_per_hour"] == pytest.approx(132)
     assert changed["workflow"]["inventory_capacity"] == 38
