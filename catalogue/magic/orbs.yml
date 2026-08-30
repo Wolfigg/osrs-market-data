@@ -1,0 +1,47 @@
+schemaVersion: 1
+family: orb_charging
+source:
+  url: https://oldschool.runescape.wiki/w/Charge_Air_Orb
+  verifiedAt: '2026-08-30'
+defaults:
+  category: processing/magic
+  cosmicRunes: 3
+  processSeconds: 1.8
+  bankSecondsPerInventory: 12
+  inventorySize: 28
+  itemsPerInventory: 26
+  notes: Route-aware orb charging with banking/travel throughput. Elemental runes are supplied by reusable equipment.
+elements:
+  water:
+    magicLevel: 56
+    product: Water orb
+    staff: Water-rune supplying staff
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Charging_water_orbs
+    routes:
+      - {id: agility_80, label: 80 Agility shortcut, cyclesPerHour: 505, roundTripSeconds: 185, requirements: {agility: 80}}
+      - {id: agility_70, label: 70 Agility shortcut, cyclesPerHour: 450, roundTripSeconds: 205, requirements: {agility: 70}}
+      - {id: no_shortcut, label: No shortcut, cyclesPerHour: 280, roundTripSeconds: 325, requirements: {}}
+  earth:
+    magicLevel: 60
+    product: Earth orb
+    staff: Earth-rune supplying staff
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Charging_earth_orbs
+    routes:
+      - {id: edgeville_glory, label: Edgeville glory route, cyclesPerHour: 470, roundTripSeconds: 205, requirements: {}}
+  fire:
+    magicLevel: 63
+    product: Fire orb
+    staff: Fire-rune supplying staff
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Charging_fire_orbs
+    routes:
+      - {id: agility_80, label: 80 Agility shortcut, cyclesPerHour: 505, roundTripSeconds: 185, requirements: {agility: 80}}
+      - {id: agility_70, label: 70 Agility shortcut, cyclesPerHour: 450, roundTripSeconds: 205, requirements: {agility: 70}}
+      - {id: no_shortcut, label: No shortcut, cyclesPerHour: 280, roundTripSeconds: 325, requirements: {}}
+  air:
+    magicLevel: 66
+    product: Air orb
+    staff: Air-rune supplying staff
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Charging_air_orbs
+    routes:
+      - {id: edgeville_energy, label: Edgeville + energy potions, cyclesPerHour: 525, roundTripSeconds: 170, requirements: {supplies: [Energy potions]}}
+      - {id: poh_pool, label: POH restoration pool, cyclesPerHour: 480, roundTripSeconds: 185, requirements: {construction: 47}}
