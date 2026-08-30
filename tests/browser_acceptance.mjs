@@ -26,6 +26,7 @@ async function run(browserType, name) {
     await page.setViewportSize({ width: 1280, height: 900 });
 
     // Bankroll/session planner uses working capital and persists locally.
+    assert.equal(await page.locator("#planner-bankroll").inputValue(), "2000000", `${name}: first-run planner has a real bankroll value`);
     await page.locator("#planner-bankroll").fill("100000");
     await page.locator("#planner-hours").fill("4");
     await page.waitForFunction(() => document.querySelector("#planner-summary")?.textContent?.includes("Cut camphor logs"));
@@ -42,16 +43,18 @@ async function run(browserType, name) {
     assert.match(page.url(), /q=camphor/);
     assert.match(await page.locator("#afk-list").textContent(), /Cut camphor logs/);
 
-    // URL restoration of type/capital/sort filters.
+    // URL restoration of advanced type/capital filters without forcing them open.
     await page.goto(`${base}/index.html?profit=all&type=gathering&capital=500000&sort=alphabetical`, { waitUntil: "networkidle" });
     await waitForCount(page, "#afk-count", "1 method");
     assert.equal(await page.locator("#afk-type").inputValue(), "gathering");
     assert.equal(await page.locator("#afk-capital").inputValue(), "500000");
     assert.equal(await page.locator("#afk-sort").inputValue(), "alphabetical");
 
-    // Expanded details expose requirements, exact economics and liquidity context.
+    // Expanded method keeps a compact summary; full economics is another explicit disclosure.
     const camphor = page.locator('[data-method-id="camphor"]');
-    await camphor.locator("summary").click();
+    await camphor.locator(":scope > summary").click();
+    assert.equal(await camphor.locator(".method-more").getAttribute("open"), null);
+    await camphor.locator(".method-more > summary").click();
     const camphorText = await camphor.textContent();
     assert.match(camphorText, /Troubled Tortugans/);
     assert.match(camphorText, /Sailing: 45/);
@@ -64,9 +67,10 @@ async function run(browserType, name) {
     await waitForCount(page, "#afk-count", "1 method");
     assert.match(await page.locator("#afk-list").textContent(), /Cut ruby bolt tips/);
 
-    // Skill profile persists locally and gates methods by all skills.
+    // Skill profile is under one collapsed advanced-control panel, persists locally and gates by all skills.
     await page.goto(`${base}/index.html?profit=all&type=gathering`, { waitUntil: "networkidle" });
-    await page.locator(".profile-panel summary").click();
+    assert.equal(await page.locator(".advanced-filters").getAttribute("open"), null);
+    await page.locator(".advanced-filters > summary").click();
     await page.locator('[data-skill="woodcutting"]').fill("99");
     await page.locator('[data-skill="sailing"]').fill("44");
     await page.locator("#afk-can-do").check();
