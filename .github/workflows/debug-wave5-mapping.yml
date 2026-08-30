@@ -1,0 +1,60 @@
+name: Debug Wave 5 mapping
+
+on:
+  push:
+    branches:
+      - hotfix/wave5-live-refresh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mapping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Inspect unresolved catalogue names
+        env:
+          OSRS_MARKET_USER_AGENT: "osrs-market-data/0.3 mapping-debug - github.com/${{ github.repository }}"
+        run: |
+          python - <<'PY'
+          import difflib
+          import json
+          import os
+          import urllib.request
+
+          targets = [
+              "Digsite pendant (5)", "Forinthry bracelet(5)", "Dragonstone necklace",
+              "Varrock teleport", "Lumbridge teleport", "Falador teleport", "Teleport to house",
+              "Camelot teleport", "Kourend castle teleport", "Ardougne teleport",
+              "Civitas illa fortis teleport", "Watchtower teleport", "Summon boat", "Teleport to boat",
+              "Paddewwa teleport", "Senntisten teleport", "Kharyrll teleport", "Lassar teleport",
+              "Dareeyak teleport", "Carrallanger teleport", "Annakarl teleport", "Ghorrock teleport",
+              "Moonclan teleport", "Ourania teleport", "Waterbirth teleport", "Barbarian teleport",
+              "Khazard teleport", "Fishing guild teleport", "Catherby teleport", "Ice plateau teleport",
+              "Arceuus library teleport", "Draynor manor teleport", "Battlefront teleport",
+              "Mind altar teleport", "Salve graveyard teleport", "Fenkenstrain's castle teleport",
+              "West ardougne teleport", "Harmony island teleport", "Cemetery teleport",
+              "Barrows teleport", "Ape atoll teleport", "Bird nest", "Desert goat horn",
+          ]
+          request = urllib.request.Request(
+              "https://prices.runescape.wiki/api/v1/osrs/mapping",
+              headers={"User-Agent": os.environ["OSRS_MARKET_USER_AGENT"]},
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              rows = json.load(response)
+          by_fold = {str(row["name"]).casefold(): row for row in rows}
+          names = [str(row["name"]) for row in rows]
+          print(f"mapping rows={len(rows)}")
+          for target in targets:
+              exact = by_fold.get(target.casefold())
+              if exact:
+                  print(f"EXACT | {target} | id={exact['id']} | name={exact['name']}")
+                  continue
+              matches = difflib.get_close_matches(target, names, n=5, cutoff=0.55)
+              print(f"MISS  | {target} | close={matches}")
+          PY
