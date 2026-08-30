@@ -76,6 +76,20 @@ jobs:
       - name: Refresh historical metrics and rebuild public site
         run: /usr/bin/time -v python -m osrs_market.cli collect --mode "${{ steps.mode.outputs.mode }}" --output build --cache-dir .market-cache
 
+      - name: Install user-specific cooking calculator
+        run: |
+          cp web/assets/cooking.js build/public-site/assets/cooking.js
+          python - <<'PY'
+          from pathlib import Path
+          page = Path("build/public-site/index.html")
+          text = page.read_text(encoding="utf-8")
+          marker = "</head>"
+          script = '  <script defer src="assets/cooking.js?v=20260830-1"></script>\n'
+          if "assets/cooking.js" not in text:
+              text = text.replace(marker, script + marker)
+          page.write_text(text, encoding="utf-8")
+          PY
+
       - name: Save derived market cache
         uses: actions/cache/save@v4
         with:
