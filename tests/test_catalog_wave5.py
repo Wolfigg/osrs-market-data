@@ -52,11 +52,16 @@ def test_cooking_probability_respects_level_location_gauntlets_and_cape():
     assert cooking_success_probability(profile, 99, "range", False, True) == 1.0
 
 
-def test_gathering_only_values_defensible_nest_roll():
+def test_gathering_does_not_assign_market_value_to_unsearched_bird_nests():
     method = wave5_method_catalog()["gather_yew_logs"]
-    assert method["outputs"][0]["quantity_expected"] == 255 / 256
-    assert method["outputs"][1]["quantity_expected"] == 1 / 256
+    assert method["outputs"] == [{"item_name": "Yew logs", "quantity": 1}]
     assert "Clue nest contents" in method["model"]["excludedExpectedOutputs"]
+
+
+def test_untradeable_digsite_pendant_conversion_is_not_ranked():
+    method = wave5_method_catalog()["enchant_ruby_necklace"]
+    assert method["enabled"] is False
+    assert "untradeable Digsite pendant" in method["notes"]
 
 
 def test_catalog_gap_v2_reports_requested_families_covered():

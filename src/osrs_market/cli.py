@@ -74,6 +74,8 @@ def _resolve_catalog_item_names(methods_config: dict[str, Any], mapping: dict[in
     index = _mapping_name_index(mapping)
     errors: list[str] = []
     for method_id, method in methods_config.get("methods", {}).items():
+        if method.get("enabled", True) is False:
+            continue
         for _, variant in iter_method_variants(str(method_id), method):
             for side in ("inputs", "outputs"):
                 for entry in variant.get(side, []):
