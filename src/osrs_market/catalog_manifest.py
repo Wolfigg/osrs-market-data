@@ -255,7 +255,7 @@ _REPLACEMENT_COMPILERS: dict[str, Callable[[str | Path], dict[str, dict[str, Any
 
 
 def compile_catalogue_manifest(path: str | Path, base_methods: dict[str, dict[str, Any]]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
-    manifest_path = Path(path)
+    manifest_path = Path(path).resolve()
     payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
     if int(payload.get("schemaVersion", 0)) != 1:
         raise ValueError("unsupported catalogue manifest schema")
@@ -266,7 +266,9 @@ def compile_catalogue_manifest(path: str | Path, base_methods: dict[str, dict[st
 
     for family in families:
         family_id = str(family["id"]); compiler_id = str(family["compiler"]); mode = str(family.get("mode") or "replace")
-        source_path = Path(str(family["path"]))
+        raw_path = Path(str(family["path"]))
+        source_path = raw_path if raw_path.is_absolute() else manifest_path.parent / raw_path
+        source_path = source_path.resolve()
         if mode == "transform":
             if compiler_id != "gathering_pacing":
                 raise ValueError(f"unsupported transform compiler: {compiler_id}")
