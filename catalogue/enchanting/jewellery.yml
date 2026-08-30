@@ -1,0 +1,125 @@
+schemaVersion: 1
+family: jewellery_enchanting
+source:
+  type: wiki
+  url: https://oldschool.runescape.wiki/w/Enchanting
+  verifiedAt: '2026-08-30'
+defaults:
+  category: bankstanding/magic
+  cyclesPerHour: 1600
+  theoreticalCyclesPerHour: 1600
+  plannedHoursPerDay: 4
+  intervalSeconds: 2.25
+  intensity: moderate
+  description: Level-enchant jewellery conversion with full-rune and reusable elemental-staff variants where applicable.
+pieces:
+  - ring
+  - necklace
+  - bracelet
+  - amulet
+tiers:
+  sapphire:
+    magicLevel: 7
+    members: true
+    runes:
+      - item: Cosmic rune
+        quantity: 1
+      - item: Water rune
+        quantity: 1
+    staff: Water-rune supplying staff
+    products:
+      ring: Ring of recoil
+      necklace: Games necklace(8)
+      bracelet: Bracelet of clay
+      amulet: Amulet of magic
+  emerald:
+    magicLevel: 27
+    members: true
+    runes:
+      - item: Cosmic rune
+        quantity: 1
+      - item: Air rune
+        quantity: 3
+    staff: Air-rune supplying staff
+    products:
+      ring: Ring of dueling(8)
+      necklace: Binding necklace
+      bracelet: Castle wars bracelet(3)
+      amulet: Amulet of defence
+  ruby:
+    magicLevel: 49
+    members: true
+    runes:
+      - item: Cosmic rune
+        quantity: 1
+      - item: Fire rune
+        quantity: 5
+    staff: Fire-rune supplying staff
+    products:
+      ring: Ring of forging
+      necklace: Digsite pendant (5)
+      bracelet: Inoculation bracelet
+      amulet: Amulet of strength
+  diamond:
+    magicLevel: 57
+    members: true
+    runes:
+      - item: Cosmic rune
+        quantity: 1
+      - item: Earth rune
+        quantity: 10
+    staff: Earth-rune supplying staff
+    products:
+      ring: Ring of life
+      necklace: Phoenix necklace
+      bracelet: Abyssal bracelet(5)
+      amulet: Amulet of power
+  dragonstone:
+    magicLevel: 68
+    members: true
+    inputNames:
+      necklace: Dragon necklace
+    runes:
+      - item: Cosmic rune
+        quantity: 1
+      - item: Water rune
+        quantity: 15
+      - item: Earth rune
+        quantity: 15
+    staff: Mud battlestaff or equivalent
+    products:
+      ring: Ring of wealth (5)
+      necklace: Skills necklace(4)
+      bracelet: Combat bracelet(4)
+      amulet: Amulet of glory(4)
+  onyx:
+    magicLevel: 87
+    members: true
+    runes:
+      - item: Cosmic rune
+        quantity: 1
+      - item: Earth rune
+        quantity: 20
+      - item: Fire rune
+        quantity: 20
+    staff: Lava battlestaff or equivalent
+    products:
+      ring: Ring of stone
+      necklace: Berserker necklace
+      bracelet: Regen bracelet
+      amulet: Amulet of fury
+  zenyte:
+    magicLevel: 93
+    members: true
+    runes:
+      - item: Cosmic rune
+        quantity: 1
+      - item: Blood rune
+        quantity: 20
+      - item: Soul rune
+        quantity: 20
+    products:
+      ring: Ring of suffering
+      necklace: Necklace of anguish
+      bracelet: Tormented bracelet
+      amulet: Amulet of torture

@@ -48,6 +48,11 @@ jobs:
           restore-keys: |
             osrs-history-${{ runner.os }}-${{ github.ref_name }}-
 
+      - name: Refresh live mapping
+        # The item mapping is cheap metadata and may change independently of the
+        # historical cache. Never let an old mapping prevent a live deployment.
+        run: rm -f .market-cache/mapping.json
+
       - name: Refresh live prices and rebuild public site
         run: /usr/bin/time -v python -m osrs_market.cli collect --mode live --output build --cache-dir .market-cache
 

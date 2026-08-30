@@ -24,10 +24,12 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
       - name: Discover and compare Wiki money-making guides
-        run: python tools/wiki_catalog_audit.py --output build/wiki-catalogue-audit.json
-      - name: Upload review report
+        run: python tools/wiki_catalog_audit.py --output build/wiki-catalogue-audit.json --impact-output build/wiki-catalogue-impact-v3.json
+      - name: Upload review reports
         uses: actions/upload-artifact@v6
         with:
           name: wiki-catalogue-audit
-          path: build/wiki-catalogue-audit.json
+          path: |
+            build/wiki-catalogue-audit.json
+            build/wiki-catalogue-impact-v3.json
           retention-days: 30
