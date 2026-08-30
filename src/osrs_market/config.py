@@ -10,10 +10,10 @@ import yaml
 from .api import ApiSettings
 from .catalog import generated_method_catalog
 from .catalog_expansion import expanded_method_catalog
+from .catalog_manifest import compile_catalogue_manifest
 from .catalog_wave4 import wave4_method_catalog
 from .catalog_wave5 import wave5_method_catalog
 from .catalog_wave6 import wave6_method_catalog
-from .catalog_wave7 import wave7_method_catalog
 
 _SKILL_KEYS = {"attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft", "construction", "hitpoints", "agility", "herblore", "thieving", "crafting", "fletching", "slayer", "hunter", "mining", "smithing", "fishing", "cooking", "firemaking", "woodcutting", "farming", "sailing"}
 
@@ -38,7 +38,7 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
 
 def _set_generated_audit(methods: dict[str, Any]) -> None:
     for method in methods.values():
-        method["audit"] = {"status": "verified", "verified_at": "2026-08-29", "source": method.get("reference"), "notes": "Verified in the 2026-08-29 catalogue family audit."}
+        method["audit"] = {"status": "verified", "verified_at": "2026-08-30", "source": method.get("reference"), "notes": "Verified in the Wave 8 catalogue family audit."}
 
 
 def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
@@ -150,7 +150,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         generated.update(wave4_method_catalog())
         generated.update(wave5_method_catalog())
         generated.update(wave6_method_catalog())
-        generated.update(wave7_method_catalog())
+        generated, manifest_report = compile_catalogue_manifest(Path("catalogue/manifest.yml"), generated)
         _apply_known_catalog_corrections(generated)
         _set_generated_audit(generated)
         generated.update(payload.get("methods", {}) or {})
@@ -163,6 +163,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
                 generated[method_id]["audit"] = {"status": audit.get("status"), "verified_at": audit.get("verified_at"), "source": audit.get("source"), "notes": audit.get("notes")}
         _validate_method_catalog(generated)
         payload["methods"] = generated
+        payload["catalogueManifest"] = manifest_report
     return payload
 
 
