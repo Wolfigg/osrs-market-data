@@ -76,6 +76,9 @@ jobs:
       - name: Refresh historical metrics and rebuild public site
         run: /usr/bin/time -v python -m osrs_market.cli collect --mode "${{ steps.mode.outputs.mode }}" --output build --cache-dir .market-cache
 
+      - name: Persist recommendation snapshots and evaluate matured forecasts
+        run: python tools/recommendation_history.py --public-afk build/public-site/data/afk.json --cache .market-cache/recommendation-history.json --summary build/internal-report/backtesting-summary.json
+
       - name: Save derived market cache
         uses: actions/cache/save@v4
         with:
