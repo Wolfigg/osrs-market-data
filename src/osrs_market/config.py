@@ -12,6 +12,7 @@ from .catalog import generated_method_catalog
 from .catalog_expansion import expanded_method_catalog
 from .catalog_wave4 import wave4_method_catalog
 from .catalog_wave5 import wave5_method_catalog
+from .catalog_wave6 import wave6_method_catalog
 
 _SKILL_KEYS = {"attack", "strength", "defence", "ranged", "prayer", "magic", "runecraft", "construction", "hitpoints", "agility", "herblore", "thieving", "crafting", "fletching", "slayer", "hunter", "mining", "smithing", "fishing", "cooking", "firemaking", "woodcutting", "farming", "sailing"}
 
@@ -29,6 +30,7 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
     text = f"{method.get('name', '')} {(method.get('afk') or {}).get('description', '')}".lower()
     if "autocast" in text or "auto-cast" in text: types.add("autocast")
     if method.get("variants"): types.add("variants")
+    if method.get("modifiers"): types.add("modifiers")
     if any(entry.get(key) is not None for side in ("inputs", "outputs") for entry in method.get(side, []) for key in ("quantity_expected", "quantity_minimum", "quantity_maximum", "probability")): types.add("probabilistic")
     return sorted(types)
 
@@ -120,6 +122,14 @@ def _validate_method_catalog(methods: dict[str, Any]) -> None:
             if not variant_id: errors.append(f"{method_id}: variant id is required")
             elif variant_id in variant_ids: errors.append(f"{method_id}: duplicate variant id {variant_id}")
             variant_ids.add(variant_id)
+        modifier_ids: set[str] = set()
+        for modifier in method.get("modifiers") or []:
+            modifier_id = str(modifier.get("id") or "")
+            if not modifier_id: errors.append(f"{method_id}: modifier id is required")
+            elif modifier_id in modifier_ids: errors.append(f"{method_id}: duplicate modifier id {modifier_id}")
+            modifier_ids.add(modifier_id)
+            for added in modifier.get("added_items") or []:
+                _validate_entry(method_id, str(added.get("side") or "modifier item"), added, errors)
         reference = str(method.get("reference") or "")
         if not reference.startswith("https://oldschool.runescape.wiki/"): errors.append(f"{method_id}: reference must point to the OSRS Wiki")
         method["method_types"] = _infer_method_types(method)
@@ -138,6 +148,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         generated.update(expanded_method_catalog())
         generated.update(wave4_method_catalog())
         generated.update(wave5_method_catalog())
+        generated.update(wave6_method_catalog())
         _apply_known_catalog_corrections(generated)
         _set_generated_audit(generated)
         generated.update(payload.get("methods", {}) or {})
