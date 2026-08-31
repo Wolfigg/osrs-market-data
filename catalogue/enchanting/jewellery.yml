@@ -2,16 +2,16 @@ schemaVersion: 1
 family: jewellery_enchanting
 source:
   type: wiki
-  url: https://oldschool.runescape.wiki/w/Enchanting
-  verifiedAt: '2026-08-30'
+  url: https://oldschool.runescape.wiki/w/Enchantment_spells
+  verifiedAt: '2026-08-31'
 defaults:
   category: bankstanding/magic
   cyclesPerHour: 1600
-  theoreticalCyclesPerHour: 1600
+  theoreticalCyclesPerHour: 2000
   plannedHoursPerDay: 4
   intervalSeconds: 2.25
   intensity: moderate
-  description: Level-enchant jewellery conversion with full-rune and reusable elemental-staff variants where applicable.
+  description: Level-enchant jewellery conversion. Practical throughput is 1,600 casts/h; the manual-cast 3-tick ceiling is 2,000 casts/h. Reusable elemental-staff variants remove only the runes they actually supply.
 pieces:
   - ring
   - necklace
@@ -88,10 +88,10 @@ tiers:
         quantity: 15
     staff: Mud battlestaff or equivalent
     products:
-      ring: Ring of wealth (5)
-      necklace: Skills necklace(4)
-      bracelet: Combat bracelet(4)
-      amulet: Amulet of glory(4)
+      ring: Ring of wealth
+      necklace: Skills necklace
+      bracelet: Combat bracelet
+      amulet: Amulet of glory
   onyx:
     magicLevel: 87
     members: true
