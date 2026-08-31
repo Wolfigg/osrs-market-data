@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .afk_quality import build_afk_quality
 from .confidence import ConfidenceComponents, method_confidence
 from .public_models import build_public_afk as build_public_afk_legacy
 from .ranking import RANKING_MODES, rank_methods
@@ -51,24 +52,36 @@ def _confidence_for(method: dict[str, Any], model: dict[str, Any]) -> dict[str, 
     ))
 
 
-def _participation_fraction(fill_score: float | None) -> float:
-    """Prudent share of observed directional market flow available to one user.
+def _participation_fraction(fill_score: float | None, stability_state: str = "unknown") -> float:
+    """Prudent share of observed directional flow available to one user.
 
-    100% of observed volume is never treated as personally executable depth.
-    Thinner markets receive progressively smaller participation caps.
+    Fill confidence sets the base participation ceiling. Price instability then
+    reduces that ceiling because historic volume at unstable prices is weaker
+    evidence of executable depth at the current margin.
     """
     if fill_score is None:
-        return 0.02
-    score = float(fill_score)
-    if score >= 90:
-        return 0.25
-    if score >= 75:
-        return 0.15
-    if score >= 55:
-        return 0.10
-    if score >= 35:
-        return 0.05
-    return 0.02
+        base = 0.02
+    else:
+        score = float(fill_score)
+        if score >= 90:
+            base = 0.25
+        elif score >= 75:
+            base = 0.15
+        elif score >= 55:
+            base = 0.10
+        elif score >= 35:
+            base = 0.05
+        else:
+            base = 0.02
+    modifier = {
+        "stable": 1.0,
+        "watch": 0.85,
+        "volatile": 0.65,
+        "thin_market": 0.50,
+        "stale": 0.35,
+        "unknown": 0.60,
+    }.get(str(stability_state or "unknown"), 0.60)
+    return max(0.01, base * modifier)
 
 
 def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
@@ -77,9 +90,10 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
     ge_limited = max(0.0, float(mechanics.get("cyclesPerHourByBuyLimits") or mechanical))
     fill_score_raw = (method.get("fillConfidence") or {}).get("score")
     fill_score = float(fill_score_raw) if fill_score_raw is not None else None
-    participation = _participation_fraction(fill_score)
+    stability_state = str((method.get("stability") or {}).get("state") or "unknown")
+    participation = _participation_fraction(fill_score, stability_state)
 
-    raw_cycle_rates: list[float] = []
+    candidates: list[dict[str, Any]] = []
     for side in ("inputs", "outputs"):
         for row in (method.get("liquidity") or {}).get(side, []):
             directional = row.get("directionalVolume24h")
@@ -91,17 +105,29 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
             quantity_per_cycle = units_per_hour / mechanical if mechanical > 0 else 0.0
             if quantity_per_cycle <= 0:
                 continue
-            raw_cycle_rates.append((directional / 24.0) / quantity_per_cycle)
+            raw_cycles_per_hour = (directional / 24.0) / quantity_per_cycle
+            candidates.append({
+                "name": row.get("name"),
+                "side": side[:-1],
+                "directionalVolume24h": directional,
+                "quantityPerCycle": quantity_per_cycle,
+                "rawCyclesPerHour": raw_cycles_per_hour,
+            })
 
-    raw_directional = min(raw_cycle_rates) if raw_cycle_rates else None
+    limiting = min(candidates, key=lambda row: row["rawCyclesPerHour"]) if candidates else None
+    raw_directional = limiting["rawCyclesPerHour"] if limiting else None
     if raw_directional is None:
         capacity = min(mechanical, ge_limited)
-        basis = "No directional 24H volume available; mechanical/GE rate only."
+        basis = "No directional 24H volume available; mechanical and GE limits are the only capacity evidence."
+        evidence = "limited"
     else:
         capacity = min(mechanical, ge_limited, raw_directional * participation)
+        evidence = "strong" if fill_score is not None and fill_score >= 75 and stability_state in {"stable", "watch"} else "moderate" if fill_score is not None and fill_score >= 55 else "weak"
+        limiter_name = str(limiting.get("name") or "limiting item")
+        limiter_side = str(limiting.get("side") or "market")
         basis = (
-            "Prudent executable capacity derived from the limiting 24H directional trade flow, "
-            f"using a {participation * 100:.0f}% participation cap for this fill-confidence tier."
+            f"{limiter_name} {limiter_side} flow is the limiting directional market signal. "
+            f"Capacity uses {participation * 100:.1f}% of its observed 24H flow after fill-confidence and price-stability adjustment."
         )
     ratio = capacity / mechanical if mechanical > 0 else 0.0
     return {
@@ -109,6 +135,8 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
         "rawDirectionalCyclesPerHour": raw_directional,
         "participationPct": participation * 100.0,
         "mechanicalRatioPct": ratio * 100.0,
+        "evidence": evidence,
+        "limitingItem": limiting,
         "basis": basis,
     }
 
@@ -137,7 +165,7 @@ def _apply_market_capacity(method: dict[str, Any]) -> None:
     source["current"] = "Latest high/low trade observations from prices.runescape.wiki, using the required input/output direction and GE tax on outputs."
     source["liquidity"] = (
         "24H directional trade volume from prices.runescape.wiki is converted into a per-user capacity. "
-        "Expected profit uses only a confidence-tier share of observed flow, never 100% of market volume."
+        "The participation ceiling is reduced when fill confidence or price stability is weak."
     )
 
 
@@ -187,6 +215,7 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
                 "description": variant.get("description"),
             }
         method["confidence"] = _confidence_for(method, model)
+        method["afkQuality"] = build_afk_quality(method)
         _apply_market_capacity(method)
 
     ranking_scores = _ranking_scores(payload.get("methods", []))
