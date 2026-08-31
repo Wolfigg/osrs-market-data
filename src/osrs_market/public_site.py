@@ -8,10 +8,10 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260831-1"
+PUBLIC_ASSET_VERSION = "20260831-2"
 
 PUBLIC_REQUIRED_FILES = (
-    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js", "assets/profile.js",
+    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js",
     "data/afk.json", "data/alchemy.json", "data/status.json",
 )
 
@@ -51,13 +51,12 @@ def _base(title: str, active: str, page: str, main: str) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="OSRS Profit Finder: live AFK money-making and High Alchemy opportunities using observed OSRS Wiki market prices.">
-  <title>{_esc(title)} | OSRS Profit Finder</title>
+  <meta name="description" content="OSRS Market Board: live AFK money-making and High Alchemy opportunities using RuneScape Wiki real-time prices from prices.runescape.wiki.">
+  <title>{_esc(title)} | OSRS Market Board</title>
   <link rel="stylesheet" href="assets/app.css?v={version}">
   <script defer src="assets/app.js?v={version}"></script>
   <script defer src="assets/enhancements.js?v={version}"></script>
   <script defer src="assets/cooking_math.js?v={version}"></script>
-  <script defer src="assets/profile.js?v={version}"></script>
 </head>
 <body data-page="{_esc(page)}">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -65,7 +64,7 @@ def _base(title: str, active: str, page: str, main: str) -> str:
     <header class="masthead">
       <div class="masthead-title">
         <p class="eyebrow">Grand Exchange Work Board</p>
-        <a class="brand" href="index.html">OSRS Profit Finder</a>
+        <a class="brand" href="index.html">OSRS Market Board</a>
         <p class="subtitle">Live AFK money makers and High Alch opportunities</p>
       </div>
       <div class="status-line" aria-live="polite">
@@ -76,7 +75,7 @@ def _base(title: str, active: str, page: str, main: str) -> str:
     </header>
     <main id="main" class="page-surface">{main}</main>
     <footer class="site-footer">
-      <p>Observed RuneLite/Wiki trades are market observations, not guaranteed Grand Exchange fills.</p>
+      <p>Price and volume data: RuneScape Wiki real-time prices API (prices.runescape.wiki). Grand Exchange observations are not guaranteed fills.</p>
       <p>Old School RuneScape and RuneScape are trademarks of Jagex. This is an independent fan tool.</p>
     </footer>
   </div>
@@ -121,8 +120,8 @@ def _afk_page() -> str:
       <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
     </div>
     <div class="profile-panel compact-profile-panel">
-      <p class="muted">Skill levels stay in this browser. Quest and equipment requirements remain visible inside each method.</p>
-      <div class="filter-grid">{_skill_fields()}<label class="checkbox-field"><input id="afk-can-do" type="checkbox"><span>Only methods I can do by skill level</span></label></div>
+      <p class="muted">Optional skill filters stay in this browser. Quest and equipment requirements remain visible inside each method.</p>
+      <div class="filter-grid">{_skill_fields()}<label class="checkbox-field"><input id="afk-can-do" type="checkbox"><span>Only methods matching these skill levels</span></label></div>
     </div>
   </details>
 </section>
@@ -160,7 +159,7 @@ def write_public_site(output_dir: str | Path, afk: dict[str, Any], alchemy: dict
     (root / "index.html").write_text(_afk_page(), encoding="utf-8")
     (root / "alchemy.html").write_text(_alchemy_page(), encoding="utf-8")
     assets = Path(assets_dir)
-    for filename in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):
+    for filename in ("app.css", "app.js", "enhancements.js", "cooking_math.js"):
         shutil.copy2(assets / filename, root / "assets" / filename)
     validate_public_site(root)
 
@@ -217,7 +216,7 @@ def validate_public_site(output_dir: str | Path) -> None:
     for name in PUBLIC_REQUIRED_FILES:
         if not (root / name).is_file():
             raise ValueError(f"missing public-site file: {name}")
-    forbidden_paths = ("market", "internal", "raw", "health.json", "index.json", "about.html", "afk.html", "data/dashboard.json", "assets/planner_v3.js")
+    forbidden_paths = ("market", "internal", "raw", "health.json", "index.json", "about.html", "afk.html", "data/dashboard.json", "assets/planner_v3.js", "assets/profile.js")
     for name in forbidden_paths:
         if (root / name).exists():
             raise ValueError(f"unwanted or internal artifact leaked into public site: {name}")
@@ -241,6 +240,8 @@ def validate_public_site(output_dir: str | Path) -> None:
             raise ValueError(f"removed navigation item found in {page}")
         if "planner" in text.lower() or "my session" in text.lower():
             raise ValueError(f"planner UI leaked into {page}")
+        if "OSRS Profit Finder" in text or "RuneLite" in text:
+            raise ValueError(f"retired branding/source attribution found in {page}")
         for asset in ("app.js", "app.css", "enhancements.js"):
             if f"assets/{asset}?v={PUBLIC_ASSET_VERSION}" not in text:
                 raise ValueError(f"versioned {asset} missing in {page}")

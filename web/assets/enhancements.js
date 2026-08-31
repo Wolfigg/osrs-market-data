@@ -59,7 +59,7 @@
     existing.forEach(node => content.appendChild(node));
 
     const context = document.createElement("div");
-    context.innerHTML = `<div class="confidence-box"><strong>Market confidence: ${confidenceText(m)}</strong><p>${esc(marketCap.basis || m.fillConfidence?.reason || "Observed directional trading is used to estimate executable capacity.")}</p></div><div class="source-box"><strong>${esc(source.provider || "OSRS Wiki Prices / RuneLite")}</strong><p>${esc(source.current || "Current observed market prices.")}</p></div>`;
+    context.innerHTML = `<div class="confidence-box"><strong>Market confidence: ${confidenceText(m)}</strong><p>${esc(marketCap.basis || m.fillConfidence?.reason || "Observed directional trading is used to estimate executable capacity.")}</p></div><div class="source-box"><strong>${esc(source.provider || "RuneScape Wiki real-time prices API")}</strong><p>${esc(source.current || "Current prices from prices.runescape.wiki.")}</p></div>`;
     content.prepend(...context.childNodes);
     more.append(summary, content);
     panel.append(quick, scenario, more);

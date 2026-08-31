@@ -27,11 +27,12 @@ def test_arceuus_tablets_cannot_be_ranked_as_zero_input_profit():
     assert all((method.get("model") or {}).get("unpricedInputs") for method in arceuus)
 
 
-def test_account_profile_exposes_combination_staff_variants():
-    profile = Path("web/assets/profile.js").read_text(encoding="utf-8")
-    assert "Mud battlestaff or equivalent" in profile
-    assert "Lava battlestaff or equivalent" in profile
-    assert "Automatically use my best available variant" in profile
+def test_my_account_profile_ui_is_removed():
+    assert not Path("web/assets/profile.js").exists()
+    public_site = Path("src/osrs_market/public_site.py").read_text(encoding="utf-8")
+    assert 'src="assets/profile.js' not in public_site
+    assert 'for filename in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js")' not in public_site
+    assert "My Account" not in public_site
 
 
 def test_session_planner_is_removed_from_product_code():
