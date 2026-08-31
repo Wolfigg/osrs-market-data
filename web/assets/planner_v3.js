@@ -19,9 +19,6 @@
     catch (_) { return false; }
   }
 
-  // Seed the same key consumed by app.js so the first render uses a real value,
-  // not a placeholder. Storage failure is non-fatal; the HTML value remains the
-  // fallback. This runs once and never mutates the field while the user types.
   try {
     const saved = JSON.parse(safeStorageGet(PLANNER_KEY) || "null");
     if (!saved || !(Number(saved.bankroll) > 0)) {
@@ -132,7 +129,15 @@
     root.innerHTML = [...seen.values()].sort((a,b) => String(a.name).localeCompare(String(b.name))).map(item => `<label class="field owned-input"><span>${String(item.name || item.itemId)}</span><input type="number" min="0" step="1" data-owned-item="${item.itemId}" value="${Math.max(0, Number(inventory[String(item.itemId)] || 0))}"></label>`).join("");
   }
 
+  function removeLegacySessionCalculations(record) {
+    record.querySelectorAll(".detail-panel p").forEach(node => {
+      const text = (node.textContent || "").trim();
+      if (/^With your bankroll:/i.test(text) || /^My\s+[0-9.]+h\s+session:/i.test(text)) node.remove();
+    });
+  }
+
   function compactPlanNote(record, plan, hours) {
+    removeLegacySessionCalculations(record);
     record.querySelectorAll(".planner-v3-inline").forEach(node => node.remove());
     if (!plan?.valid) return;
     const quick = record.querySelector(".quick-meta");
@@ -192,8 +197,6 @@
   fetch("data/afk.json", { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject()).then(data => {
     methods = data.methods || [];
     renderInventoryInputs();
-    // app.js may have restored an old empty planner state while this module was
-    // loading. Apply the default once on initialization, never during editing.
     const bankrollNode = document.querySelector("#planner-bankroll");
     if (bankrollNode && bankrollNode.value === "") bankrollNode.value = String(DEFAULT_BANKROLL);
     apply();
