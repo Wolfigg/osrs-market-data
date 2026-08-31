@@ -9,29 +9,14 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    /* AFK scanner first. Account/session utilities are deliberately removed
-       from the primary view so market opportunity is the visual hierarchy. */
-    .planner-frame,#owned-input-panel,#local-tools{display:none!important}
     .afk-grid{grid-template-columns:minmax(300px,2.5fr) minmax(120px,1fr) minmax(120px,1fr) minmax(80px,.65fr) minmax(125px,1fr)!important}
-    .afk-grid>:nth-child(3),.afk-grid>:nth-child(6),.afk-grid>:nth-child(8),.afk-grid>:nth-child(9),.afk-grid>:nth-child(10){display:none!important}
-    .ledger-summary>div{padding:10px 12px}
-    .ledger-record[open] .ledger-summary{border-bottom:0}
-    .detail-panel{padding:12px 16px 14px}
-    .method-quick{display:block}
-    .method-actions{display:none!important}
-    .scenario-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid rgba(91,73,53,.34);margin:10px 0 8px;background:rgba(234,217,173,.35)}
-    .scenario-card{padding:8px 10px;border-right:1px solid rgba(91,73,53,.25)}
-    .scenario-card:last-child{border-right:0}.scenario-card span{display:block;color:#5b4935;font:700 .64rem/1.15 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.04em}
-    .scenario-card strong{display:block;margin-top:2px;font-size:1rem}.scenario-card small{display:none}
-    .quick-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:#5b4935;font:.74rem/1.3 system-ui,sans-serif}
-    .quick-meta strong{color:#241b12}.quick-separator{opacity:.55}
-    .method-more{margin-top:9px;border-top:1px solid rgba(91,73,53,.32)}
-    .method-more>summary{cursor:pointer;list-style:none;padding:9px 1px 2px;color:#5b4935;font:700 .74rem/1.2 system-ui,sans-serif}
-    .method-more>summary::-webkit-details-marker{display:none}.method-more>summary:before{content:"+ ";color:#6e3430}.method-more[open]>summary:before{content:"− "}
-    .method-more-content{padding-top:10px}.method-more .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .method-more .calculation-block{margin-top:12px}.method-more .history-grid{margin-top:12px}
-    .confidence-box,.source-box{margin:10px 0;padding:10px;border:1px solid rgba(91,73,53,.38);background:rgba(234,217,173,.35)}
-    .confidence-box p,.source-box p{font-size:.82rem}
+    .ledger-summary>div{padding:10px 12px}.ledger-record[open] .ledger-summary{border-bottom:0}.detail-panel{padding:12px 16px 14px}
+    .method-quick{display:block}.scenario-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid rgba(91,73,53,.34);margin:10px 0 8px;background:rgba(234,217,173,.35)}
+    .scenario-card{padding:8px 10px;border-right:1px solid rgba(91,73,53,.25)}.scenario-card:last-child{border-right:0}.scenario-card span{display:block;color:#5b4935;font:700 .64rem/1.15 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.04em}.scenario-card strong{display:block;margin-top:2px;font-size:1rem}
+    .quick-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:#5b4935;font:.74rem/1.3 system-ui,sans-serif}.quick-meta strong{color:#241b12}.quick-separator{opacity:.55}
+    .method-more{margin-top:9px;border-top:1px solid rgba(91,73,53,.32)}.method-more>summary{cursor:pointer;list-style:none;padding:9px 1px 2px;color:#5b4935;font:700 .74rem/1.2 system-ui,sans-serif}.method-more>summary::-webkit-details-marker{display:none}.method-more>summary:before{content:"+ ";color:#6e3430}.method-more[open]>summary:before{content:"− "}
+    .method-more-content{padding-top:10px}.method-more .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.method-more .calculation-block{margin-top:12px}.method-more .history-grid{margin-top:12px}
+    .confidence-box,.source-box{margin:10px 0;padding:10px;border:1px solid rgba(91,73,53,.38);background:rgba(234,217,173,.35)}.confidence-box p,.source-box p{font-size:.82rem}
     @media(max-width:1000px){.afk-grid{grid-template-columns:minmax(240px,2fr) minmax(105px,1fr) minmax(105px,1fr) minmax(110px,1fr)!important}.afk-grid>:nth-child(5){display:none!important}.method-more .detail-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:680px){.afk-grid{grid-template-columns:minmax(0,1.7fr) minmax(100px,.8fr)!important}.afk-grid>:not(:nth-child(1)):not(:nth-child(2)){display:none!important}.ledger-summary>div{padding:9px 10px}.detail-panel{padding:10px 11px 12px}.scenario-grid{grid-template-columns:1fr 1fr 1fr}.scenario-card{padding:7px 6px}.scenario-card strong{font-size:.86rem}.method-more .detail-grid{grid-template-columns:1fr}.method-more .calc-table{font-size:.76rem}}
   `;
@@ -45,23 +30,10 @@
     return c.score == null ? esc(c.label || "Unknown") : `${esc(c.label || "Unknown")} ${esc(c.score)}/100`;
   }
 
-  function stripPlannerFluff(record) {
-    record.querySelectorAll(".planner-v3-inline").forEach(node => node.remove());
-    record.querySelectorAll(".detail-panel p").forEach(node => {
-      const text = (node.textContent || "").trim();
-      if (/^With your bankroll:/i.test(text) || /^My\s+[0-9.]+h\s+session:/i.test(text)) node.remove();
-    });
-    record.querySelectorAll(".calc-table th,.calc-table td").forEach(node => {
-      if ((node.textContent || "").trim() === "My session") node.style.display = "none";
-    });
-  }
-
   function enhanceRecord(record, m) {
-    stripPlannerFluff(record);
     const panel = record.querySelector(".detail-panel");
     if (!panel || panel.dataset.compact === "1") return;
     panel.dataset.compact = "1";
-
     const existing = [...panel.childNodes];
     existing.forEach(node => node.remove());
 
@@ -91,7 +63,6 @@
     content.prepend(...context.childNodes);
     more.append(summary, content);
     panel.append(quick, scenario, more);
-    stripPlannerFluff(record);
   }
 
   function enhanceVisibleRecords() {
@@ -102,16 +73,6 @@
     });
   }
 
-  function simplifyPageCopy() {
-    const intro = document.querySelector(".page-heading > p:last-child");
-    if (intro) intro.textContent = "Find low-interaction money makers using live prices, realistic throughput and directional Grand Exchange market capacity.";
-    const toolbar = document.querySelector(".ledger-toolbar .muted");
-    if (toolbar) toolbar.textContent = "Expected profit is market-capacity aware. Open a method for requirements, recipe and price/liquidity evidence.";
-    const sort = document.querySelector('#afk-sort option[value="session-profit"]');
-    if (sort) sort.remove();
-  }
-
-  simplifyPageCopy();
   ["input", "change"].forEach(type => document.addEventListener(type, event => {
     if (event.target.matches("#afk-search,#afk-category,#afk-profit,#afk-level,#afk-type,#afk-stability,#afk-sustainability,#afk-capital,#afk-can-do,input[name='afk-membership'],.skill-level")) setTimeout(enhanceVisibleRecords, 0);
   }));
