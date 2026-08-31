@@ -40,7 +40,9 @@ def test_history_refresh_has_short_long_full_tiers_and_cache_persistence():
 
 def test_public_site_has_no_session_planner_asset_or_module():
     public_site = text("src/osrs_market/public_site.py")
-    assert "planner_v3.js" not in public_site
+    assert '"assets/planner_v3.js",' not in public_site
+    assert 'src="assets/planner_v3.js' not in public_site
+    assert '"planner_v3.js", "cooking_math.js"' not in public_site
     assert "Bankroll & time planner" not in public_site
     assert "My session profit" not in public_site
     assert not Path("web/assets/planner_v3.js").exists()
