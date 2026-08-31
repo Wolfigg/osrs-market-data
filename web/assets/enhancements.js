@@ -16,7 +16,7 @@
     .quick-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:#5b4935;font:.74rem/1.3 system-ui,sans-serif}.quick-meta strong{color:#241b12}.quick-separator{opacity:.55}
     .method-more{margin-top:9px;border-top:1px solid rgba(91,73,53,.32)}.method-more>summary{cursor:pointer;list-style:none;padding:9px 1px 2px;color:#5b4935;font:700 .74rem/1.2 system-ui,sans-serif}.method-more>summary::-webkit-details-marker{display:none}.method-more>summary:before{content:"+ ";color:#6e3430}.method-more[open]>summary:before{content:"− "}
     .method-more-content{padding-top:10px}.method-more .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.method-more .calculation-block{margin-top:12px}.method-more .history-grid{margin-top:12px}
-    .confidence-box,.source-box{margin:10px 0;padding:10px;border:1px solid rgba(91,73,53,.38);background:rgba(234,217,173,.35)}.confidence-box p,.source-box p{font-size:.82rem}
+    .confidence-box,.source-box,.afk-quality-box{margin:10px 0;padding:10px;border:1px solid rgba(91,73,53,.38);background:rgba(234,217,173,.35)}.confidence-box p,.source-box p,.afk-quality-box p{font-size:.82rem}
     @media(max-width:1000px){.afk-grid{grid-template-columns:minmax(240px,2fr) minmax(105px,1fr) minmax(105px,1fr) minmax(110px,1fr)!important}.afk-grid>:nth-child(5){display:none!important}.method-more .detail-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:680px){.afk-grid{grid-template-columns:minmax(0,1.7fr) minmax(100px,.8fr)!important}.afk-grid>:not(:nth-child(1)):not(:nth-child(2)){display:none!important}.ledger-summary>div{padding:9px 10px}.detail-panel{padding:10px 11px 12px}.scenario-grid{grid-template-columns:1fr 1fr 1fr}.scenario-card{padding:7px 6px}.scenario-card strong{font-size:.86rem}.method-more .detail-grid{grid-template-columns:1fr}.method-more .calc-table{font-size:.76rem}}
   `;
@@ -41,10 +41,11 @@
     const sustainability = m.sustainability || {};
     const source = m.priceSource || {};
     const marketCap = m.marketCapacity || {};
+    const afkQuality = m.afkQuality || {};
 
     const quick = document.createElement("div");
     quick.className = "method-quick";
-    quick.innerHTML = `<div class="quick-meta"><strong>${esc(m.afk?.classification || "Method")}</strong><span class="quick-separator">·</span><span>Fill ${confidenceText(m)}</span><span class="quick-separator">·</span><span>${esc(sustainability.label || "Market unknown")}</span>${marketCap.cyclesPerHour == null ? "" : `<span class="quick-separator">·</span><span><strong>${gp.format(marketCap.cyclesPerHour)} cycles/h</strong> estimated executable capacity</span>`}</div>`;
+    quick.innerHTML = `<div class="quick-meta"><strong>${esc(afkQuality.label || m.afk?.classification || "Method")}</strong>${afkQuality.score == null ? "" : `<span>${esc(afkQuality.score)}/100 AFK quality</span>`}<span class="quick-separator">·</span><span>Fill ${confidenceText(m)}</span><span class="quick-separator">·</span><span>${esc(sustainability.label || "Market unknown")}</span>${marketCap.evidence ? `<span class="quick-separator">·</span><span>${esc(marketCap.evidence)} market evidence</span>` : ""}${marketCap.cyclesPerHour == null ? "" : `<span class="quick-separator">·</span><span><strong>${gp.format(marketCap.cyclesPerHour)} cycles/h</strong> estimated executable capacity</span>`}</div>`;
 
     const scenario = document.createElement("div");
     scenario.className = "scenario-grid";
@@ -53,13 +54,14 @@
     const more = document.createElement("details");
     more.className = "method-more";
     const summary = document.createElement("summary");
-    summary.textContent = "Requirements, recipe, calculation, liquidity and history";
+    summary.textContent = "Requirements, recipe, calculation, liquidity and history · AFK quality";
     const content = document.createElement("div");
     content.className = "method-more-content";
     existing.forEach(node => content.appendChild(node));
 
     const context = document.createElement("div");
-    context.innerHTML = `<div class="confidence-box"><strong>Market confidence: ${confidenceText(m)}</strong><p>${esc(marketCap.basis || m.fillConfidence?.reason || "Observed directional trading is used to estimate executable capacity.")}</p></div><div class="source-box"><strong>${esc(source.provider || "RuneScape Wiki real-time prices API")}</strong><p>${esc(source.current || "Current prices from prices.runescape.wiki.")}</p></div>`;
+    const cadence = afkQuality.estimatedInteractionsPerHour == null ? "Unknown" : `${esc(afkQuality.estimatedInteractionsPerHour)} estimated interactions/h`;
+    context.innerHTML = `<div class="afk-quality-box"><strong>AFK quality: ${esc(afkQuality.label || "Unknown")}${afkQuality.score == null ? "" : ` ${esc(afkQuality.score)}/100`}</strong><p>${cadence}. ${afkQuality.deterministicTiming ? "Timing is deterministic for the modelled workflow." : afkQuality.estimatedCadence ? "Gathering cadence is an estimate, not guaranteed idle time." : "Timing confidence is moderate."}</p></div><div class="confidence-box"><strong>Market confidence: ${confidenceText(m)}${marketCap.evidence ? ` · ${esc(marketCap.evidence)} capacity evidence` : ""}</strong><p>${esc(marketCap.basis || m.fillConfidence?.reason || "Observed directional trading is used to estimate executable capacity.")}</p></div><div class="source-box"><strong>${esc(source.provider || "RuneScape Wiki real-time prices API")}</strong><p>${esc(source.current || "Current prices from prices.runescape.wiki.")}</p></div>`;
     content.prepend(...context.childNodes);
     more.append(summary, content);
     panel.append(quick, scenario, more);
