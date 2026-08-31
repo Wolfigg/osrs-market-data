@@ -6,7 +6,10 @@ on:
     branches:
       - master
   schedule:
-    - cron: "2/5 * * * *"
+    # GitHub scheduled workflows are best-effort. Avoid both the start of the
+    # hour and an aggressive every-5-minute expression, which was observed to
+    # be delayed/coalesced for hours. History refreshes remain a fallback.
+    - cron: "7,17,27,37,47,57 * * * *"
 
 concurrency:
   group: osrs-market-publish

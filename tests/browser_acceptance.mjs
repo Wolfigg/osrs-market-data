@@ -25,17 +25,11 @@ async function run(browserType, name) {
     for (const width of [360, 390, 768, 1280]) await assertResponsive(page, width);
     await page.setViewportSize({ width: 1280, height: 900 });
 
-    // Bankroll/session planner uses working capital and persists locally.
-    assert.equal(await page.locator("#planner-bankroll").inputValue(), "2000000", `${name}: first-run planner has a real bankroll value`);
-    await page.locator("#planner-bankroll").fill("100000");
-    await page.locator("#planner-hours").fill("4");
-    await page.waitForFunction(() => document.querySelector("#planner-summary")?.textContent?.includes("Cut camphor logs"));
-    assert.match(await page.locator("#planner-summary").textContent(), /480,000 gp over 4h/);
-    await page.locator("#afk-sort").selectOption("session-profit");
-    assert.equal(await page.locator("#afk-sort").inputValue(), "session-profit");
-    await page.reload({ waitUntil: "networkidle" });
-    assert.equal(await page.locator("#planner-bankroll").inputValue(), "100000");
-    assert.equal(await page.locator("#planner-hours").inputValue(), "4");
+    // AFK-first UI removes session-planner and saved/compare clutter from the scanner entirely.
+    assert.equal(await page.locator(".planner-frame").count(), 0);
+    assert.equal(await page.locator("#afk-sort option[value='session-profit']").count(), 0);
+    assert.equal(await page.locator("#local-tools").count(), 0);
+    assert.match(await page.locator(".page-heading").textContent(), /directional Grand Exchange market capacity/i);
 
     // Search and URL-state synchronization.
     await page.locator("#afk-search").fill("camphor");
@@ -54,13 +48,15 @@ async function run(browserType, name) {
     const camphor = page.locator('[data-method-id="camphor"]');
     await camphor.locator(":scope > summary").click();
     assert.equal(await camphor.locator(".method-more").getAttribute("open"), null);
+    assert.match(await camphor.textContent(), /Expected executable/i);
+    assert.doesNotMatch(await camphor.textContent(), /My 4h:/);
     await camphor.locator(".method-more > summary").click();
     const camphorText = await camphor.textContent();
     assert.match(camphorText, /Troubled Tortugans/);
     assert.match(camphorText, /Sailing: 45/);
     assert.match(camphorText, /Current calculation/);
     assert.match(camphorText, /Sustainability & liquidity/);
-    assert.match(camphorText, /Mechanical rate/);
+    assert.doesNotMatch(camphorText, /With your bankroll:/);
 
     // Sustainability filtering is independent of historical stability.
     await page.goto(`${base}/index.html?profit=all&sustainability=moderate`, { waitUntil: "networkidle" });

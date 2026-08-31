@@ -19,7 +19,7 @@
       return { ...defaults(), ...stored, skills: { ...defaults().skills, ...(stored.skills || {}) }, methodSettings: { ...defaults().methodSettings, ...(stored.methodSettings || {}) }, filters: { ...defaults().filters, ...(stored.filters || {}) } };
     } catch (_) { return defaults(); }
   };
-  const save = value => localStorage.setItem(KEY, JSON.stringify(value));
+  const save = value => { try { localStorage.setItem(KEY, JSON.stringify(value)); } catch (_) {} };
   let profile = load();
   let methods = [];
 
@@ -49,7 +49,7 @@
   function accountPanel() {
     const existing = document.querySelector("#my-account-panel");
     if (existing) return existing;
-    const anchor = document.querySelector(".planner-frame") || document.querySelector(".filter-frame");
+    const anchor = document.querySelector(".filter-frame");
     if (!anchor) return null;
     const panel = document.createElement("section");
     panel.id = "my-account-panel";
@@ -66,6 +66,7 @@
             ["prescription_goggles","Prescription goggles"],["amulet_of_chemistry","Amulet of chemistry"],
             ["water_rune_supplying_staff","Water-rune supplying staff"],["earth_rune_supplying_staff","Earth-rune supplying staff"],
             ["fire_rune_supplying_staff","Fire-rune supplying staff"],["air_rune_supplying_staff","Air-rune supplying staff"],
+            ["mud_battlestaff_or_equivalent","Mud battlestaff or equivalent"],["lava_battlestaff_or_equivalent","Lava battlestaff or equivalent"],
             ["fish_barrel","Fish barrel"],["radas_blessing_4","Rada's blessing 4"]
           ].map(([id,label]) => `<label><input data-profile-set="equipment" value="${id}" type="checkbox" ${has("equipment", id) ? "checked" : ""}> ${label}</label>`).join("")}
         </div>
@@ -78,7 +79,7 @@
         <h3>Cooking setup</h3><label class="field"><span>Location</span><select data-profile-cooking="location"><option value="fire">Fire</option><option value="range">Range</option><option value="hosidius_5">Hosidius 5%</option><option value="hosidius_10">Hosidius 10%</option></select></label>
         <h3>Personalisation</h3><div class="account-checks">
           <label><input data-profile-filter="onlyAvailable" type="checkbox" ${profile.filters.onlyAvailable ? "checked" : ""}> Only methods I can perform</label>
-          <label><input data-profile-filter="autoBestVariant" type="checkbox" ${profile.filters.autoBestVariant ? "checked" : ""}> Automatically use my best variant</label>
+          <label><input data-profile-filter="autoBestVariant" type="checkbox" ${profile.filters.autoBestVariant ? "checked" : ""}> Automatically use my best available variant</label>
           <label><input data-profile-filter="showUnavailable" type="checkbox" ${profile.filters.showUnavailable ? "checked" : ""}> Show unavailable methods</label>
         </div>
       </details>`;
@@ -130,7 +131,11 @@
     groups.forEach(rows => {
       let selected = null;
       if (profile.filters.autoBestVariant) {
-        selected = rows.filter(row => row.state.available).sort((a, b) => Number(b.method.mechanics?.cyclesPerHour || 0) - Number(a.method.mechanics?.cyclesPerHour || 0))[0] || null;
+        selected = rows.filter(row => row.state.available).sort((a, b) => {
+          const expected = Number(b.method.scenarios?.expectedGpPerHour ?? -Infinity) - Number(a.method.scenarios?.expectedGpPerHour ?? -Infinity);
+          if (Number.isFinite(expected) && expected !== 0) return expected;
+          return Number(b.method.mechanics?.cyclesPerHour || 0) - Number(a.method.mechanics?.cyclesPerHour || 0);
+        })[0] || null;
       }
       rows.forEach(row => {
         const hideUnavailable = !row.state.available && (profile.filters.onlyAvailable || !profile.filters.showUnavailable);

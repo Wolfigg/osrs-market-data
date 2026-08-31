@@ -8,10 +8,10 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260830-3"
+PUBLIC_ASSET_VERSION = "20260831-1"
 
 PUBLIC_REQUIRED_FILES = (
-    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/planner_v3.js", "assets/cooking_math.js", "assets/profile.js",
+    "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js", "assets/profile.js",
     "data/afk.json", "data/alchemy.json", "data/status.json",
 )
 
@@ -56,7 +56,6 @@ def _base(title: str, active: str, page: str, main: str) -> str:
   <link rel="stylesheet" href="assets/app.css?v={version}">
   <script defer src="assets/app.js?v={version}"></script>
   <script defer src="assets/enhancements.js?v={version}"></script>
-  <script defer src="assets/planner_v3.js?v={version}"></script>
   <script defer src="assets/cooking_math.js?v={version}"></script>
   <script defer src="assets/profile.js?v={version}"></script>
 </head>
@@ -102,15 +101,7 @@ def _afk_page() -> str:
 <section class="page-heading compact">
   <p class="eyebrow">Work Board</p>
   <h1>AFK Money Makers</h1>
-  <p>Compare low-interaction methods using live prices, Expected profit, session affordability and market capacity.</p>
-</section>
-<section class="planner-frame" aria-label="Session planner">
-  <div class="planner-heading"><div><p class="eyebrow">My session</p><h2>Bankroll & time planner</h2></div><p class="muted">Change only if you want account-specific session estimates.</p></div>
-  <div class="planner-grid">
-    <label class="field"><span>Available cash</span><input id="planner-bankroll" type="number" min="0" step="10000" value="2000000"></label>
-    <label class="field"><span>Session length</span><input id="planner-hours" type="number" min="0.25" max="24" step="0.25" value="4"></label>
-    <div class="planner-summary"><span>Planner result</span><strong id="planner-summary">Calculating what 2m GP can fund...</strong></div>
-  </div>
+  <p>Find low-interaction methods using live prices, realistic throughput and directional Grand Exchange market capacity.</p>
 </section>
 <section class="filter-frame compact-filter-frame" aria-label="AFK filters">
   <div class="filter-grid primary-filter-grid">
@@ -118,7 +109,7 @@ def _afk_page() -> str:
     <label class="field"><span>Category</span><select id="afk-category"><option value="all">All categories</option></select></label>
     <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="afk-membership" value="all" checked><span>All</span></label><label><input type="radio" name="afk-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="afk-membership" value="members"><span>Members</span></label></fieldset>
     <label class="field"><span>Profitability</span><select id="afk-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
-    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="session-profit">My session profit</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
+    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
   </div>
   <details class="advanced-filters">
     <summary>More filters & skill levels</summary>
@@ -135,7 +126,7 @@ def _afk_page() -> str:
     </div>
   </details>
 </section>
-<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Open a method for three profit scenarios. Full calculation and liquidity details stay collapsed until requested.</p></div>
+<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Expected profit is market-capacity aware. Open a method for requirements, recipe and price/liquidity evidence.</p></div>
 <section id="afk-list" class="ranking-ledger" aria-live="polite"></section>
 """
     return _base("AFK Money Makers", "afk", "afk", main)
@@ -159,36 +150,49 @@ def _alchemy_page() -> str:
 
 def write_public_site(output_dir: str | Path, afk: dict[str, Any], alchemy: dict[str, Any], status: dict[str, Any], assets_dir: str | Path = "web/assets") -> None:
     root = Path(output_dir)
-    if root.exists(): shutil.rmtree(root)
-    (root / "data").mkdir(parents=True, exist_ok=True); (root / "assets").mkdir(parents=True, exist_ok=True)
-    write_json(root / "data" / "afk.json", afk); write_json(root / "data" / "alchemy.json", alchemy); write_json(root / "data" / "status.json", status)
-    (root / "index.html").write_text(_afk_page(), encoding="utf-8"); (root / "alchemy.html").write_text(_alchemy_page(), encoding="utf-8")
+    if root.exists():
+        shutil.rmtree(root)
+    (root / "data").mkdir(parents=True, exist_ok=True)
+    (root / "assets").mkdir(parents=True, exist_ok=True)
+    write_json(root / "data" / "afk.json", afk)
+    write_json(root / "data" / "alchemy.json", alchemy)
+    write_json(root / "data" / "status.json", status)
+    (root / "index.html").write_text(_afk_page(), encoding="utf-8")
+    (root / "alchemy.html").write_text(_alchemy_page(), encoding="utf-8")
     assets = Path(assets_dir)
-    for filename in ("app.css", "app.js", "enhancements.js", "planner_v3.js", "cooking_math.js", "profile.js"): shutil.copy2(assets / filename, root / "assets" / filename)
+    for filename in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):
+        shutil.copy2(assets / filename, root / "assets" / filename)
     validate_public_site(root)
 
 
 def _walk_keys(value: Any) -> set[str]:
     found: set[str] = set()
     if isinstance(value, dict):
-        for key, child in value.items(): found.add(str(key)); found.update(_walk_keys(child))
+        for key, child in value.items():
+            found.add(str(key))
+            found.update(_walk_keys(child))
     elif isinstance(value, list):
-        for child in value: found.update(_walk_keys(child))
+        for child in value:
+            found.update(_walk_keys(child))
     return found
 
 
 def _validate_afk_production_payload(afk: dict[str, Any]) -> None:
     methods = afk.get("methods")
-    if not isinstance(methods, list): raise ValueError("data/afk.json methods must be a list")
+    if not isinstance(methods, list):
+        raise ValueError("data/afk.json methods must be a list")
     seen: set[str] = set()
     for method in methods:
         method_id = str(method.get("methodId") or "")
-        if not method_id: raise ValueError("public AFK method missing methodId")
-        if method_id in seen: raise ValueError(f"duplicate public AFK methodId: {method_id}")
+        if not method_id:
+            raise ValueError("public AFK method missing methodId")
+        if method_id in seen:
+            raise ValueError(f"duplicate public AFK methodId: {method_id}")
         seen.add(method_id)
         scenarios = method.get("scenarios") or {}
         for key in ("currentGpPerHour", "expectedGpPerHour", "conservativeGpPerHour"):
-            if key not in scenarios: raise ValueError(f"{method_id}: missing profit scenario {key}")
+            if key not in scenarios:
+                raise ValueError(f"{method_id}: missing profit scenario {key}")
         confidence = method.get("fillConfidence") or {}
         if confidence.get("state") not in {"high", "good", "fair", "low", "very_low", "unknown"}:
             raise ValueError(f"{method_id}: invalid fill confidence state")
@@ -211,23 +215,32 @@ def _validate_afk_production_payload(afk: dict[str, Any]) -> None:
 def validate_public_site(output_dir: str | Path) -> None:
     root = Path(output_dir)
     for name in PUBLIC_REQUIRED_FILES:
-        if not (root / name).is_file(): raise ValueError(f"missing public-site file: {name}")
-    forbidden_paths = ("market", "internal", "raw", "health.json", "index.json", "about.html", "afk.html", "data/dashboard.json")
+        if not (root / name).is_file():
+            raise ValueError(f"missing public-site file: {name}")
+    forbidden_paths = ("market", "internal", "raw", "health.json", "index.json", "about.html", "afk.html", "data/dashboard.json", "assets/planner_v3.js")
     for name in forbidden_paths:
-        if (root / name).exists(): raise ValueError(f"unwanted or internal artifact leaked into public site: {name}")
+        if (root / name).exists():
+            raise ValueError(f"unwanted or internal artifact leaked into public site: {name}")
     for name in ("afk.json", "alchemy.json", "status.json"):
         payload = json.loads((root / "data" / name).read_text(encoding="utf-8"))
-        if payload.get("schemaVersion") != PUBLIC_SCHEMA_VERSION: raise ValueError(f"invalid public schemaVersion in data/{name}")
+        if payload.get("schemaVersion") != PUBLIC_SCHEMA_VERSION:
+            raise ValueError(f"invalid public schemaVersion in data/{name}")
         leaked = FORBIDDEN_PUBLIC_KEYS & _walk_keys(payload)
-        if leaked: raise ValueError(f"internal fields leaked into data/{name}: {sorted(leaked)}")
+        if leaked:
+            raise ValueError(f"internal fields leaked into data/{name}: {sorted(leaked)}")
     afk = json.loads((root / "data" / "afk.json").read_text(encoding="utf-8"))
     _validate_afk_production_payload(afk)
     alchemy = json.loads((root / "data" / "alchemy.json").read_text(encoding="utf-8"))
-    if not isinstance(alchemy.get("items"), list): raise ValueError("data/alchemy.json items must be a list")
+    if not isinstance(alchemy.get("items"), list):
+        raise ValueError("data/alchemy.json items must be a list")
     for page in ("index.html", "alchemy.html"):
         text = (root / page).read_text(encoding="utf-8")
-        if "Market Explorer" in text: raise ValueError(f"public Market Explorer found in {page}")
-        if ">Ledger<" in text or ">About<" in text: raise ValueError(f"removed navigation item found in {page}")
-        for asset in ("app.js", "app.css", "enhancements.js", "planner_v3.js"):
+        if "Market Explorer" in text:
+            raise ValueError(f"public Market Explorer found in {page}")
+        if ">Ledger<" in text or ">About<" in text:
+            raise ValueError(f"removed navigation item found in {page}")
+        if "planner" in text.lower() or "my session" in text.lower():
+            raise ValueError(f"planner UI leaked into {page}")
+        for asset in ("app.js", "app.css", "enhancements.js"):
             if f"assets/{asset}?v={PUBLIC_ASSET_VERSION}" not in text:
                 raise ValueError(f"versioned {asset} missing in {page}")
