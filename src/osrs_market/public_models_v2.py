@@ -132,9 +132,12 @@ def _apply_market_capacity(method: dict[str, Any]) -> None:
         scenarios["conservativeGpPerHour"] = float(raw_conservative) * ratio
     if raw_recommended is not None:
         method.setdefault("recommended", {})["gpPerHour"] = float(raw_recommended) * ratio
-    method.setdefault("priceSource", {})["liquidity"] = (
-        "24H directional RuneLite/Wiki trade volume is converted into a per-user capacity. "
-        "The planner and Recommended value use only a confidence-tier share of observed flow, never 100% of market volume."
+    source = method.setdefault("priceSource", {})
+    source["provider"] = "RuneScape Wiki real-time prices API (prices.runescape.wiki)"
+    source["current"] = "Latest high/low trade observations from prices.runescape.wiki, using the required input/output direction and GE tax on outputs."
+    source["liquidity"] = (
+        "24H directional trade volume from prices.runescape.wiki is converted into a per-user capacity. "
+        "Expected profit uses only a confidence-tier share of observed flow, never 100% of market volume."
     )
 
 
