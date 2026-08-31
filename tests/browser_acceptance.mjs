@@ -25,8 +25,8 @@ async function run(browserType, name) {
     for (const width of [360, 390, 768, 1280]) await assertResponsive(page, width);
     await page.setViewportSize({ width: 1280, height: 900 });
 
-    // AFK-first UI removes session-planner and saved/compare clutter from the visible scanner.
-    assert.equal(await page.locator(".planner-frame").evaluate(el => getComputedStyle(el).display), "none");
+    // AFK-first UI removes session-planner and saved/compare clutter from the scanner entirely.
+    assert.equal(await page.locator(".planner-frame").count(), 0);
     assert.equal(await page.locator("#afk-sort option[value='session-profit']").count(), 0);
     assert.equal(await page.locator("#local-tools").count(), 0);
     assert.match(await page.locator(".page-heading").textContent(), /directional Grand Exchange market capacity/i);
