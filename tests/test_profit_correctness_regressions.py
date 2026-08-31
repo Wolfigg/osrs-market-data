@@ -34,8 +34,10 @@ def test_account_profile_exposes_combination_staff_variants():
     assert "Automatically use my best available variant" in profile
 
 
-def test_planner_v3_removes_legacy_duplicate_session_calculations():
-    planner = Path("web/assets/planner_v3.js").read_text(encoding="utf-8")
-    assert "function removeLegacySessionCalculations" in planner
-    assert "With your bankroll:" in planner
-    assert "planner-v3-inline" in planner
+def test_session_planner_is_removed_from_product_code():
+    assert not Path("web/assets/planner_v3.js").exists()
+    assert not Path("src/osrs_market/session_planner_v3.py").exists()
+    app = Path("web/assets/app.js").read_text(encoding="utf-8")
+    assert "sessionPlan" not in app
+    assert "planner-bankroll" not in app
+    assert "My session" not in app
