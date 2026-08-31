@@ -34,16 +34,16 @@
   }
   function saveInventory(value) { safeStorageSet(INVENTORY_KEY, JSON.stringify(value)); }
 
-  function directionalRate(method, side) {
-    const rows = method.liquidity?.[side] || [];
-    const rates = rows.map(row => finite(row.directionalVolume24h)).filter(v => v != null).map(v => v / 24);
-    return rates.length ? Math.min(...rates) : Infinity;
-  }
-
   function geRate(method) {
     const mechanical = Number(method.mechanics?.cyclesPerHour || 0);
     const limited = finite(method.mechanics?.cyclesPerHourByBuyLimits);
     return limited == null ? mechanical : limited;
+  }
+
+  function marketRate(method) {
+    const configured = finite(method.marketCapacity?.cyclesPerHour);
+    if (configured != null) return Math.max(0, configured);
+    return Math.max(0, geRate(method));
   }
 
   function ownedEquivalentUnits(method, inventory) {
@@ -62,32 +62,29 @@
   function sessionPlan(method, bankroll, hours, inventory) {
     const duration = clamp(hours, 0.25, 24);
     const productionRate = Math.max(0, Number(method.mechanics?.cyclesPerHour || 0));
+    const geLimitRate = Math.max(0, geRate(method));
+    const executableRate = Math.max(0, marketRate(method));
     const inputCost = Math.max(0, Number(method.economics?.capitalPerCycle || 0));
     const profitPerUnit = finite(method.economics?.profitPerCycle);
     const outputValue = Math.max(0, Number(method.economics?.outputNetGpPerCycle || inputCost + (profitPerUnit || 0)));
-    const inputFillRate = directionalRate(method, "inputs");
-    const outputSellRate = directionalRate(method, "outputs");
-    const buyLimitRate = Math.max(0, geRate(method));
     const owned = ownedEquivalentUnits(method, inventory);
     const fillDelay = Math.max(0, Number(method.fillConfidence?.inputFillDelayHours || 0));
     const sellDelay = Math.max(0.25, Number(method.fillConfidence?.turnoverHours || 1));
 
-    if (!method.current?.valid || profitPerUnit == null || productionRate <= 0 || duration <= 0) {
+    if (!method.current?.valid || profitPerUnit == null || productionRate <= 0 || duration <= 0 || executableRate <= 0) {
       return { valid: false, profit: null, limitingFactor: "unavailable" };
     }
 
     const activeWindow = Math.max(0, duration - fillDelay);
-    const liquidityRate = Math.min(productionRate, inputFillRate, outputSellRate, buyLimitRate || productionRate);
     const concurrencyHours = Math.max(1 / productionRate, sellDelay + 1 / productionRate);
     const cashFinancedUnits = inputCost > 0 ? Math.max(0, bankroll) / inputCost : Infinity;
     const bankrollRate = cashFinancedUnits === Infinity ? Infinity : cashFinancedUnits / concurrencyHours;
-    const marketUnits = liquidityRate * activeWindow;
+    const marketUnits = executableRate * activeWindow;
     const ownedUsed = Math.min(owned, marketUnits);
     const remaining = Math.max(0, marketUnits - ownedUsed);
     const cashUnits = Math.min(remaining, bankrollRate * activeWindow);
     const processedUnits = ownedUsed + cashUnits;
-    const soldCapacity = outputSellRate === Infinity ? processedUnits : outputSellRate * Math.max(0, activeWindow - sellDelay);
-    const unsoldUnits = Math.max(0, processedUnits - soldCapacity);
+    const unsoldUnits = Math.max(0, processedUnits - executableRate * activeWindow);
     const capitalLocked = unsoldUnits * outputValue;
     const cashPurchased = Math.max(0, processedUnits - ownedUsed);
     const incrementalCash = Math.min(Math.max(0, bankroll), cashPurchased * inputCost);
@@ -95,13 +92,28 @@
     const idleHours = Math.max(0, duration - processedUnits / productionRate);
 
     const candidates = [
-      ["production", productionRate], ["input_fill", inputFillRate], ["output_sell", outputSellRate],
-      ["ge_buy_limit", buyLimitRate || Infinity], ["bankroll", owned >= marketUnits ? Infinity : bankrollRate],
+      ["production", productionRate],
+      ["market_capacity", executableRate],
+      ["ge_buy_limit", geLimitRate || Infinity],
+      ["bankroll", owned >= marketUnits ? Infinity : bankrollRate],
     ].filter(([, value]) => Number.isFinite(value));
     let limitingFactor = candidates.length ? candidates.sort((a,b) => a[1]-b[1])[0][0] : "production";
     if (fillDelay >= duration) limitingFactor = "input_fill_delay";
 
-    return { valid: true, profit, processedUnits, gpPerHour: profit / duration, capitalLocked, incrementalCash, ownedUsed, idleHours, limitingFactor, sellDelay };
+    return {
+      valid: true,
+      profit,
+      processedUnits,
+      gpPerHour: profit / duration,
+      capitalLocked,
+      incrementalCash,
+      ownedUsed,
+      idleHours,
+      limitingFactor,
+      sellDelay,
+      executableRate,
+      marketParticipationPct: finite(method.marketCapacity?.participationPct),
+    };
   }
 
   let methods = [];
@@ -141,12 +153,13 @@
     record.querySelectorAll(".planner-v3-inline").forEach(node => node.remove());
     if (!plan?.valid) return;
     const quick = record.querySelector(".quick-meta");
+    const capText = plan.marketParticipationPct == null ? "" : ` · ${gp.format(plan.executableRate)} cycles/h market cap`;
     if (quick) {
-      quick.insertAdjacentHTML("beforeend", `<span class="quick-separator planner-v3-inline">·</span><span class="planner-v3-inline"><strong>My ${hours}h: ${gp.format(plan.profit)} gp</strong> · ${plan.limitingFactor.replaceAll("_", " ")}</span>`);
+      quick.insertAdjacentHTML("beforeend", `<span class="quick-separator planner-v3-inline">·</span><span class="planner-v3-inline"><strong>My ${hours}h: ${gp.format(plan.profit)} gp</strong> · ${plan.limitingFactor.replaceAll("_", " ")}${capText}</span>`);
       return;
     }
     const panel = record.querySelector(".detail-panel");
-    if (panel) panel.insertAdjacentHTML("afterbegin", `<p class="planner-v3-inline"><strong>My ${hours}h session: ${gp.format(plan.profit)} gp</strong> · limiter ${plan.limitingFactor.replaceAll("_", " ")}.</p>`);
+    if (panel) panel.insertAdjacentHTML("afterbegin", `<p class="planner-v3-inline"><strong>My ${hours}h session: ${gp.format(plan.profit)} gp</strong> · limiter ${plan.limitingFactor.replaceAll("_", " ")}${capText}.</p>`);
   }
 
   function apply() {
@@ -159,6 +172,7 @@
     const rows = [...document.querySelectorAll("#afk-list [data-method-id]")].map(record => {
       const method = map.get(record.dataset.methodId);
       const plan = method ? sessionPlan(method, bankroll, hours, inventory) : null;
+      removeLegacySessionCalculations(record);
       if (plan) {
         record.dataset.sessionV3Profit = plan.profit == null ? "" : String(plan.profit);
         const cell = record.querySelector(".session-column");
