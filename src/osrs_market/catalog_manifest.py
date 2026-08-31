@@ -150,16 +150,23 @@ def compile_teleport_tablets(path: str | Path) -> dict[str, dict[str, Any]]:
                 method_types=["bankstanding"], source=source, workflow=deepcopy(workflow),
             )
 
+    # Arceuus tablets consume an untradeable dark essence block plus spell
+    # resources. Until those inputs have an explicit acquisition/opportunity-cost
+    # model, ranking them as zero-cost production is materially wrong. Keep the
+    # catalogue rows for coverage and audit, but fail closed so they cannot enter
+    # public profitability or session rankings.
     for row in (payload.get("arceuus") or {}).get("rows") or []:
         magic = int(row["magic"])
-        methods[f"make_teleport_tablet_arceuus_{row['id']}"] = _method(
+        method = _method(
             name=f"Make {row['product']} tablets", category=category, inputs=[], outputs=[_item(str(row["product"]))],
             cycles=cycles, theoretical=theoretical, interval=interval,
-            requirements={"members": True, "magic": magic, "mining": 38, "unlocks": ["arceuus_spellbook"], "supplies": ["Self-supplied dark essence block and spell runes"]},
-            notes="Arceuus tablets consume an untradeable dark essence block. This catalogue entry intentionally reports market revenue only until an integrated essence/time model is available.",
+            requirements={"members": True, "magic": magic, "mining": 38, "unlocks": ["arceuus_spellbook"], "supplies": ["Dark essence block and spell resources"]},
+            notes="Disabled for profit ranking: Arceuus tablet inputs include untradeable dark essence and are not yet fully opportunity-costed. Revenue-only GP/hour must never be shown as profit.",
             reference=reference, method_types=["bankstanding"], source=source,
-            model={"unpricedInputs": ["Dark essence block", "Spell runes pending recipe audit"]},
+            model={"unpricedInputs": ["Dark essence block", "Spell resources pending recipe/opportunity-cost audit"], "profitModelStatus": "UNRESOLVED"},
         )
+        method["enabled"] = False
+        methods[f"make_teleport_tablet_arceuus_{row['id']}"] = method
     return methods
 
 
@@ -286,7 +293,6 @@ def compile_catalogue_manifest(path: str | Path, base_methods: dict[str, dict[st
             owners[method_id] = family_id
         family_rows.append({"id": family_id, "compiler": compiler_id, "mode": mode, "path": str(source_path), "methodCount": len(compiled)})
 
-    # Preserve the explicit GE exclusion of the untradeable Digsite pendant.
     ruby = effective.get("enchant_ruby_necklace")
     if ruby is not None:
         ruby["enabled"] = False
