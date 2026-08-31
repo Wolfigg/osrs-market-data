@@ -25,7 +25,7 @@ async function run(browserType, name) {
     for (const width of [360, 390, 768, 1280]) await assertResponsive(page, width);
     await page.setViewportSize({ width: 1280, height: 900 });
 
-    // Bankroll/session planner uses working capital and persists locally.
+    // Bankroll/session planner uses the market-aware V3 path and persists locally.
     assert.equal(await page.locator("#planner-bankroll").inputValue(), "2000000", `${name}: first-run planner has a real bankroll value`);
     await page.locator("#planner-bankroll").fill("100000");
     await page.locator("#planner-hours").fill("4");
@@ -60,7 +60,8 @@ async function run(browserType, name) {
     assert.match(camphorText, /Sailing: 45/);
     assert.match(camphorText, /Current calculation/);
     assert.match(camphorText, /Sustainability & liquidity/);
-    assert.match(camphorText, /Mechanical rate/);
+    assert.match(camphorText, /My 4h:/);
+    assert.doesNotMatch(camphorText, /With your bankroll:/);
 
     // Sustainability filtering is independent of historical stability.
     await page.goto(`${base}/index.html?profit=all&sustainability=moderate`, { waitUntil: "networkidle" });
