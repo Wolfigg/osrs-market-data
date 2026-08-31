@@ -7,7 +7,7 @@ def text(path: str) -> str:
 
 def test_live_refresh_is_lightweight_and_public_only():
     workflow = text(".github/workflows/refresh-live.yml")
-    assert 'cron: "2/5 * * * *"' in workflow
+    assert 'cron: "7,17,27,37,47,57 * * * *"' in workflow
     assert "collect --mode live" in workflow
     assert "/usr/bin/time -v" in workflow
     assert "actions/cache/restore@v4" in workflow
