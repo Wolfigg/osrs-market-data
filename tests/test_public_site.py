@@ -139,7 +139,7 @@ def test_status_hides_internal_health_details_and_tracks_history_age():
     assert payload == {"schemaVersion": 1, "generatedAt": 123, "liveGeneratedAt": 123, "shortHistoryGeneratedAt": 100, "longHistoryGeneratedAt": 80, "state": "delayed", "ageSeconds": 0}
 
 
-def test_public_site_contains_session_planner_and_sustainability_filters(tmp_path):
+def test_public_site_contains_afk_market_filters_and_compact_assets(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
     _write_test_assets(assets)
     afk = build_public_afk(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
@@ -147,44 +147,30 @@ def test_public_site_contains_session_planner_and_sustainability_filters(tmp_pat
     write_public_site(site, afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
     validate_public_site(site)
     index = (site / "index.html").read_text(encoding="utf-8")
-    assert "Bankroll & time planner" in index
-    assert 'id="planner-bankroll"' in index
-    assert 'value="2000000"' in index
-    assert 'id="planner-hours"' in index
     assert "Market capacity" in index
-    assert "My session profit" in index
     assert "More filters & skill levels" in index
     assert "High Alch" in index
     assert "enhancements.js" in index
-    assert "planner_v3.js" in index
-    assert (site / "assets" / "planner_v3.js").is_file()
+    assert (site / "assets" / "enhancements.js").is_file()
     assert "Ledger" not in index and ">About<" not in index
     assert not (site / "market").exists()
 
 
-def test_client_supports_planner_sustainability_breakdowns_and_history():
+def test_client_focuses_afk_scanner_on_market_aware_profit_and_breakdowns():
     app = open("web/assets/app.js", encoding="utf-8").read()
     enhancements = open("web/assets/enhancements.js", encoding="utf-8").read()
-    planner = open("web/assets/planner_v3.js", encoding="utf-8").read()
-    assert 'osrs-profit-finder.session-planner.v1' in app
-    assert 'function sessionPlan' in app
-    assert 'ge_buy_limit' in app
-    assert 'market_liquidity' in app
     assert 'function calculationHtml' in app
     assert 'function liquidityHtml' in app
-    assert '"session-profit": planFor(m).profit' in app
     assert 'm.sustainability?.state' in app
     assert 'osrs-profit-finder.skill-levels.v1' in app
     assert 'age < 5400 ? "current" : age <= 9000 ? "delayed" : "stale"' in app
-    assert 'osrs-profit-finder.favourites.v1' in enhancements
-    assert 'osrs-profit-finder.compare.v1' in enhancements
-    assert 'Current' in enhancements and 'Expected' in enhancements and 'Conservative' in enhancements
-    assert 'Full breakdown: requirements, recipe, calculation, liquidity and history' in enhancements
-    assert 'function sessionPlan' in planner
-    assert 'osrs-profit-finder.owned-inputs.v1' in planner
-    assert 'input_fill_delay' in planner
-    assert 'bankrollRate' in planner
-    assert '2000000' in planner
+    assert '.planner-frame,#owned-input-panel,#local-tools{display:none!important}' in enhancements
+    assert 'Expected executable' in enhancements
+    assert 'Market confidence' in enhancements
+    assert 'estimated executable capacity' in enhancements
+    assert 'Requirements, recipe, calculation, liquidity and history' in enhancements
+    assert 'data-favourite' not in enhancements
+    assert 'data-compare' not in enhancements
 
 
 def test_production_validator_rejects_incomplete_decision_model(tmp_path):
