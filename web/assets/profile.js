@@ -49,7 +49,7 @@
   function accountPanel() {
     const existing = document.querySelector("#my-account-panel");
     if (existing) return existing;
-    const anchor = document.querySelector(".planner-frame") || document.querySelector(".filter-frame");
+    const anchor = document.querySelector(".filter-frame");
     if (!anchor) return null;
     const panel = document.createElement("section");
     panel.id = "my-account-panel";
