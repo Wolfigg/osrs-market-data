@@ -54,7 +54,7 @@
     const more = document.createElement("details");
     more.className = "method-more";
     const summary = document.createElement("summary");
-    summary.textContent = "Requirements, recipe, AFK quality, calculation, liquidity and history";
+    summary.textContent = "Requirements, recipe, calculation, liquidity and history · AFK quality";
     const content = document.createElement("div");
     content.className = "method-more-content";
     existing.forEach(node => content.appendChild(node));
