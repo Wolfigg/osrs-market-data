@@ -49,7 +49,7 @@ def _candidate(valid=True):
 
 
 def _write_test_assets(assets):
-    for name in ("app.css", "app.js", "enhancements.js", "planner_v3.js", "cooking_math.js", "profile.js"):
+    for name in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):
         (assets / name).write_text("void 0;", encoding="utf-8")
 
 
@@ -139,7 +139,7 @@ def test_status_hides_internal_health_details_and_tracks_history_age():
     assert payload == {"schemaVersion": 1, "generatedAt": 123, "liveGeneratedAt": 123, "shortHistoryGeneratedAt": 100, "longHistoryGeneratedAt": 80, "state": "delayed", "ageSeconds": 0}
 
 
-def test_public_site_contains_afk_market_filters_and_compact_assets(tmp_path):
+def test_public_site_contains_afk_market_filters_and_no_planner(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
     _write_test_assets(assets)
     afk = build_public_afk(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
@@ -152,6 +152,9 @@ def test_public_site_contains_afk_market_filters_and_compact_assets(tmp_path):
     assert "High Alch" in index
     assert "enhancements.js" in index
     assert (site / "assets" / "enhancements.js").is_file()
+    assert "planner" not in index.lower()
+    assert "My session" not in index
+    assert not (site / "assets" / "planner_v3.js").exists()
     assert "Ledger" not in index and ">About<" not in index
     assert not (site / "market").exists()
 
@@ -159,12 +162,16 @@ def test_public_site_contains_afk_market_filters_and_compact_assets(tmp_path):
 def test_client_focuses_afk_scanner_on_market_aware_profit_and_breakdowns():
     app = open("web/assets/app.js", encoding="utf-8").read()
     enhancements = open("web/assets/enhancements.js", encoding="utf-8").read()
+    assert 'osrs-profit-finder.session-planner.v1' not in app
+    assert 'function sessionPlan' not in app
+    assert 'planner-bankroll' not in app
+    assert 'My session' not in app
     assert 'function calculationHtml' in app
     assert 'function liquidityHtml' in app
     assert 'm.sustainability?.state' in app
+    assert 'marketCapacity' in app
     assert 'osrs-profit-finder.skill-levels.v1' in app
     assert 'age < 5400 ? "current" : age <= 9000 ? "delayed" : "stale"' in app
-    assert '.planner-frame,#owned-input-panel,#local-tools{display:none!important}' in enhancements
     assert 'Expected executable' in enhancements
     assert 'Market confidence' in enhancements
     assert 'estimated executable capacity' in enhancements
@@ -184,8 +191,9 @@ def test_production_validator_rejects_incomplete_decision_model(tmp_path):
 
 def test_sanitizer_rejects_internal_key(tmp_path):
     site = tmp_path / "site"; (site / "assets").mkdir(parents=True); (site / "data").mkdir()
-    for page in ("index.html", "alchemy.html"): (site / page).write_text("ok", encoding="utf-8")
-    for asset in ("app.css", "app.js", "enhancements.js", "planner_v3.js", "cooking_math.js", "profile.js"):
+    for page in ("index.html", "alchemy.html"):
+        (site / page).write_text("ok", encoding="utf-8")
+    for asset in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):
         (site / "assets" / asset).write_text("", encoding="utf-8")
     base = {"schemaVersion": 1, "generatedAt": 123}
     (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": [], "series": []}), encoding="utf-8")
