@@ -4,6 +4,7 @@ import pytest
 
 from osrs_market.public_models import PUBLIC_SCHEMA_VERSION, build_public_afk, build_public_alchemy, build_public_status, classify_afk, public_risk
 from osrs_market.public_site import validate_public_site, write_public_site
+from osrs_market.public_models_v2 import build_public_afk as build_public_afk_v2
 
 
 def _afk_result(scenario="CURRENT_INSTANT", valid=True, gp=100_000, warnings=None, fixed_cost=0, volume=100_000):
@@ -49,7 +50,7 @@ def _candidate(valid=True):
 
 
 def _write_test_assets(assets):
-    for name in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):
+    for name in ("app.css", "app.js", "enhancements.js", "cooking_math.js"):
         (assets / name).write_text("void 0;", encoding="utf-8")
 
 
@@ -84,11 +85,17 @@ def test_public_afk_contains_history_scenarios_confidence_and_breakdown():
     assert method["liquidity"]["outputs"][0]["directionalVolume24h"] == 700_000
     assert method["fillConfidence"]["score"] is not None
     assert method["fillConfidence"]["turnoverHours"] > 0
-    assert method["priceSource"]["provider"] == "OSRS Wiki Prices / RuneLite"
     assert method["sustainability"]["state"] == "moderate"
     assert method["sustainability"]["throughputRatioPct"] == 90.0
     assert "warnings" not in method
     assert "scenario" not in method
+
+
+def test_public_v2_normalises_prices_runescape_source():
+    method = build_public_afk_v2(123, [_afk_result()])["methods"][0]
+    assert method["priceSource"]["provider"] == "RuneScape Wiki real-time prices API (prices.runescape.wiki)"
+    assert "prices.runescape.wiki" in method["priceSource"]["current"]
+    assert "RuneLite" not in json.dumps(method["priceSource"])
 
 
 def test_directional_fill_confidence_penalises_required_side_pressure():
@@ -139,10 +146,10 @@ def test_status_hides_internal_health_details_and_tracks_history_age():
     assert payload == {"schemaVersion": 1, "generatedAt": 123, "liveGeneratedAt": 123, "shortHistoryGeneratedAt": 100, "longHistoryGeneratedAt": 80, "state": "delayed", "ageSeconds": 0}
 
 
-def test_public_site_contains_afk_market_filters_and_no_planner(tmp_path):
+def test_public_site_contains_afk_market_filters_and_no_account_or_planner(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
     _write_test_assets(assets)
-    afk = build_public_afk(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
+    afk = build_public_afk_v2(123, [_afk_result()]); alch = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
     site = tmp_path / "site"
     write_public_site(site, afk, alch, build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
     validate_public_site(site)
@@ -151,7 +158,13 @@ def test_public_site_contains_afk_market_filters_and_no_planner(tmp_path):
     assert "More filters & skill levels" in index
     assert "High Alch" in index
     assert "enhancements.js" in index
+    assert "OSRS Market Board" in index
+    assert "prices.runescape.wiki" in index
+    assert "OSRS Profit Finder" not in index
+    assert "RuneLite" not in index
+    assert "My Account" not in index
     assert (site / "assets" / "enhancements.js").is_file()
+    assert not (site / "assets" / "profile.js").exists()
     assert "planner" not in index.lower()
     assert "My session" not in index
     assert not (site / "assets" / "planner_v3.js").exists()
@@ -170,12 +183,12 @@ def test_client_focuses_afk_scanner_on_market_aware_profit_and_breakdowns():
     assert 'function liquidityHtml' in app
     assert 'm.sustainability?.state' in app
     assert 'marketCapacity' in app
-    assert 'osrs-profit-finder.skill-levels.v1' in app
     assert 'age < 5400 ? "current" : age <= 9000 ? "delayed" : "stale"' in app
     assert 'Expected executable' in enhancements
     assert 'Market confidence' in enhancements
     assert 'estimated executable capacity' in enhancements
     assert 'Requirements, recipe, calculation, liquidity and history' in enhancements
+    assert 'RuneScape Wiki real-time prices API' in enhancements
     assert 'data-favourite' not in enhancements
     assert 'data-compare' not in enhancements
 
@@ -183,7 +196,7 @@ def test_client_focuses_afk_scanner_on_market_aware_profit_and_breakdowns():
 def test_production_validator_rejects_incomplete_decision_model(tmp_path):
     assets = tmp_path / "assets-source"; assets.mkdir()
     _write_test_assets(assets)
-    afk = build_public_afk(123, [_afk_result()])
+    afk = build_public_afk_v2(123, [_afk_result()])
     del afk["methods"][0]["fillConfidence"]
     with pytest.raises(ValueError, match="fill confidence"):
         write_public_site(tmp_path / "site", afk, build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True}), build_public_status(123, {"status": "ok", "api": {"timeseriesFailed": 0}, "warnings": []}), assets)
@@ -193,7 +206,7 @@ def test_sanitizer_rejects_internal_key(tmp_path):
     site = tmp_path / "site"; (site / "assets").mkdir(parents=True); (site / "data").mkdir()
     for page in ("index.html", "alchemy.html"):
         (site / page).write_text("ok", encoding="utf-8")
-    for asset in ("app.css", "app.js", "enhancements.js", "cooking_math.js", "profile.js"):
+    for asset in ("app.css", "app.js", "enhancements.js", "cooking_math.js"):
         (site / "assets" / asset).write_text("", encoding="utf-8")
     base = {"schemaVersion": 1, "generatedAt": 123}
     (site / "data" / "afk.json").write_text(json.dumps({**base, "methods": [], "series": []}), encoding="utf-8")
