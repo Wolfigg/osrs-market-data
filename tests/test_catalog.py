@@ -59,6 +59,10 @@ def test_methods_yaml_is_merged_over_all_generated_catalogues():
     assert methods["steel_cannonballs_double_mould"]["cycles_per_hour"] == 1080
     assert methods["oak_plank_make_afk"]["fixed_cost_gp_per_cycle"] == 175
     assert methods["oak_plank_make_afk"]["audit"]["status"] == "verified"
+    for legacy_id in ("mine_amethyst", "cut_magic_logs", "cut_camphor_logs", "catch_dark_crabs", "catch_raw_karambwan"):
+        assert legacy_id not in methods
+    for canonical_id in ("gather_mining_amethyst", "gather_magic_logs", "gather_camphor_logs", "gather_fishing_dark_crabs", "gather_fishing_karambwan"):
+        assert canonical_id in methods
 
 
 def test_every_generated_method_has_market_inputs_or_outputs():

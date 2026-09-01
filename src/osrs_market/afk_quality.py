@@ -46,9 +46,32 @@ def build_afk_quality(method: dict[str, Any]) -> dict[str, Any]:
     bank_share = bank_seconds / total_cycle if total_cycle > 0 else 0.0
     banking_score = _clamp(100.0 * (1.0 - bank_share))
 
-    # Interaction burden is a transparent approximation from the published
-    # interval. It is intentionally not a click-count claim.
+    inventory_size = _num(workflow.get("inventorySize"), _num(workflow.get("inventoryCapacity")))
+    items_per_inventory = _num(workflow.get("itemsPerInventory"), inventory_size)
+    batch_size = items_per_inventory if items_per_inventory > 0 else None
+    inventory_duration = process_seconds if process_seconds > 0 else (interval if deterministic else None)
+
+    if gathering:
+        cadence_type = "probabilistic_gathering"
+    elif method_type == "autocast" or "autocast" in tags:
+        cadence_type = "deterministic_autocast"
+    elif deterministic:
+        cadence_type = "deterministic_batch"
+    else:
+        cadence_type = "semi_continuous"
+
+    cycles_per_hour = _num((method.get("mechanics") or {}).get("cyclesPerHour"))
+    inventory_cycles_per_hour = cycles_per_hour / batch_size if cycles_per_hour > 0 and batch_size else None
+    bank_interactions_per_hour = inventory_cycles_per_hour if bank_seconds > 0 and inventory_cycles_per_hour is not None else 0.0 if bank_seconds == 0 else None
+
+    # Interaction burden remains an interaction-window estimate unless the
+    # catalogue explicitly provides defensible click counts.
     interactions_per_hour = 3600.0 / interval if interval > 0 else None
+    clicks_per_cycle_raw = workflow.get("estimatedClicksPerCycle")
+    clicks_per_cycle = _num(clicks_per_cycle_raw) if clicks_per_cycle_raw is not None else None
+    clicks_per_hour = clicks_per_cycle * cycles_per_hour if clicks_per_cycle is not None and cycles_per_hour > 0 else None
+    interrupt_probability_raw = workflow.get("interruptProbability")
+    interrupt_probability = _clamp(_num(interrupt_probability_raw), 0.0, 1.0) if interrupt_probability_raw is not None else None
     interaction_score = _clamp((interval / 120.0) * 100.0) if interval > 0 else 0.0
 
     score = (
@@ -78,6 +101,13 @@ def build_afk_quality(method: dict[str, Any]) -> dict[str, Any]:
         "bankingBurdenPct": round(bank_share * 100.0, 1),
         "deterministicTiming": deterministic,
         "estimatedCadence": gathering,
+        "cadenceType": cadence_type,
+        "batchSize": round(batch_size, 2) if batch_size is not None else None,
+        "inventoryDurationSeconds": round(inventory_duration, 1) if inventory_duration is not None else None,
+        "bankInteractionsPerHour": round(bank_interactions_per_hour, 1) if bank_interactions_per_hour is not None else None,
+        "estimatedClicksPerCycle": round(clicks_per_cycle, 2) if clicks_per_cycle is not None else None,
+        "estimatedClicksPerHour": round(clicks_per_hour, 1) if clicks_per_hour is not None else None,
+        "interruptProbability": interrupt_probability,
         "basis": (
             "AFK quality combines uninterrupted interval, estimated interaction frequency, banking burden and timing confidence. "
             "Gathering cadence is treated as estimated rather than guaranteed."

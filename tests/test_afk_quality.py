@@ -36,3 +36,18 @@ def test_afk_quality_exposes_interaction_frequency():
     quality = build_afk_quality(method)
     assert quality["estimatedInteractionsPerHour"] == 60.0
     assert 0 <= quality["score"] <= 100
+
+
+def test_afk_quality_v2_exposes_batch_and_cadence_without_fabricating_clicks():
+    method = {
+        "afk": {"intervalSeconds": 81},
+        "tags": ["make-x"],
+        "mechanics": {"cyclesPerHour": 1060},
+        "model": {"methodType": "make-x", "workflow": {"processSeconds": 81, "bankSeconds": 3, "itemsPerInventory": 27}},
+    }
+    quality = build_afk_quality(method)
+    assert quality["cadenceType"] == "deterministic_batch"
+    assert quality["batchSize"] == 27
+    assert quality["inventoryDurationSeconds"] == 81
+    assert quality["bankInteractionsPerHour"] == round(1060 / 27, 1)
+    assert quality["estimatedClicksPerHour"] is None

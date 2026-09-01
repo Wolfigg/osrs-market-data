@@ -3,6 +3,7 @@ from pathlib import Path
 from osrs_market.catalog_manifest import (
     compile_catalogue_manifest,
     compile_orb_charging,
+    compile_afk_fishing,
     compile_potion_v2,
     compile_probabilistic_cooking,
     compile_teleport_tablets,
@@ -20,8 +21,8 @@ def _base():
 
 def test_manifest_is_authoritative_for_wave8_data_families():
     effective, report = compile_catalogue_manifest(Path("catalogue/manifest.yml"), _base())
-    assert report["catalogueVersion"] == 8
-    assert report["familyCount"] == 6
+    assert report["catalogueVersion"] == 9
+    assert report["familyCount"] == 7
     assert report["policy"]["sourceOfTruth"] == "data-first"
     owners = report["methodOwners"]
     for method_id in (
@@ -85,9 +86,20 @@ def test_cooking_curves_are_data_driven():
 def test_production_config_exposes_manifest_report_and_data_owned_methods():
     config = load_yaml("config/methods.yaml")
     report = config["catalogueManifest"]
-    assert report["catalogueVersion"] == 8
+    assert report["catalogueVersion"] == 9
     assert report["dataOwnedMethodCount"] >= 90
     methods = config["methods"]
     assert methods["charge_air_orb"]["source"]["verifiedAt"] == "2026-08-30"
     assert methods["make_prayer_potions_v2"]["model"]["modifierEngine"] == "v2"
     assert methods["cook_probabilistic_shark"]["source"]["verifiedAt"] == "2026-08-30"
+
+
+def test_afk_eels_use_probabilistic_tradeable_outputs():
+    methods = compile_afk_fishing("catalogue/gathering/afk_fishing.yml")
+    sacred = methods["gather_fishing_sacred_eels"]
+    assert sacred["outputs"][0]["quantity_expected"] == 7
+    infernal = methods["gather_fishing_infernal_eels"]
+    outputs = {row["item_name"]: row for row in infernal["outputs"]}
+    assert round(outputs["Onyx bolt tips"]["quantity_expected"], 6) == round(2 / 35, 6)
+    assert round(outputs["Lava scale shard"]["quantity_expected"], 6) == round(12 / 35, 6)
+    assert "Tokkul" in infernal["model"]["excludedExpectedOutputs"]

@@ -252,12 +252,42 @@ def compile_probabilistic_cooking(path: str | Path) -> dict[str, dict[str, Any]]
     return methods
 
 
+def compile_afk_fishing(path: str | Path) -> dict[str, dict[str, Any]]:
+    payload = load_catalogue_document(path)
+    if payload.get("family") != "afk_fishing":
+        raise ValueError("expected afk_fishing family")
+    source = dict(payload.get("source") or {})
+    methods: dict[str, dict[str, Any]] = {}
+    for method_id, row in (payload.get("methods") or {}).items():
+        inputs = [_item(str(item["item"]), float(item.get("quantity", 1)), buy=True) for item in row.get("inputs") or []]
+        outputs = []
+        for item in row.get("outputs") or []:
+            expected = float(item["quantityExpected"])
+            outputs.append(_item(
+                str(item["item"]), expected,
+                quantity_expected=expected,
+                quantity_minimum=float(item.get("quantityMinimum", 0)),
+                quantity_maximum=float(item.get("quantityMaximum", expected)),
+            ))
+        methods[str(method_id)] = _method(
+            name=str(row["name"]), category="gathering/fishing", inputs=inputs, outputs=outputs,
+            cycles=float(row["cyclesPerHour"]), theoretical=float(row["theoreticalCyclesPerHour"]),
+            interval=float(row["intervalSeconds"]), requirements=deepcopy(row.get("requirements") or {}),
+            notes=str(row["notes"]), reference=str(row.get("reference") or source.get("url")),
+            method_types=["gathering", "probabilistic"], source=source,
+            workflow=deepcopy(row.get("workflow") or {}),
+            model={"excludedExpectedOutputs": list(row.get("excludedExpectedOutputs") or [])},
+        )
+    return methods
+
+
 _REPLACEMENT_COMPILERS: dict[str, Callable[[str | Path], dict[str, dict[str, Any]]]] = {
     "jewellery_enchanting": compile_jewellery_enchanting,
     "orb_charging": compile_orb_charging,
     "teleport_tablets": compile_teleport_tablets,
     "potion_v2": compile_potion_v2,
     "probabilistic_cooking": compile_probabilistic_cooking,
+    "afk_fishing": compile_afk_fishing,
 }
 
 
@@ -285,12 +315,13 @@ def compile_catalogue_manifest(path: str | Path, base_methods: dict[str, dict[st
             if compiler is None:
                 raise ValueError(f"unknown catalogue compiler: {compiler_id}")
             compiled = compiler(source_path)
-        collisions = sorted(method_id for method_id in compiled if method_id in owners and owners[method_id] != family_id)
+        collisions = sorted(method_id for method_id in compiled if mode != "transform" and method_id in owners and owners[method_id] != family_id)
         if collisions:
             raise ValueError(f"catalogue method IDs owned by multiple data families: {collisions}")
         for method_id, method in compiled.items():
             effective[method_id] = method
-            owners[method_id] = family_id
+            if mode != "transform" or method_id not in owners:
+                owners[method_id] = family_id
         family_rows.append({"id": family_id, "compiler": compiler_id, "mode": mode, "path": str(source_path), "methodCount": len(compiled)})
 
     ruby = effective.get("enchant_ruby_necklace")

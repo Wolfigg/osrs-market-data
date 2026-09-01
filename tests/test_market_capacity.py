@@ -62,3 +62,12 @@ def test_volatile_market_reduces_participation_even_with_high_fill_score():
     volatile = _market_capacity(_method(directional_output=24_000, fill_score=95, stability="volatile"))
     assert volatile["participationPct"] < stable["participationPct"]
     assert volatile["cyclesPerHour"] < stable["cyclesPerHour"]
+
+
+def test_recent_directional_slowdown_constrains_24h_capacity():
+    method = _method(directional_output=120_000, fill_score=95)
+    method["liquidity"]["outputs"][0]["directionalVolume6h"] = 600
+    capacity = _market_capacity(method)
+    assert capacity["marketSupportedCyclesPerHour"] == 100
+    assert capacity["expectedExecutableCyclesPerHour"] == 25
+    assert capacity["limitingItem"]["volumeAccelerationRatio"] < 1

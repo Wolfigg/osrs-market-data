@@ -1,4 +1,4 @@
-# OSRS Profit Finder
+# OSRS Market Board
 
 A Python 3.12 market-analysis pipeline for Old School RuneScape using the OSRS Wiki / RuneLite Real-time Prices API.
 
@@ -56,7 +56,7 @@ Live mode:
 - makes **zero** `/timeseries` requests
 - rebuilds the public and internal artifacts
 
-The scheduled live workflow targets every five minutes. GitHub Actions scheduling is best-effort, so the UI derives freshness from the actual `generatedAt` timestamp rather than assuming the cron fired on time.
+The scheduled live workflow uses explicit ten-minute slots (`7,17,27,37,47,57`). GitHub Actions scheduling is best-effort, so the UI derives freshness from the actual `generatedAt` timestamp rather than assuming the cron fired on time.
 
 ### Short-history mode
 
@@ -223,7 +223,7 @@ Negative-profit cases are kept conservative by choosing the lower of current and
 
 Recommended GP/hour is the default AFK sort, while raw Current GP/hour remains available as an explicit sort option.
 
-### Personal skill filtering
+### Optional eligibility filtering
 
 The AFK page allows users to enter relevant skill levels and enable:
 
@@ -231,9 +231,9 @@ The AFK page allows users to enter relevant skill levels and enable:
 Only show methods I can do by skill level
 ```
 
-The values are stored only in browser `localStorage`. No account, RuneLite login or server-side profile storage is used.
+The values are lightweight local eligibility controls only. There is no account, login, or server-side profile.
 
-The profile includes skills currently used by the catalogue, including Sailing for current 2026 content such as camphor logging.
+The controls include skills currently used by the catalogue, including Sailing for current content such as camphor logging.
 
 Skill matching does not imply that quest or equipment requirements are satisfied. Those remain visible separately.
 
@@ -292,7 +292,7 @@ export OSRS_MARKET_USER_AGENT="osrs-market-data/0.3 - github.com/Wolfigg/osrs-ma
 The responsibilities are intentionally separated:
 
 - `ci.yml`: Python regression tests plus deterministic Chromium/Firefox browser acceptance on pull requests and pushes
-- `refresh-live.yml`: lightweight `/latest` refresh and Pages deployment every five minutes
+- `refresh-live.yml`: lightweight `/latest` refresh and Pages deployment at explicit ten-minute schedule slots
 - `refresh-history.yml`: hourly short history, six-hour 30D history and daily full/bootstrap refresh
 
 The browser acceptance suite uses a synthetic static dataset. It tests the actual generated HTML/CSS/JS without making live market API calls and covers 360, 390, 768 and desktop widths, filters, URL restoration, local skill storage, details, capital boundaries, unavailable rows and freshness boundaries.

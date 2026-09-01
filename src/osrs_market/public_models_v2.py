@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .afk_quality import build_afk_quality
+from .anomaly_detection import detect_method_anomalies, publication_errors
 from .confidence import ConfidenceComponents, method_confidence
 from .public_models import build_public_afk as build_public_afk_legacy
 from .ranking import RANKING_MODES, rank_methods
@@ -96,29 +97,43 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
     candidates: list[dict[str, Any]] = []
     for side in ("inputs", "outputs"):
         for row in (method.get("liquidity") or {}).get(side, []):
-            directional = row.get("directionalVolume24h")
             units_per_hour = row.get("unitsPerHour")
-            if directional is None or units_per_hour is None or mechanical <= 0:
+            if units_per_hour is None or mechanical <= 0:
                 continue
-            directional = max(0.0, float(directional))
             units_per_hour = max(0.0, float(units_per_hour))
             quantity_per_cycle = units_per_hour / mechanical if mechanical > 0 else 0.0
             if quantity_per_cycle <= 0:
                 continue
-            raw_cycles_per_hour = (directional / 24.0) / quantity_per_cycle
+            horizons: list[dict[str, float]] = []
+            for hours, field in ((1.0, "directionalVolume1h"), (6.0, "directionalVolume6h"), (24.0, "directionalVolume24h")):
+                directional = row.get(field)
+                if directional is None:
+                    continue
+                volume = max(0.0, float(directional))
+                horizons.append({"hours": hours, "volume": volume, "cyclesPerHour": (volume / hours) / quantity_per_cycle})
+            if not horizons:
+                continue
+            # A recent slowdown is relevant immediately, while an isolated
+            # short-window spike is not enough to override the longer window.
+            raw_cycles_per_hour = min(point["cyclesPerHour"] for point in horizons)
+            short = min(horizons, key=lambda point: point["hours"])
+            long = max(horizons, key=lambda point: point["hours"])
+            acceleration = short["cyclesPerHour"] / long["cyclesPerHour"] if long["cyclesPerHour"] > 0 else None
             candidates.append({
                 "name": row.get("name"),
                 "side": side[:-1],
-                "directionalVolume24h": directional,
+                "directionalVolume24h": row.get("directionalVolume24h"),
                 "quantityPerCycle": quantity_per_cycle,
                 "rawCyclesPerHour": raw_cycles_per_hour,
+                "horizons": horizons,
+                "volumeAccelerationRatio": acceleration,
             })
 
     limiting = min(candidates, key=lambda row: row["rawCyclesPerHour"]) if candidates else None
     raw_directional = limiting["rawCyclesPerHour"] if limiting else None
     if raw_directional is None:
         capacity = min(mechanical, ge_limited)
-        basis = "No directional 24H volume available; mechanical and GE limits are the only capacity evidence."
+        basis = "No directional market volume is available; mechanical and GE limits are the only capacity evidence."
         evidence = "limited"
     else:
         capacity = min(mechanical, ge_limited, raw_directional * participation)
@@ -127,11 +142,14 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
         limiter_side = str(limiting.get("side") or "market")
         basis = (
             f"{limiter_name} {limiter_side} flow is the limiting directional market signal. "
-            f"Capacity uses {participation * 100:.1f}% of its observed 24H flow after fill-confidence and price-stability adjustment."
+            f"Capacity uses {participation * 100:.1f}% of the weakest available short/long directional flow after fill-confidence and price-stability adjustment."
         )
     ratio = capacity / mechanical if mechanical > 0 else 0.0
     return {
         "cyclesPerHour": capacity,
+        "mechanicalCyclesPerHour": mechanical,
+        "marketSupportedCyclesPerHour": raw_directional,
+        "expectedExecutableCyclesPerHour": capacity,
         "rawDirectionalCyclesPerHour": raw_directional,
         "participationPct": participation * 100.0,
         "mechanicalRatioPct": ratio * 100.0,
@@ -164,7 +182,7 @@ def _apply_market_capacity(method: dict[str, Any]) -> None:
     source["provider"] = "RuneScape Wiki real-time prices API (prices.runescape.wiki)"
     source["current"] = "Latest high/low trade observations from prices.runescape.wiki, using the required input/output direction and GE tax on outputs."
     source["liquidity"] = (
-        "24H directional trade volume from prices.runescape.wiki is converted into a per-user capacity. "
+        "Available short-window and 24H directional trade volume from prices.runescape.wiki is converted into a per-user capacity. "
         "The participation ceiling is reduced when fill confidence or price stability is weak."
     )
 
@@ -177,7 +195,7 @@ def _ranking_scores(methods: list[dict[str, Any]]) -> dict[str, dict[str, float]
     return scores
 
 
-def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> dict[str, Any]:
+def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]], anomaly_sink: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     payload = build_public_afk_legacy(generated_at, afk_results)
     lower = _lower_bound_lookup(afk_results)
     models = _model_lookup(afk_results)
@@ -214,9 +232,25 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
                 "label": variant.get("label"),
                 "description": variant.get("description"),
             }
+            variant_label = str(variant.get("label") or "").strip()
+            if variant_label:
+                method["name"] = f"{method['name']} - {variant_label}"
         method["confidence"] = _confidence_for(method, model)
         method["afkQuality"] = build_afk_quality(method)
         _apply_market_capacity(method)
+
+    publishable: list[dict[str, Any]] = []
+    for method in payload.get("methods", []):
+        anomalies = detect_method_anomalies(method)
+        if anomaly_sink is not None:
+            anomaly_sink.extend(anomalies)
+        warning_count = sum(row.get("severity") == "warning" for row in anomalies)
+        if warning_count:
+            confidence = method.get("confidence") or {}
+            confidence["score"] = max(0.0, float(confidence.get("score") or 0.0) - 5.0 * warning_count)
+        if not publication_errors(anomalies):
+            publishable.append(method)
+    payload["methods"] = publishable
 
     ranking_scores = _ranking_scores(payload.get("methods", []))
     for method in payload.get("methods", []):

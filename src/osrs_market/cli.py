@@ -189,6 +189,7 @@ def _write_internal_report(
     preliminary_count: int,
     alchemy_assumptions: dict[str, Any],
     health: dict[str, Any],
+    anomalies: list[dict[str, Any]],
 ) -> None:
     if root.exists():
         shutil.rmtree(root)
@@ -204,6 +205,7 @@ def _write_internal_report(
         if item_id in tracked_ids:
             write_json(root / "market" / "items" / f"{item_id}.json", record)
     write_json(root / "health.json", health)
+    write_json(root / "profit-anomalies.json", {"schemaVersion": SCHEMA_VERSION, "generatedAt": generated_at, "anomalies": anomalies})
     write_json(root / "catalogue-gap.json", build_catalog_gap_report(methods_config.get("methods", {})))
     write_json(root / "market" / "summary.json", {
         "schemaVersion": SCHEMA_VERSION,
@@ -357,6 +359,8 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
 
     internal_dir = output_dir / "internal-report"
     public_dir = output_dir / "public-site"
+    anomalies: list[dict[str, Any]] = []
+    public_afk = build_public_afk(generated_at, afk_results, anomaly_sink=anomalies)
     _write_internal_report(
         internal_dir,
         generated_at,
@@ -369,10 +373,11 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
         len(preliminary),
         alchemy_assumptions,
         health,
+        anomalies,
     )
     write_public_site(
         public_dir,
-        build_public_afk(generated_at, afk_results),
+        public_afk,
         build_public_alchemy(generated_at, alchemy_candidates, alchemy_assumptions),
         build_public_status(
             generated_at,

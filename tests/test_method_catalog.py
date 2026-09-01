@@ -39,7 +39,7 @@ def test_audited_hand_tuned_methods_receive_provenance():
 
 def test_generated_catalog_types_come_from_semantics_not_copy_text():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
-    assert methods["mine_amethyst"]["method_types"] == ["gathering"]
+    assert "gathering" in methods["gather_mining_amethyst"]["method_types"]
     assert methods["string_yew_longbows"]["method_types"] == ["bankstanding"]
     assert methods["fletch_magic_longbow_u"]["method_types"] == ["bankstanding", "make-x"]
 
@@ -107,14 +107,14 @@ def test_onyx_bolt_tip_quantity_uses_24_tips_per_gem():
 
 def test_gathering_requirements_match_modelled_rate_gear_and_access():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
-    assert methods["cut_magic_logs"]["requirements"]["equipment"] == ["Dragon or crystal axe"]
     assert methods["cut_redwood_logs"]["requirements"]["equipment"] == ["Dragon axe"]
-    camphor = methods["cut_camphor_logs"]["requirements"]
+    assert methods["gather_magic_logs"]["requirements"]["equipment"] == ["Dragon or crystal axe"]
+    camphor = methods["gather_camphor_logs"]["requirements"]
     assert camphor["woodcutting"] == 66
     assert camphor["sailing"] == 45
     assert camphor["quests"] == ["Troubled Tortugans (partial)"]
     assert camphor["equipment"] == ["Dragon axe", "Log basket"]
-    assert methods["catch_dark_crabs"]["requirements"]["equipment"] == ["Lobster pot"]
+    assert methods["gather_fishing_dark_crabs"]["requirements"]["equipment"] == ["Lobster pot"]
 
 
 def _public_result(category: str, method_types: list[str]):

@@ -1,0 +1,46 @@
+schemaVersion: 1
+family: afk_fishing
+source:
+  type: wiki
+  url: https://oldschool.runescape.wiki/w/Pay-to-play_Fishing_training
+  verifiedAt: '2026-09-01'
+methods:
+  gather_fishing_sacred_eels:
+    name: Catch and dissect sacred eels
+    cyclesPerHour: 220
+    theoreticalCyclesPerHour: 260
+    intervalSeconds: 75
+    inputs:
+      - {item: Fishing bait, quantity: 1}
+    outputs:
+      - {item: Zulrah's scales, quantityExpected: 7, quantityMinimum: 6, quantityMaximum: 8}
+    requirements:
+      members: true
+      fishing: 87
+      cooking: 96
+      quests: [Regicide]
+      equipment: [Fishing rod, Knife]
+    workflow: {process_seconds: 0, bank_seconds: 0, travel_seconds: 0}
+    excludedExpectedOutputs: [Rada's blessing duplicate catch, Spirit flakes duplicate catch]
+    notes: Baseline uses 220 catches/hour and the 96-99 Cooking average of seven scales per eel. Rada's blessing, Spirit flakes and boosted Cooking are excluded rather than silently assumed. Fishing cadence is estimated and spot-dependent.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Catching_sacred_eels
+  gather_fishing_infernal_eels:
+    name: Catch and smash infernal eels
+    cyclesPerHour: 350
+    theoreticalCyclesPerHour: 368.4
+    intervalSeconds: 75
+    inputs:
+      - {item: Fishing bait, quantity: 1}
+    outputs:
+      - {item: Onyx bolt tips, quantityExpected: 0.0571428571, quantityMinimum: 0, quantityMaximum: 1}
+      - {item: Lava scale shard, quantityExpected: 0.3428571429, quantityMinimum: 0, quantityMaximum: 5}
+    requirements:
+      members: true
+      fishing: 80
+      herblore: 25
+      equipment: [Oily fishing rod, Ice gloves, Hammer]
+      unlocks: [mor_ul_rek_inner_city]
+    workflow: {process_seconds: 0, bank_seconds: 0, travel_seconds: 0}
+    excludedExpectedOutputs: [Tokkul, Clue bottles, Rada's blessing duplicate catch]
+    notes: Models the source-backed 2/35 onyx-tip roll and 4/35 lava-shard roll with an average of three shards. Untradeable Tokkul and clue bottles are excluded. Throughput is conservatively below the 35,000 Fishing XP/hour ceiling.
+    reference: https://oldschool.runescape.wiki/w/Infernal_eel

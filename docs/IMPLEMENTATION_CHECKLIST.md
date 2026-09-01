@@ -1,4 +1,4 @@
-# OSRS Profit Finder - Completion Checklist
+# OSRS Market Board - Completion Checklist
 
 Updated: 2026-08-29
 
@@ -45,7 +45,7 @@ data/status.json
 - [x] Cache metadata records source, status, generated time and separate short/long timestamps.
 - [x] Failed time-series fetches retain the previously valid derived window.
 - [x] CI is separate from scheduled market collection.
-- [x] Live workflow is scheduled every five minutes.
+- [x] Live workflow uses explicit ten-minute schedule slots (`7,17,27,37,47,57`).
 - [x] Short history is scheduled hourly.
 - [x] Long history is scheduled every six hours.
 - [x] Full/mapping recovery is scheduled daily.
@@ -98,9 +98,9 @@ See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 - [x] Stability state.
 - [x] Strict-under capital filters.
 - [x] Sort by Recommended, Current, 24H, 7D, 30D, GP/interaction, interval, capital and name.
-- [x] Browser-local skill profile.
+- [x] Optional browser-local eligibility levels, without an account/profile concept.
 - [x] Skill gate checks all published skill requirements.
-- [x] Sailing is included in the local profile for current 2026 content.
+- [x] Sailing is included in optional eligibility filtering for current content.
 - [x] Quest and equipment requirements remain visible and are never inferred as completed.
 
 ## High Alch

@@ -1,5 +1,5 @@
 schemaVersion: 1
-catalogueVersion: 8
+catalogueVersion: 9
 policy:
   duplicateIds: error
   discoveryAutoPromote: false
@@ -24,6 +24,10 @@ families:
   - id: probabilistic_cooking
     path: cooking/foods.yml
     compiler: probabilistic_cooking
+    mode: replace
+  - id: afk_fishing
+    path: gathering/afk_fishing.yml
+    compiler: afk_fishing
     mode: replace
   - id: gathering_pacing
     path: gathering/pacing.yml

@@ -3,7 +3,7 @@
 Date: 2026-08-29
 Status: complete for the enabled catalogue
 
-This document records the completed catalogue-quality pass for OSRS Profit Finder. It is maintainer documentation and is not part of the GitHub Pages public artifact.
+This document records the completed catalogue-quality pass for OSRS Market Board. It is maintainer documentation and is not part of the GitHub Pages public artifact.
 
 ## Audit standard
 
@@ -147,4 +147,4 @@ When a source/mechanic changes:
 3. update regression tests
 4. update this audit note when the change affects a reusable catalogue rule
 
-Market profitability itself is never copied from Wiki headline GP/hour. It continues to be calculated from current and historical RuneLite/Wiki market observations using this audited mechanical catalogue.
+Market profitability itself is never copied from Wiki headline GP/hour. It continues to be calculated from current and historical RuneScape Wiki real-time prices API observations using this audited mechanical catalogue.

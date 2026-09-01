@@ -98,6 +98,17 @@ def test_public_v2_normalises_prices_runescape_source():
     assert "RuneLite" not in json.dumps(method["priceSource"])
 
 
+def test_public_v2_variant_label_prevents_indistinguishable_rows():
+    row = _afk_result()
+    row["model"] = {
+        "variant": {"baseMethodId": "cut_redwood_logs", "id": "afk", "label": "AFK", "description": "Lower-attention pacing."},
+        "workflow": {},
+    }
+    method = build_public_afk_v2(123, [row])["methods"][0]
+    assert method["name"] == "Cut ruby bolt tips - AFK"
+    assert method["variant"]["id"] == "afk"
+
+
 def test_directional_fill_confidence_penalises_required_side_pressure():
     liquid = build_public_afk(123, [_afk_result(volume=1_000_000)])["methods"][0]
     thin = build_public_afk(123, [_afk_result(volume=8_000)])["methods"][0]

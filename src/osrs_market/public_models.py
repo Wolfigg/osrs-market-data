@@ -136,7 +136,9 @@ def _public_liquidity(current: dict[str, Any], mechanical_cph: float) -> dict[st
             quantity = _number(detail.get("quantity")) or 0.0
             total_volume = _number(row.get("observedVolume24h"))
             directional_key = "observedHighVolume24h" if side == "inputs" else "observedLowVolume24h"
+            short_directional_key = "observedHighVolume6h" if side == "inputs" else "observedLowVolume6h"
             directional_volume = _number(row.get(directional_key))
+            short_directional_volume = _number(row.get(short_directional_key))
             units_per_hour = quantity * mechanical_cph
             total_share = units_per_hour / total_volume * 100.0 if total_volume and total_volume > 0 else None
             directional_share = units_per_hour / directional_volume * 100.0 if directional_volume and directional_volume > 0 else None
@@ -144,6 +146,7 @@ def _public_liquidity(current: dict[str, Any], mechanical_cph: float) -> dict[st
                 "itemId": item_id, "name": str(row.get("name", "")), "unitsPerHour": _intish(units_per_hour),
                 "volume24h": _intish(total_volume), "oneHourSharePct24h": total_share,
                 "directionalVolume24h": _intish(directional_volume),
+                "directionalVolume6h": _intish(short_directional_volume),
                 "directionalOneHourSharePct24h": directional_share,
             })
     return result
@@ -295,7 +298,7 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             },
             "liquidity": liquidity, "risk": risk, "inputs": inputs, "outputs": outputs,
             "priceSource": {
-                "provider": "OSRS Wiki Prices / RuneLite",
+                "provider": "RuneScape Wiki real-time prices API (prices.runescape.wiki)",
                 "current": "Latest observed high trades for inputs and low trades for outputs, including GE tax on outputs.",
                 "expected": "Current profit blended with 24H, 7D and 30D historical market references according to price stability.",
                 "conservative": "Lowest available Current, Expected, 24H, 7D or 30D profit reference.",

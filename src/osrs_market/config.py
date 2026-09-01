@@ -72,11 +72,11 @@ def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:
         method.setdefault("afk", {})["interval_seconds"] = 48.6
     for element in ("water", "earth", "fire", "air"):
         if method := methods.get(f"craft_{element}_battlestaves"): method["theoretical_cycles_per_hour"] = 2625
-    if method := methods.get("cut_magic_logs"): method.setdefault("requirements", {})["equipment"] = ["Dragon or crystal axe"]
+    if method := methods.get("gather_magic_logs"): method.setdefault("requirements", {})["equipment"] = ["Dragon or crystal axe"]
     if method := methods.get("cut_redwood_logs"): method.setdefault("requirements", {})["equipment"] = ["Dragon axe"]
-    if method := methods.get("cut_camphor_logs"):
+    if method := methods.get("gather_camphor_logs"):
         req = method.setdefault("requirements", {}); req.update({"sailing": 45, "quests": ["Troubled Tortugans (partial)"], "equipment": ["Dragon axe", "Log basket"]})
-    if method := methods.get("catch_dark_crabs"): method.setdefault("requirements", {})["equipment"] = ["Lobster pot"]
+    if method := methods.get("gather_fishing_dark_crabs"): method.setdefault("requirements", {})["equipment"] = ["Lobster pot"]
     if method := methods.get("cook_karambwan"): method.setdefault("requirements", {})["quests"] = ["Tai Bwo Wannai Trio"]
 
 
@@ -151,6 +151,17 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         generated.update(wave5_method_catalog())
         generated.update(wave6_method_catalog())
         generated, manifest_report = compile_catalogue_manifest(Path("catalogue/manifest.yml"), generated)
+        # Older hand-written rows below describe the same activity and recipe
+        # as their Wave 5 gathering replacements. Keeping both creates
+        # duplicate public recommendations and inflates catalogue breadth.
+        for legacy_id in (
+            "mine_amethyst",
+            "cut_magic_logs",
+            "cut_camphor_logs",
+            "catch_dark_crabs",
+            "catch_raw_karambwan",
+        ):
+            generated.pop(legacy_id, None)
         _apply_known_catalog_corrections(generated)
         _set_generated_audit(generated)
         generated.update(payload.get("methods", {}) or {})

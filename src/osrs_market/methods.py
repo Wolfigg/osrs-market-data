@@ -307,6 +307,8 @@ def _method_liquidity(
                 "observedVolume24h": window_24h.get("totalVolume"),
                 "observedHighVolume24h": window_24h.get("highVolume"),
                 "observedLowVolume24h": window_24h.get("lowVolume"),
+                "observedHighVolume6h": record["windows"].get("6h", {}).get("highVolume"),
+                "observedLowVolume6h": record["windows"].get("6h", {}).get("lowVolume"),
                 "observedVolume7d": record["windows"].get("7d", {}).get("totalVolume"),
                 "observedVolume30d": record["windows"].get("30d", {}).get("totalVolume"),
                 "plannedQuantity24h": planned_quantity,
