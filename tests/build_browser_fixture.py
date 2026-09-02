@@ -12,7 +12,7 @@ def afk_method(method_id: str, name: str, category: str, *, members: bool, gp_pe
     profit_per_cycle = gp_per_hour / cycles
     output_volume = 100_000
     expected = gp_per_hour * 0.9
-    conservative = min(gp_per_hour, expected, gp_per_hour * 0.85, gp_per_hour * 0.84, gp_per_hour * 0.83)
+    conservative = min(gp_per_hour, expected, gp_per_hour * 0.85, gp_per_hour * 0.84, gp_per_hour * 0.83, gp_per_hour * 0.78)
     return {
         "methodId": method_id,
         "name": name,
@@ -23,8 +23,8 @@ def afk_method(method_id: str, name: str, category: str, *, members: bool, gp_pe
         "current": {"valid": True, "gpPerHour": gp_per_hour},
         "recommended": {"gpPerHour": expected, "referenceGpPerHour": gp_per_hour * 0.85},
         "scenarios": {"currentGpPerHour": gp_per_hour, "expectedGpPerHour": expected, "conservativeGpPerHour": conservative},
-        "history": {"6hGpPerHour": gp_per_hour * 0.88, "24hGpPerHour": gp_per_hour * 0.85, "7dGpPerHour": gp_per_hour * 0.84, "30dGpPerHour": gp_per_hour * 0.83},
-        "stability": {"state": stability, "label": stability.replace("_", " ").title(), "currentVs24hPct": 4.0, "currentVs7dPct": 5.0, "currentVs30dPct": 6.0, "referenceSpreadPct": 2.0, "reasons": ["Synthetic browser fixture."]},
+        "history": {"6hGpPerHour": gp_per_hour * 0.88, "24hGpPerHour": gp_per_hour * 0.85, "7dGpPerHour": gp_per_hour * 0.84, "30dGpPerHour": gp_per_hour * 0.83, "6mGpPerHour": gp_per_hour * 0.78},
+        "stability": {"state": stability, "label": stability.replace("_", " ").title(), "currentVs6hPct": 3.0, "currentVs24hPct": 4.0, "currentVs7dPct": 5.0, "currentVs30dPct": 6.0, "currentVs6mPct": 8.0, "referenceSpreadPct": 2.0, "reasons": ["Synthetic browser fixture."]},
         "sustainability": {"state": sustainability, "label": sustainability.replace("_", " ").title(), "throughputRatioPct": 100.0, "maxOneHourSharePct24h": 0.1, "limitingFactor": "mechanics", "reasons": ["Synthetic sustainability fixture."]},
         "fillConfidence": {"state": "high", "label": "High", "score": 95.0, "inputScore": 95.0 if capital else None, "outputScore": 95.0, "maxDirectionalSharePct24h": 0.2, "turnoverHours": 0.25, "reason": "Synthetic directional fill fixture."},
         "afk": {"classification": "AFK", "intervalSeconds": 60, "gpPerInteraction": gp_per_hour / 60, "description": "Synthetic browser fixture."},
@@ -34,7 +34,7 @@ def afk_method(method_id: str, name: str, category: str, *, members: bool, gp_pe
         "risk": {"level": "normal", "label": "Normal market risk", "reasons": []},
         "inputs": [] if capital == 0 else [{"itemId": 100 + len(method_id), "name": "Synthetic input", "quantity": 1, "price": cost_per_cycle, "subtotal": cost_per_cycle, "buyViaGe": True, "geBuyLimit": 10_000, "maxCyclesPerHourByLimit": 2_500}],
         "outputs": [{"itemId": 200 + len(method_id), "name": "Output", "quantity": 1, "gePrice": cost_per_cycle + profit_per_cycle, "geTaxPerItem": 0, "geNetPerItem": cost_per_cycle + profit_per_cycle}],
-        "priceSource": {"provider": "OSRS Wiki Prices / RuneLite", "current": "Synthetic current prices.", "expected": "Synthetic expected prices.", "conservative": "Synthetic conservative reference.", "liquidity": "Synthetic directional volume.", "generatedAt": int(time.time())},
+        "priceSource": {"provider": "RuneScape Wiki real-time prices API", "current": "Synthetic current prices.", "expected": "Synthetic expected prices.", "conservative": "Synthetic conservative reference.", "liquidity": "Synthetic directional volume.", "generatedAt": int(time.time())},
         "description": "Synthetic browser fixture.",
         "reference": "https://oldschool.runescape.wiki/",
     }
@@ -56,9 +56,9 @@ def main() -> None:
         "generatedAt": now,
         "assumptions": {"magicLevel": 55, "castsPerHour": 1200, "natureRuneCost": 100, "fireStaff": True},
         "items": [
-            {"itemId": 1, "name": "Rune platebody", "members": False, "buyPrice": 38_000, "highAlchValue": 39_000, "runeCost": 100, "profitPerCast": 900, "roi": 2.3, "buyLimit": 70, "quantity4h": 70, "profit4h": 63_000, "capitalRequired": 800_000, "volume24h": 10_000, "freshness": "Fresh", "history": {"24hProfitPerCast": 850, "7dProfitPerCast": 820, "30dProfitPerCast": 800}, "history24hProfitPerCast": 850, "risk": {"level": "normal", "label": "Normal market risk", "reasons": []}},
-            {"itemId": 2, "name": "Exact million item", "members": True, "buyPrice": 1_000, "highAlchValue": 1_500, "runeCost": 100, "profitPerCast": 400, "roi": 36.4, "buyLimit": 1000, "quantity4h": 1000, "profit4h": 400_000, "capitalRequired": 1_000_000, "volume24h": 20_000, "freshness": "Fresh", "history": {"24hProfitPerCast": 390, "7dProfitPerCast": 380, "30dProfitPerCast": 370}, "history24hProfitPerCast": 390, "risk": {"level": "normal", "label": "Normal market risk", "reasons": []}},
-            {"itemId": 3, "name": "Unavailable item", "members": False, "buyPrice": None, "highAlchValue": 2_000, "runeCost": None, "profitPerCast": None, "roi": None, "buyLimit": 100, "quantity4h": None, "profit4h": None, "capitalRequired": None, "volume24h": 0, "freshness": "Stale", "history": {"24hProfitPerCast": None, "7dProfitPerCast": None, "30dProfitPerCast": None}, "history24hProfitPerCast": None, "risk": {"level": "unavailable", "label": "Unavailable", "reasons": ["Synthetic stale item."]}},
+            {"itemId": 1, "name": "Rune platebody", "members": False, "buyPrice": 38_000, "highAlchValue": 39_000, "runeCost": 100, "profitPerCast": 900, "roi": 2.3, "buyLimit": 70, "quantity4h": 70, "profit4h": 63_000, "capitalRequired": 800_000, "volume24h": 10_000, "freshness": "Fresh", "history": {"6hProfitPerCast": 870, "24hProfitPerCast": 850, "7dProfitPerCast": 820, "30dProfitPerCast": 800, "6mProfitPerCast": 760}, "history24hProfitPerCast": 850, "risk": {"level": "normal", "label": "Normal market risk", "reasons": []}},
+            {"itemId": 2, "name": "Exact million item", "members": True, "buyPrice": 1_000, "highAlchValue": 1_500, "runeCost": 100, "profitPerCast": 400, "roi": 36.4, "buyLimit": 1000, "quantity4h": 1000, "profit4h": 400_000, "capitalRequired": 1_000_000, "volume24h": 20_000, "freshness": "Fresh", "history": {"6hProfitPerCast": 395, "24hProfitPerCast": 390, "7dProfitPerCast": 380, "30dProfitPerCast": 370, "6mProfitPerCast": 350}, "history24hProfitPerCast": 390, "risk": {"level": "normal", "label": "Normal market risk", "reasons": []}},
+            {"itemId": 3, "name": "Unavailable item", "members": False, "buyPrice": None, "highAlchValue": 2_000, "runeCost": None, "profitPerCast": None, "roi": None, "buyLimit": 100, "quantity4h": None, "profit4h": None, "capitalRequired": None, "volume24h": 0, "freshness": "Stale", "history": {"6hProfitPerCast": None, "24hProfitPerCast": None, "7dProfitPerCast": None, "30dProfitPerCast": None, "6mProfitPerCast": None}, "history24hProfitPerCast": None, "risk": {"level": "unavailable", "label": "Unavailable", "reasons": ["Synthetic stale item."]}},
         ],
     }
     status = {"schemaVersion": 1, "generatedAt": now, "liveGeneratedAt": now, "shortHistoryGeneratedAt": now - 1800, "longHistoryGeneratedAt": now - 7200, "state": "current", "ageSeconds": 9000}

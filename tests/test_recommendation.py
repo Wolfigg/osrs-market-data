@@ -9,8 +9,14 @@ def test_percentage_deviation():
     assert round(percentage_deviation(610_000, 395_000), 1) == 54.4
 
 
-def test_weighted_reference_is_explicit_50_30_20_blend():
+def test_weighted_reference_preserves_legacy_blend_when_new_windows_are_missing():
     assert weighted_reference(history(400, 300, 200)) == 330
+
+
+def test_weighted_reference_uses_short_and_six_month_context():
+    values = history(400, 300, 200)
+    values.update({"6hGpPerHour": 500, "6mGpPerHour": 100})
+    assert weighted_reference(values) == 349.5
 
 
 def test_large_current_spike_is_volatile_and_recommendation_is_capped():

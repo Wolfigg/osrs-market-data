@@ -144,7 +144,7 @@ def _refresh_plan(mode: str) -> dict[str, tuple[str, ...]]:
     if mode == "long":
         return long
     if mode == "full":
-        return {**short, **long}
+        return {**short, **long, "24h": ("6m",)}
     return {}
 
 

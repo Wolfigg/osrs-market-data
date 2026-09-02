@@ -186,9 +186,11 @@ def build_alchemy_candidate(
 
     instant = alch_costs(item, latest_item.high, latest_nature.high, use_fire_staff, fire_rune_price, fire_runes_per_cast)
     patient = alch_costs(item, latest_item.low, latest_nature.high, use_fire_staff, fire_rune_price, fire_runes_per_cast)
+    hist6 = _historical_alch(item, "6h", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
     hist24 = _historical_alch(item, "24h", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
     hist7 = _historical_alch(item, "7d", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
     hist30 = _historical_alch(item, "30d", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
+    hist6m = _historical_alch(item, "6m", windows, nature_windows, use_fire_staff, fire_windows, fire_runes_per_cast)
 
     extra_fire_cost = 0.0
     if not use_fire_staff and fire_rune_price is not None:
@@ -253,9 +255,11 @@ def build_alchemy_candidate(
             "profitPerCast": patient["profit"] if patient_fresh else None,
             "roiPct": patient["roiPct"] if patient_fresh else None,
         },
+        "historicalInstant6h": hist6,
         "historicalInstant24h": hist24,
         "historicalInstant7d": hist7,
         "historicalInstant30d": hist30,
+        "historicalInstant6m": hist6m,
         "capacity4h": capacity,
         "profitPer4hGeLimit": profit_per_4h,
         "capitalRequired": capital_required,

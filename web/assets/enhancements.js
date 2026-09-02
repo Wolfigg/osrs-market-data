@@ -7,21 +7,6 @@
   const esc = value => String(value ?? "").replace(/[&<>'\"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]);
   const gpText = value => value == null ? "Unavailable" : `${gp.format(value)} gp`;
 
-  const style = document.createElement("style");
-  style.textContent = `
-    .afk-grid{grid-template-columns:minmax(300px,2.5fr) minmax(120px,1fr) minmax(120px,1fr) minmax(80px,.65fr) minmax(125px,1fr)!important}
-    .ledger-summary>div{padding:10px 12px}.ledger-record[open] .ledger-summary{border-bottom:0}.detail-panel{padding:12px 16px 14px}
-    .method-quick{display:block}.scenario-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid rgba(91,73,53,.34);margin:10px 0 8px;background:rgba(234,217,173,.35)}
-    .scenario-card{padding:8px 10px;border-right:1px solid rgba(91,73,53,.25)}.scenario-card:last-child{border-right:0}.scenario-card span{display:block;color:#5b4935;font:700 .64rem/1.15 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.04em}.scenario-card strong{display:block;margin-top:2px;font-size:1rem}
-    .quick-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:#5b4935;font:.74rem/1.3 system-ui,sans-serif}.quick-meta strong{color:#241b12}.quick-separator{opacity:.55}
-    .method-more{margin-top:9px;border-top:1px solid rgba(91,73,53,.32)}.method-more>summary{cursor:pointer;list-style:none;padding:9px 1px 2px;color:#5b4935;font:700 .74rem/1.2 system-ui,sans-serif}.method-more>summary::-webkit-details-marker{display:none}.method-more>summary:before{content:"+ ";color:#6e3430}.method-more[open]>summary:before{content:"− "}
-    .method-more-content{padding-top:10px}.method-more .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.method-more .calculation-block{margin-top:12px}.method-more .history-grid{margin-top:12px}
-    .confidence-box,.source-box,.afk-quality-box{margin:10px 0;padding:10px;border:1px solid rgba(91,73,53,.38);background:rgba(234,217,173,.35)}.confidence-box p,.source-box p,.afk-quality-box p{font-size:.82rem}
-    @media(max-width:1000px){.afk-grid{grid-template-columns:minmax(240px,2fr) minmax(105px,1fr) minmax(105px,1fr) minmax(110px,1fr)!important}.afk-grid>:nth-child(5){display:none!important}.method-more .detail-grid{grid-template-columns:1fr 1fr}}
-    @media(max-width:680px){.afk-grid{grid-template-columns:minmax(0,1.7fr) minmax(100px,.8fr)!important}.afk-grid>:not(:nth-child(1)):not(:nth-child(2)){display:none!important}.ledger-summary>div{padding:9px 10px}.detail-panel{padding:10px 11px 12px}.scenario-grid{grid-template-columns:1fr 1fr 1fr}.scenario-card{padding:7px 6px}.scenario-card strong{font-size:.86rem}.method-more .detail-grid{grid-template-columns:1fr}.method-more .calc-table{font-size:.76rem}}
-  `;
-  document.head.appendChild(style);
-
   let methods = [];
   const byId = () => new Map(methods.map(m => [m.methodId, m]));
 

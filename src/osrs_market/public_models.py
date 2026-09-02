@@ -11,6 +11,7 @@ _HISTORY_SCENARIOS = {
     "HISTORICAL_INSTANT_24H": "24hGpPerHour",
     "HISTORICAL_INSTANT_7D": "7dGpPerHour",
     "HISTORICAL_INSTANT_30D": "30dGpPerHour",
+    "HISTORICAL_INSTANT_6M": "6mGpPerHour",
 }
 
 _CATEGORY_LABELS = {
@@ -229,7 +230,7 @@ def _fill_confidence(mechanical_cph: float, sustainable_cph: float, liquidity: d
 
 
 def _profit_scenarios(current_gp: float | None, expected_gp: float | None, history: dict[str, Any]) -> dict[str, float | None]:
-    references = [current_gp, expected_gp, history.get("24hGpPerHour"), history.get("7dGpPerHour"), history.get("30dGpPerHour")]
+    references = [current_gp, expected_gp, history.get("6hGpPerHour"), history.get("24hGpPerHour"), history.get("7dGpPerHour"), history.get("30dGpPerHour"), history.get("6mGpPerHour")]
     available = [float(value) for value in references if value is not None]
     conservative = min(available) if available else None
     return {
@@ -300,8 +301,8 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             "priceSource": {
                 "provider": "RuneScape Wiki real-time prices API (prices.runescape.wiki)",
                 "current": "Latest observed high trades for inputs and low trades for outputs, including GE tax on outputs.",
-                "expected": "Current profit blended with 24H, 7D and 30D historical market references according to price stability.",
-                "conservative": "Lowest available Current, Expected, 24H, 7D or 30D profit reference.",
+                "expected": "Current profit blended with 6H, 24H, 7D, 30D and 6M historical market references according to price stability.",
+                "conservative": "Lowest available Current, Expected, 6H, 24H, 7D, 30D or 6M profit reference.",
                 "liquidity": "24H observed directional trade volume for the side required by the method.",
                 "generatedAt": generated_at,
             },
@@ -334,9 +335,11 @@ def build_public_alchemy(generated_at: int, candidates: list[dict[str, Any]], as
         valid = bool(current.get("valid")) and current.get("profitPerCast") is not None
         rune_cost = _number(current.get("natureRunePrice")) or 0.0
         if not use_fire_staff: rune_cost += _number(current.get("fireRunePrice")) or 0.0
+        history6 = _history_profit(row, "historicalInstant6h")
         history24 = _history_profit(row, "historicalInstant24h")
         history7 = _history_profit(row, "historicalInstant7d")
         history30 = _history_profit(row, "historicalInstant30d")
+        history6m = _history_profit(row, "historicalInstant6m")
         risk = public_risk(row.get("warnings"), valid=valid)
         items.append({
             "itemId": int(row["itemId"]), "name": str(row.get("name", row["itemId"])), "members": bool(row.get("members", True)),
@@ -344,7 +347,7 @@ def build_public_alchemy(generated_at: int, candidates: list[dict[str, Any]], as
             "profitPerCast": _number(current.get("profitPerCast")) if valid else None, "roi": _number(current.get("roiPct")) if valid else None, "buyLimit": _intish(row.get("geBuyLimit")),
             "quantity4h": _intish((row.get("capacity4h") or {}).get("maxQuantity")) if valid else None, "profit4h": _number(row.get("profitPer4hGeLimit")) if valid else None,
             "capitalRequired": _number(row.get("capitalRequired")) if valid else None, "volume24h": _intish(row.get("volume24h")), "freshness": _freshness(row.get("buyPriceAgeSeconds")),
-            "history": {"24hProfitPerCast": history24, "7dProfitPerCast": history7, "30dProfitPerCast": history30}, "history24hProfitPerCast": history24, "risk": risk,
+            "history": {"6hProfitPerCast": history6, "24hProfitPerCast": history24, "7dProfitPerCast": history7, "30dProfitPerCast": history30, "6mProfitPerCast": history6m}, "history24hProfitPerCast": history24, "risk": risk,
         })
     items.sort(key=lambda row: row["profit4h"] if row["profit4h"] is not None else float("-inf"), reverse=True)
     return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "assumptions": {"magicLevel": 55, "castsPerHour": int(assumptions.get("castsPerHour", 1200)), "natureRuneCost": next((item["runeCost"] for item in items if item["runeCost"] is not None), None), "fireStaff": use_fire_staff}, "items": items}

@@ -4,8 +4,8 @@ A Python 3.12 market-analysis pipeline for Old School RuneScape using the OSRS W
 
 The public application intentionally contains two tools:
 
-1. **AFK Money Makers**: ranks genuinely AFK or low-interaction processing methods using live prices, historical VWAPs, GE tax, buy limits, liquidity, audited game mechanics, AFK interval metrics and a conservative Recommended GP/hour model.
-2. **High Alch**: a standalone active buy-and-alch scanner. It is deliberately not used as an exit for AFK methods.
+1. **AFK Money Makers**: ranks genuinely AFK or low-interaction processing methods using live prices, 6H/24H/7D/30D/6M historical VWAPs, GE tax, buy limits, liquidity, audited game mechanics, AFK interval metrics and a conservative Expected GP/hour model.
+2. **High Alch**: a standalone active buy-and-alch scanner with the same historical price horizons. It is deliberately not used as an exit for AFK methods.
 
 There is no public Market Explorer, raw API browser, diagnostics page or dashboard branch.
 
@@ -88,7 +88,7 @@ Long mode refreshes:
 
 It runs every six hours.
 
-The simplified public product does not expose 6M/1Y Market Explorer data, so ordinary collection no longer downloads a per-item `24h` time series.
+The six-month reference uses the API's `24h` time series and refreshes in the daily full collection. One-year Market Explorer data remains outside the public product.
 
 ### Full mode
 
@@ -96,7 +96,7 @@ The simplified public product does not expose 6M/1Y Market Explorer data, so ord
 python -m osrs_market.cli collect --mode full --output build --cache-dir .market-cache
 ```
 
-Full mode is intended for bootstrap, recovery and validation. It refreshes mapping plus the 5m, 1h and 6h historical sources and rewrites the derived cache.
+Full mode is intended for bootstrap, recovery and validation. It refreshes mapping plus the 5m, 1h, 6h and 24h historical sources and rewrites the derived cache.
 
 A daily full workflow keeps mapping current and provides a recovery point.
 

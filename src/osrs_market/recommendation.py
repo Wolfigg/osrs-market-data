@@ -3,9 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 REFERENCE_WEIGHTS = {
-    "24hGpPerHour": 0.50,
-    "7dGpPerHour": 0.30,
-    "30dGpPerHour": 0.20,
+    "6hGpPerHour": 0.25,
+    "24hGpPerHour": 0.325,
+    "7dGpPerHour": 0.195,
+    "30dGpPerHour": 0.13,
+    "6mGpPerHour": 0.10,
 }
 STABLE_DEVIATION_PCT = 15.0
 VOLATILE_DEVIATION_PCT = 35.0
@@ -62,12 +64,15 @@ def build_stability(
     joined = " ".join(warnings)
     current = _number(current_gp_per_hour)
     deviations = {
+        "currentVs6hPct": percentage_deviation(current, history.get("6hGpPerHour")),
         "currentVs24hPct": percentage_deviation(current, history.get("24hGpPerHour")),
         "currentVs7dPct": percentage_deviation(current, history.get("7dGpPerHour")),
         "currentVs30dPct": percentage_deviation(current, history.get("30dGpPerHour")),
+        "currentVs6mPct": percentage_deviation(current, history.get("6mGpPerHour")),
     }
     spread = reference_spread_pct(history)
-    available_history = sum(history.get(key) is not None for key in REFERENCE_WEIGHTS)
+    core_history_keys = ("24hGpPerHour", "7dGpPerHour", "30dGpPerHour")
+    available_history = sum(history.get(key) is not None for key in core_history_keys)
     reasons: list[str] = []
 
     if "STALE" in joined:
@@ -87,9 +92,9 @@ def build_stability(
         ):
             state = "volatile"
             reasons.append("Current profitability is materially different from historical references.")
-        elif available_history < len(REFERENCE_WEIGHTS):
+        elif available_history < len(core_history_keys):
             state = "watch"
-            reasons.append("Not all 24H, 7D and 30D historical references are available.")
+            reasons.append("Not all 6H, 24H, 7D, 30D and 6M historical references are available.")
         elif (max_deviation is not None and max_deviation >= STABLE_DEVIATION_PCT) or (
             spread is not None and spread >= STABLE_REFERENCE_SPREAD_PCT
         ) or warnings:

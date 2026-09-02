@@ -8,7 +8,7 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260831-2"
+PUBLIC_ASSET_VERSION = "20260901-1"
 
 PUBLIC_REQUIRED_FILES = (
     "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js",
@@ -50,7 +50,7 @@ def _base(title: str, active: str, page: str, main: str) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="dark">
   <meta name="description" content="OSRS Market Board: live AFK money-making and High Alchemy opportunities using RuneScape Wiki real-time prices from prices.runescape.wiki.">
   <title>{_esc(title)} | OSRS Market Board</title>
   <link rel="stylesheet" href="assets/app.css?v={version}">
@@ -63,15 +63,19 @@ def _base(title: str, active: str, page: str, main: str) -> str:
   <div class="site-shell">
     <header class="masthead">
       <div class="masthead-title">
-        <p class="eyebrow">Grand Exchange Work Board</p>
+        <p class="eyebrow">Grand Exchange intelligence</p>
         <a class="brand" href="index.html">OSRS Market Board</a>
-        <p class="subtitle">Live AFK money makers and High Alch opportunities</p>
+        <p class="subtitle">Live margins, historical context, and executable market capacity.</p>
+      </div>
+      <nav class="main-nav" aria-label="Primary">{_nav(active)}</nav>
+      <div class="rail-note">
+        <span>Signal windows</span>
+        <strong>NOW · 6H · 24H · 7D · 30D · 6M</strong>
       </div>
       <div class="status-line" aria-live="polite">
         <span id="health-state" class="status-plaque">Loading</span>
         <span id="update-age">Checking latest market scan</span>
       </div>
-      <nav class="main-nav" aria-label="Primary">{_nav(active)}</nav>
     </header>
     <main id="main" class="page-surface">{main}</main>
     <footer class="site-footer">
@@ -98,17 +102,23 @@ def _skill_fields() -> str:
 def _afk_page() -> str:
     main = f"""
 <section class="page-heading compact">
-  <p class="eyebrow">Work Board</p>
-  <h1>AFK Money Makers</h1>
-  <p>Find low-interaction methods using live prices, realistic throughput and directional Grand Exchange market capacity.</p>
+  <div><p class="eyebrow">Opportunity desk / 01</p><h1>AFK Money Makers</h1></div>
+  <p>Rank low-interaction methods using live prices, realistic throughput, directional Grand Exchange market capacity, and six market horizons.</p>
 </section>
+<section class="market-overview" aria-label="AFK market overview">
+  <article class="signal-card signal-card-primary"><p class="signal-label">Best executable signal</p><strong id="afk-leader-value">Loading</strong><span id="afk-leader-name">Scanning methods</span></article>
+  <article class="signal-card"><p class="signal-label">Stable methods</p><strong id="afk-stable-count">—</strong><span>Current margin tracks history</span></article>
+  <article class="signal-card"><p class="signal-label">Strong capacity</p><strong id="afk-capacity-count">—</strong><span>Low pressure on observed flow</span></article>
+  <article class="signal-card signal-card-note"><p class="signal-label">Methods audited</p><strong id="afk-method-total">—</strong><span>Mechanics and GE rules checked</span></article>
+</section>
+<div class="window-strip" aria-label="Available price windows"><span>Price basis</span><strong>Current</strong><strong>6H</strong><strong>24H</strong><strong>7D</strong><strong>30D</strong><strong>6M</strong></div>
 <section class="filter-frame compact-filter-frame" aria-label="AFK filters">
   <div class="filter-grid primary-filter-grid">
     <label class="field search-field"><span>Search</span><input id="afk-search" type="search" placeholder="Method name" autocomplete="off"></label>
     <label class="field"><span>Category</span><select id="afk-category"><option value="all">All categories</option></select></label>
     <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="afk-membership" value="all" checked><span>All</span></label><label><input type="radio" name="afk-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="afk-membership" value="members"><span>Members</span></label></fieldset>
     <label class="field"><span>Profitability</span><select id="afk-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
-    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
+    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-6h">6H reference GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-6m">6M reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
   </div>
   <details class="advanced-filters">
     <summary>More filters & skill levels</summary>
@@ -133,14 +143,21 @@ def _afk_page() -> str:
 
 def _alchemy_page() -> str:
     main = f"""
-<section class="page-heading compact"><p class="eyebrow">Alchemist's Desk</p><h1>High Alch</h1><p>Active trading scanner. High Alchemy is kept separate from AFK money making.</p></section>
+<section class="page-heading compact"><div><p class="eyebrow">Alchemy desk / 02</p><h1>High Alch</h1></div><p>Scan practical four-hour batches with live buy prices, rune cost, GE limits, liquidity, and six historical horizons.</p></section>
+<section class="market-overview alch-overview" aria-label="High Alch market overview">
+  <article class="signal-card signal-card-primary"><p class="signal-label">Best four-hour batch</p><strong id="alch-leader-value">Loading</strong><span id="alch-leader-name">Scanning candidates</span></article>
+  <article class="signal-card"><p class="signal-label">Profitable now</p><strong id="alch-profitable-count">—</strong><span>Positive after rune cost</span></article>
+  <article class="signal-card"><p class="signal-label">Fresh quotes</p><strong id="alch-fresh-count">—</strong><span>Within current freshness policy</span></article>
+  <article class="signal-card signal-card-note"><p class="signal-label">Spell throughput</p><strong id="alch-casts-hour">—</strong><span>Casts per modelled hour</span></article>
+</section>
+<div class="window-strip" aria-label="Available price windows"><span>Price basis</span><strong>Current</strong><strong>6H</strong><strong>24H</strong><strong>7D</strong><strong>30D</strong><strong>6M</strong></div>
 <section class="filter-frame" aria-label="High Alch filters"><div class="filter-grid alch-filters">
 <label class="field search-field"><span>Item search</span><input id="alch-search" type="search" placeholder="Item name" autocomplete="off"></label>
 <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="alch-membership" value="all" checked><span>All</span></label><label><input type="radio" name="alch-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="alch-membership" value="members"><span>Members</span></label></fieldset>
 <label class="field"><span>Profitability</span><select id="alch-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
 <label class="field"><span>Minimum profit/cast</span><input id="alch-min-profit" type="number" value="0" min="0" step="1"></label>
 <label class="field"><span>Capital</span><select id="alch-capital">{_capital_options()}</select></label>
-<label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
+<label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-6h">6H profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="profit-6m">6M profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
 <label class="checkbox-field"><input id="alch-unavailable" type="checkbox"><span>Show unavailable / stale</span></label></div></section>
 <div class="ledger-toolbar"><p id="alch-count">Loading candidates...</p><p class="muted">Requirement: 55 Magic.</p></div><section id="alch-list" class="alchemy-ledger" aria-live="polite"></section>
 """

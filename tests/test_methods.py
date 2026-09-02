@@ -2,7 +2,7 @@ from osrs_market.methods import evaluate_method
 
 
 def record(item_id, name, high, low, limit=1000, volume=100000):
-    windows = {key: {"highVwap": high, "lowVwap": low, "totalVolume": volume} for key in ("6h", "24h", "7d", "30d")}
+    windows = {key: {"highVwap": high, "lowVwap": low, "totalVolume": volume} for key in ("6h", "24h", "7d", "30d", "6m")}
     return {
         "item": {"id": item_id, "name": name, "limit": limit, "highalch": None},
         "current": {"high": high, "low": low, "highFreshness": "fresh", "lowFreshness": "fresh", "crossed": False},

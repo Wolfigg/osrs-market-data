@@ -44,7 +44,7 @@ def _candidate(valid=True):
     return {
         "itemId": 1, "name": "Test item", "members": False, "highAlchValue": 2000, "geBuyLimit": 100, "buyPriceAgeSeconds": 60,
         "currentInstant": {"valid": valid, "buyPrice": 1000, "natureRunePrice": 100, "fireRunePrice": None, "profitPerCast": 900 if valid else None, "roiPct": 81.8 if valid else None},
-        "historicalInstant24h": {"valid": True, "profitPerCast": 800}, "historicalInstant7d": {"valid": True, "profitPerCast": 750}, "historicalInstant30d": {"valid": True, "profitPerCast": 700},
+        "historicalInstant6h": {"valid": True, "profitPerCast": 825}, "historicalInstant24h": {"valid": True, "profitPerCast": 800}, "historicalInstant7d": {"valid": True, "profitPerCast": 750}, "historicalInstant30d": {"valid": True, "profitPerCast": 700}, "historicalInstant6m": {"valid": True, "profitPerCast": 650},
         "capacity4h": {"maxQuantity": 100}, "profitPer4hGeLimit": 90_000 if valid else None, "capitalRequired": 110_000 if valid else None, "volume24h": 10_000, "warnings": [],
     }
 
@@ -64,14 +64,15 @@ def test_afk_classification_boundaries():
 
 def test_public_afk_contains_history_scenarios_confidence_and_breakdown():
     rows = [_afk_result()]
-    for scenario, gp in [("HISTORICAL_INSTANT_6H", 90_000), ("HISTORICAL_INSTANT_24H", 80_000), ("HISTORICAL_INSTANT_7D", 70_000), ("HISTORICAL_INSTANT_30D", 60_000)]:
+    for scenario, gp in [("HISTORICAL_INSTANT_6H", 90_000), ("HISTORICAL_INSTANT_24H", 80_000), ("HISTORICAL_INSTANT_7D", 70_000), ("HISTORICAL_INSTANT_30D", 60_000), ("HISTORICAL_INSTANT_6M", 55_000)]:
         rows.append(_afk_result(scenario=scenario, gp=gp))
     method = build_public_afk(123, rows)["methods"][0]
     assert method["history"]["24hGpPerHour"] == 80_000
     assert method["recommended"]["gpPerHour"] is not None
     assert method["scenarios"]["currentGpPerHour"] == 100_000
     assert method["scenarios"]["expectedGpPerHour"] == method["recommended"]["gpPerHour"]
-    assert method["scenarios"]["conservativeGpPerHour"] == 60_000
+    assert method["history"]["6mGpPerHour"] == 55_000
+    assert method["scenarios"]["conservativeGpPerHour"] == 55_000
     assert method["economics"]["capitalOneHour"] == 900_000
     assert method["economics"]["capitalPerCycle"] == 1000
     assert method["economics"]["inputGpPerCycle"] == 1000
@@ -141,7 +142,7 @@ def test_high_liquidity_warning_is_public_high_risk():
 
 def test_public_alchemy_contains_matching_historical_windows():
     payload = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
-    assert payload["items"][0]["history"] == {"24hProfitPerCast": 800.0, "7dProfitPerCast": 750.0, "30dProfitPerCast": 700.0}
+    assert payload["items"][0]["history"] == {"6hProfitPerCast": 825.0, "24hProfitPerCast": 800.0, "7dProfitPerCast": 750.0, "30dProfitPerCast": 700.0, "6mProfitPerCast": 650.0}
 
 
 def test_unavailable_alchemy_never_emits_numeric_profit():
