@@ -13,7 +13,15 @@ def afk_method(method_id: str, name: str, category: str, *, members: bool, gp_pe
     output_volume = 100_000
     expected = gp_per_hour * 0.9
     conservative = min(gp_per_hour, expected, gp_per_hour * 0.85, gp_per_hour * 0.84, gp_per_hour * 0.83, gp_per_hour * 0.78)
+    now = int(time.time())
+    quote = {"name": "Output", "side": "low", "latestObserved": cost_per_cycle + profit_per_cycle,
+             "latestObservedAt": now - 60, "latestFreshness": "fresh",
+             "expectedExecutable": cost_per_cycle + profit_per_cycle * 0.9,
+             "conservative": cost_per_cycle + profit_per_cycle * 0.8,
+             "directionalVolume": 10000, "windowSeconds": 1800, "requiredPerHour": 100,
+             "requiredSharePct": 0.5, "latestBucketEnd": now - 300, "freshness": "fresh"}
     return {
+        "executionPrices": {"inputs": [], "outputs": [quote]},
         "methodId": method_id,
         "name": name,
         "category": category,

@@ -54,7 +54,12 @@ async function run(browserType, name) {
     const camphorText = await camphor.textContent();
     assert.match(camphorText, /Troubled Tortugans/);
     assert.match(camphorText, /Sailing: 45/);
-    assert.match(camphorText, /Current calculation/);
+    assert.match(camphorText, /Latest \/ Mechanical calculation/);
+    assert.match(camphorText, /Execution prices/);
+    assert.match(camphorText, /Recent directional volume/);
+    assert.match(camphorText, /Required per hour/);
+    assert.match(camphorText, /Latest bucket ended/);
+    for (const width of [360, 390, 768, 1280]) await assertResponsive(page, width);
     assert.match(camphorText, /Sustainability & liquidity/);
     assert.doesNotMatch(camphorText, /With your bankroll:/);
 
