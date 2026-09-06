@@ -179,3 +179,26 @@ def test_missing_latest_still_preserves_ge_capacity_for_execution():
     assert result["mechanics"]["cyclesPerHourByBuyLimits"] == 50
     assert result["scenarios"]["expectedGpPerHour"] == 150 * 50
     assert result["executionPrices"]["inputs"][0]["latestObserved"] is None
+
+
+def test_scenarios_reuse_quotes_without_sharing_mutable_results(monkeypatch):
+    import osrs_market.methods as methods
+
+    calls = []
+    original = methods.execution_quote
+
+    def counted_quote(record, side, required, now):
+        calls.append((side, required))
+        return original(record, side, required, now)
+
+    monkeypatch.setattr(methods, "execution_quote", counted_quote)
+    method = {"cycles_per_hour": 100,
+              "inputs": [{"item_id": 1, "quantity": 1}, {"item_id": 1, "quantity": 2}],
+              "outputs": [{"item_id": 1, "quantity": 3}]}
+    rows = methods.evaluate_method("reuse", method, {1: market()}, set(), SETTINGS, NOW)
+    assert calls == [("high", 100), ("high", 200), ("low", 300)]
+    assert rows[0]["executionPrices"]["inputs"][1]["requiredPerHour"] == 200
+    rows[0]["inputs"][0]["execution"]["expectedExecutable"] = -1
+    rows[0]["executionPrices"]["inputs"][0]["expectedExecutable"] = -2
+    assert rows[1]["inputs"][0]["execution"]["expectedExecutable"] == 340
+    assert rows[1]["executionPrices"]["inputs"][0]["expectedExecutable"] == 340
