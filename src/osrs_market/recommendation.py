@@ -13,8 +13,6 @@ STABLE_DEVIATION_PCT = 15.0
 VOLATILE_DEVIATION_PCT = 35.0
 STABLE_REFERENCE_SPREAD_PCT = 15.0
 VOLATILE_REFERENCE_SPREAD_PCT = 30.0
-VOLATILE_UPSIDE_CAP_PCT = 15.0
-THIN_MARKET_DISCOUNT = 0.80
 
 
 def _number(value: Any) -> float | None:
@@ -119,29 +117,3 @@ def build_stability(
         "referenceSpreadPct": spread,
         "reasons": reasons,
     }
-
-
-def recommended_gp_per_hour(
-    current_gp_per_hour: float | int | None,
-    history: dict[str, Any],
-    stability_state: str,
-) -> float | None:
-    current = _number(current_gp_per_hour)
-    if current is None or stability_state in {"stale", "unavailable"}:
-        return None
-    reference = weighted_reference(history)
-    if reference is None:
-        return None
-
-    if current < 0 or reference < 0:
-        return min(current, reference)
-    if stability_state == "stable":
-        return current * 0.50 + reference * 0.50
-    if stability_state == "watch":
-        return current * 0.25 + reference * 0.75
-    if stability_state == "volatile":
-        return min(current, reference * (1.0 + VOLATILE_UPSIDE_CAP_PCT / 100.0))
-    if stability_state == "thin_market":
-        conservative = current * 0.25 + reference * 0.75
-        return conservative * THIN_MARKET_DISCOUNT
-    return None

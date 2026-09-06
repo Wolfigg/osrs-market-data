@@ -9,16 +9,6 @@ from .public_models import build_public_afk as build_public_afk_legacy
 from .ranking import RANKING_MODES, rank_methods
 
 
-def _lower_bound_lookup(afk_results: list[dict[str, Any]]) -> dict[str, dict[str, float | None]]:
-    lookup: dict[str, dict[str, float | None]] = {}
-    for row in afk_results:
-        econ = row.get("economics") or {}
-        lookup.setdefault(str(row["methodId"]), {})[str(row["scenario"])] = econ.get(
-            "profitGpPerHourLowerBoundSustainable"
-        )
-    return lookup
-
-
 def _model_lookup(afk_results: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
     for row in afk_results:
@@ -191,7 +181,6 @@ def _ranking_scores(methods: list[dict[str, Any]]) -> dict[str, dict[str, float]
 
 def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]], anomaly_sink: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     payload = build_public_afk_legacy(generated_at, afk_results)
-    lower = _lower_bound_lookup(afk_results)
     models = _model_lookup(afk_results)
 
     for method in payload.get("methods", []):
@@ -204,9 +193,6 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]], anoma
             "variant": None,
         }
         method["model"] = model
-        if model.get("probabilisticOutputs"):
-            lower_execution = (lower.get(method_id) or {}).get("CONSERVATIVE_EXECUTION")
-            method["scenarios"]["conservativeGpPerHour"] = lower_execution
         if model.get("variant"):
             variant = model["variant"]
             method["baseMethodId"] = variant.get("baseMethodId")

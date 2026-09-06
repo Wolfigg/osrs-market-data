@@ -26,22 +26,17 @@ def _window_key_for_scenario(scenario: str) -> str | None:
     return scenario.removeprefix("HISTORICAL_INSTANT_").lower()
 
 
-def _input_price(record: dict[str, Any], scenario: str) -> float | None:
+def _scenario_price(record: dict[str, Any], scenario: str, side: str, execution: dict[str, Any]) -> float | None:
+    if scenario == "EXPECTED_EXECUTION":
+        return execution["expectedExecutable"]
+    if scenario == "CONSERVATIVE_EXECUTION":
+        return execution["conservative"]
     if scenario == "CURRENT_INSTANT":
-        return record["current"].get("high")
+        return record["current"].get(side)
     if scenario == "CURRENT_PATIENT_PROXY":
-        return record["current"].get("low")
+        return record["current"].get("low" if side == "high" else "high")
     window = _window_key_for_scenario(scenario)
-    return record["windows"].get(window, {}).get("highVwap") if window else None
-
-
-def _output_price(record: dict[str, Any], scenario: str) -> float | None:
-    if scenario == "CURRENT_INSTANT":
-        return record["current"].get("low")
-    if scenario == "CURRENT_PATIENT_PROXY":
-        return record["current"].get("high")
-    window = _window_key_for_scenario(scenario)
-    return record["windows"].get(window, {}).get("lowVwap") if window else None
+    return record["windows"].get(window, {}).get(f"{side}Vwap") if window else None
 
 
 def evaluate_method(
@@ -60,6 +55,15 @@ def evaluate_method(
     """
     if method.get("enabled", True) is False:
         return []
+    # Execution evidence depends on the recipe, not the pricing scenario.
+    execution_quotes = {}
+    cycles_per_hour = float(method.get("cycles_per_hour", 0))
+    for kind, side in (("inputs", "high"), ("outputs", "low")):
+        for index, entry in enumerate(method.get(kind, [])):
+            record = item_records.get(int(entry["item_id"]))
+            if record is not None:
+                required = float(entry.get("execution_required_per_hour", float(entry.get("quantity", 1)) * cycles_per_hour))
+                execution_quotes[kind, index] = execution_quote(record, side, required, generated_at)
     return [
         _evaluate_scenario(
             method_id,
@@ -69,6 +73,7 @@ def evaluate_method(
             exempt_item_ids,
             settings,
             generated_at,
+            execution_quotes,
         )
         for scenario in SCENARIOS
     ]
@@ -82,6 +87,7 @@ def _evaluate_scenario(
     exempt_item_ids: set[int],
     settings: dict[str, Any],
     generated_at: int,
+    execution_quotes: dict[tuple[str, int], dict[str, Any]],
 ) -> dict[str, Any]:
     warnings: list[str] = []
     missing: list[str] = []
@@ -114,7 +120,7 @@ def _evaluate_scenario(
     output_details: list[dict[str, Any]] = []
     buy_limit_cycle_caps: list[float] = []
 
-    for entry in method.get("inputs", []):
+    for index, entry in enumerate(method.get("inputs", [])):
         item_id = int(entry["item_id"])
         quantity = float(entry.get("quantity", 1))
         record = item_records.get(item_id)
@@ -122,8 +128,8 @@ def _evaluate_scenario(
             missing.append(f"MISSING_ITEM_{item_id}")
             continue
 
-        execution = execution_quote(record, "high", float(entry.get("execution_required_per_hour", quantity * mechanical_cph)), generated_at)
-        price = execution["expectedExecutable" if scenario == "EXPECTED_EXECUTION" else "conservative"] if scenario in {"EXPECTED_EXECUTION", "CONSERVATIVE_EXECUTION"} else _input_price(record, scenario)
+        execution = execution_quotes["inputs", index].copy()
+        price = _scenario_price(record, scenario, "high", execution)
         limit = record["item"].get("limit")
         buy_via_ge = bool(entry.get("buy_via_ge", True))
         cap = None
@@ -153,7 +159,7 @@ def _evaluate_scenario(
             needed_side = "high" if scenario == "CURRENT_INSTANT" else "low"
             _append_current_warning(record, needed_side, warnings)
 
-    for entry in method.get("outputs", []):
+    for index, entry in enumerate(method.get("outputs", [])):
         item_id = int(entry["item_id"])
         quantity = float(entry.get("quantity", 1))
         record = item_records.get(item_id)
@@ -161,8 +167,8 @@ def _evaluate_scenario(
             missing.append(f"MISSING_ITEM_{item_id}")
             continue
 
-        execution = execution_quote(record, "low", float(entry.get("execution_required_per_hour", quantity * mechanical_cph)), generated_at)
-        ge_price = execution["expectedExecutable" if scenario == "EXPECTED_EXECUTION" else "conservative"] if scenario in {"EXPECTED_EXECUTION", "CONSERVATIVE_EXECUTION"} else _output_price(record, scenario)
+        execution = execution_quotes["outputs", index].copy()
+        ge_price = _scenario_price(record, scenario, "low", execution)
         if ge_price is None:
             missing.append(f"MISSING_OUTPUT_PRICE_{item_id}")
             continue
@@ -263,9 +269,8 @@ def _evaluate_scenario(
         },
         "executionPrices": {
             kind: [{"itemId": int(entry["item_id"]), "name": item_records[int(entry["item_id"])]["item"]["name"],
-                    **execution_quote(item_records[int(entry["item_id"])], "high" if kind == "inputs" else "low",
-                                      float(entry.get("quantity", 1)) * mechanical_cph, generated_at)}
-                   for entry in method.get(kind, []) if int(entry["item_id"]) in item_records]
+                    **execution_quotes[kind, index]}
+                   for index, entry in enumerate(method.get(kind, [])) if (kind, index) in execution_quotes]
             for kind in ("inputs", "outputs")
         },
         "inputs": input_details,
