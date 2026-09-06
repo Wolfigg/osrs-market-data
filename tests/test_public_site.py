@@ -63,7 +63,7 @@ def test_afk_classification_boundaries():
 
 
 def test_public_afk_contains_history_scenarios_confidence_and_breakdown():
-    rows = [_afk_result()]
+    rows = [_afk_result(), _afk_result("EXPECTED_EXECUTION", gp=95_000), _afk_result("CONSERVATIVE_EXECUTION", gp=85_000)]
     for scenario, gp in [("HISTORICAL_INSTANT_6H", 90_000), ("HISTORICAL_INSTANT_24H", 80_000), ("HISTORICAL_INSTANT_7D", 70_000), ("HISTORICAL_INSTANT_30D", 60_000), ("HISTORICAL_INSTANT_6M", 55_000)]:
         rows.append(_afk_result(scenario=scenario, gp=gp))
     method = build_public_afk(123, rows)["methods"][0]
@@ -72,7 +72,7 @@ def test_public_afk_contains_history_scenarios_confidence_and_breakdown():
     assert method["scenarios"]["currentGpPerHour"] == 100_000
     assert method["scenarios"]["expectedGpPerHour"] == method["recommended"]["gpPerHour"]
     assert method["history"]["6mGpPerHour"] == 55_000
-    assert method["scenarios"]["conservativeGpPerHour"] == 55_000
+    assert method["scenarios"]["conservativeGpPerHour"] == 85_000
     assert method["economics"]["capitalOneHour"] == 900_000
     assert method["economics"]["capitalPerCycle"] == 1000
     assert method["economics"]["inputGpPerCycle"] == 1000

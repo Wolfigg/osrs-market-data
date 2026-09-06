@@ -165,6 +165,15 @@ def _refresh_history(item_ids: set[int], history: dict[str, Any], collector: Ser
                 put_item_windows(history, item_id, updates)
 
 
+def _refresh_execution(method_ids: set[int], records: dict[int, dict[str, Any]], collector: SeriesCollector, generated_at: int) -> None:
+    # Refresh execution evidence in every publishing mode; reuse history requests.
+    for item_id in sorted(method_ids):
+        records[item_id]["executionPoints"] = [
+            point.to_api_dict() for point in collector.get(item_id, "5m")
+            if generated_at - 3600 <= point.timestamp <= generated_at
+        ]
+
+
 def _load_or_fetch_mapping(client: MarketApiClient, cache_dir: Path, generated_at: int, force_refresh: bool) -> dict[int, MappingItem]:
     if not force_refresh:
         cached = load_mapping(cache_dir)
@@ -299,6 +308,8 @@ def collect(config_dir: Path, output_dir: Path, cache_dir: Path, mode: str = "fu
         )
         for item_id in sorted(base_ids)
     }
+
+    _refresh_execution(method_ids, records, collector, generated_at)
 
     afk_results: list[dict[str, Any]] = []
     for method_id, method in methods_config.get("methods", {}).items():

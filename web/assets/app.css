@@ -234,3 +234,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .detail-panel { padding: .8rem; }
   .calc-table { display: block; overflow-x: auto; }
 }
+
+.execution-table-scroll { overflow-x: auto; }
+.execution-table-scroll small { display: block; white-space: normal; font-size: 0.75rem; }
+.execution-table-scroll .calc-table { min-width: 850px; }

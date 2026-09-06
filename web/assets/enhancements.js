@@ -34,7 +34,7 @@
 
     const scenario = document.createElement("div");
     scenario.className = "scenario-grid";
-    scenario.innerHTML = `<div class="scenario-card"><span>Current margin</span><strong>${gpText(scenarios.currentGpPerHour)}</strong></div><div class="scenario-card"><span>Expected executable</span><strong>${gpText(scenarios.expectedGpPerHour)}</strong></div><div class="scenario-card"><span>Conservative</span><strong>${gpText(scenarios.conservativeGpPerHour)}</strong></div>`;
+    scenario.innerHTML = `<div class="scenario-card"><span>Latest / Mechanical</span><strong>${gpText(scenarios.currentGpPerHour)}</strong></div><div class="scenario-card"><span>Expected executable</span><strong>${gpText(scenarios.expectedGpPerHour)}</strong></div><div class="scenario-card"><span>Conservative</span><strong>${gpText(scenarios.conservativeGpPerHour)}</strong></div>`;
 
     const more = document.createElement("details");
     more.className = "method-more";

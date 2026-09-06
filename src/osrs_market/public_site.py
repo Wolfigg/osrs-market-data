@@ -8,7 +8,7 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260901-1"
+PUBLIC_ASSET_VERSION = "20260906-execution-1"
 
 PUBLIC_REQUIRED_FILES = (
     "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js",

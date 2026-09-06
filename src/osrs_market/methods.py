@@ -3,12 +3,15 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from .execution import execution_quote
 from .quality import liquidity_warnings
 from .tax import ge_tax_per_item
 
 SCENARIOS = (
     "CURRENT_INSTANT",
     "CURRENT_PATIENT_PROXY",
+    "EXPECTED_EXECUTION",
+    "CONSERVATIVE_EXECUTION",
     "HISTORICAL_INSTANT_6H",
     "HISTORICAL_INSTANT_24H",
     "HISTORICAL_INSTANT_7D",
@@ -119,7 +122,8 @@ def _evaluate_scenario(
             missing.append(f"MISSING_ITEM_{item_id}")
             continue
 
-        price = _input_price(record, scenario)
+        execution = execution_quote(record, "high", float(entry.get("execution_required_per_hour", quantity * mechanical_cph)), generated_at)
+        price = execution["expectedExecutable" if scenario == "EXPECTED_EXECUTION" else "conservative"] if scenario in {"EXPECTED_EXECUTION", "CONSERVATIVE_EXECUTION"} else _input_price(record, scenario)
         if price is None:
             missing.append(f"MISSING_INPUT_PRICE_{item_id}")
             continue
@@ -135,6 +139,7 @@ def _evaluate_scenario(
 
         input_details.append(
             {
+                "execution": execution,
                 "itemId": item_id,
                 "name": record["item"]["name"],
                 "quantity": quantity,
@@ -157,7 +162,8 @@ def _evaluate_scenario(
             missing.append(f"MISSING_ITEM_{item_id}")
             continue
 
-        ge_price = _output_price(record, scenario)
+        execution = execution_quote(record, "low", float(entry.get("execution_required_per_hour", quantity * mechanical_cph)), generated_at)
+        ge_price = execution["expectedExecutable" if scenario == "EXPECTED_EXECUTION" else "conservative"] if scenario in {"EXPECTED_EXECUTION", "CONSERVATIVE_EXECUTION"} else _output_price(record, scenario)
         if ge_price is None:
             missing.append(f"MISSING_OUTPUT_PRICE_{item_id}")
             continue
@@ -171,6 +177,7 @@ def _evaluate_scenario(
         output_net += ge_net_each * quantity
         output_details.append(
             {
+                "execution": execution,
                 "itemId": item_id,
                 "name": record["item"]["name"],
                 "quantity": quantity,
@@ -255,6 +262,13 @@ def _evaluate_scenario(
             "profitGpPerHourMechanical": reported_profit_mechanical,
             "profitGpPerHourBuyLimitSustainable": reported_profit_sustainable,
         },
+        "executionPrices": {
+            kind: [{"itemId": int(entry["item_id"]), "name": item_records[int(entry["item_id"])]["item"]["name"],
+                    **execution_quote(item_records[int(entry["item_id"])], "high" if kind == "inputs" else "low",
+                                      float(entry.get("quantity", 1)) * mechanical_cph, generated_at)}
+                   for entry in method.get(kind, []) if int(entry["item_id"]) in item_records]
+            for kind in ("inputs", "outputs")
+        },
         "inputs": input_details,
         "outputs": output_details,
         "liquidity": liquidity,
@@ -323,6 +337,8 @@ def _method_liquidity(
 
 
 def _input_basis(scenario: str) -> str:
+    if scenario in {"EXPECTED_EXECUTION", "CONSERVATIVE_EXECUTION"}:
+        return "30-60m high-side VWAP" if scenario == "EXPECTED_EXECUTION" else "adverse high-side volume-weighted 90th percentile, at least VWAP"
     if scenario == "CURRENT_INSTANT":
         return "current observed high"
     if scenario == "CURRENT_PATIENT_PROXY":
@@ -331,6 +347,8 @@ def _input_basis(scenario: str) -> str:
 
 
 def _output_basis(scenario: str) -> str:
+    if scenario in {"EXPECTED_EXECUTION", "CONSERVATIVE_EXECUTION"}:
+        return "30-60m low-side VWAP minus GE tax" if scenario == "EXPECTED_EXECUTION" else "adverse low-side volume-weighted 10th percentile, at most VWAP, minus GE tax"
     if scenario == "CURRENT_INSTANT":
         return "current observed low minus GE seller tax"
     if scenario == "CURRENT_PATIENT_PROXY":

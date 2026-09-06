@@ -165,6 +165,10 @@ def evaluate_method(
         probabilistic = method_has_probabilistic_quantities(variant)
         if probabilistic:
             minimum_method = _materialise_method(variant, "minimum")
+            # Hold the price window fixed while varying probabilistic quantities.
+            for side in ("inputs", "outputs"):
+                for base_entry, lower_entry in zip(expected_method.get(side, []), minimum_method.get(side, [])):
+                    lower_entry["execution_required_per_hour"] = base_entry["quantity"] * expected_method["cycles_per_hour"]
             lower_results = evaluate_legacy_method(variant_method_id, minimum_method, item_records, exempt_item_ids, settings, generated_at)
             lower_by_scenario = {str(row["scenario"]): row for row in lower_results}
         workflow = variant.get("workflow") or {}
@@ -173,6 +177,10 @@ def evaluate_method(
         personalised = variant.get("personalisation") or {}
         for row in expected_results:
             lower = lower_by_scenario.get(str(row["scenario"]))
+            if lower and row["scenario"] == "CONSERVATIVE_EXECUTION":
+                # Keep conservative arithmetic and recipe consistent with lower quantities.
+                for key in ("economics", "inputs", "outputs", "valid", "warnings"):
+                    row[key] = deepcopy(lower[key])
             economics = row.setdefault("economics", {})
             economics["profitGpPerCycleLowerBound"] = ((lower.get("economics") or {}).get("profitGpPerCycle") if lower else economics.get("profitGpPerCycle"))
             economics["profitGpPerHourLowerBoundSustainable"] = ((lower.get("economics") or {}).get("profitGpPerHourBuyLimitSustainable") if lower else economics.get("profitGpPerHourBuyLimitSustainable"))
