@@ -166,3 +166,16 @@ def test_conservative_order_for_losses_zero_and_profit(output_price):
               "inputs": [{"item_id": 1}], "outputs": [{"item_id": 2}]}
     result = build_public_afk(NOW, evaluate_method("boundary", method, records, set(), SETTINGS, NOW))["methods"][0]
     assert result["scenarios"]["conservativeGpPerHour"] <= result["scenarios"]["expectedGpPerHour"]
+
+
+def test_missing_latest_still_preserves_ge_capacity_for_execution():
+    records = {1: market(), 2: market(510, 500)}
+    records[1]["current"]["high"] = None
+    records[1]["item"]["limit"] = 200
+    method = {"name": "Latest missing", "cycles_per_hour": 100,
+              "inputs": [{"item_id": 1}], "outputs": [{"item_id": 2}]}
+    result = build_public_afk(NOW, evaluate_method("missing", method, records, set(), SETTINGS, NOW))["methods"][0]
+    assert result["current"]["gpPerHour"] is None
+    assert result["mechanics"]["cyclesPerHourByBuyLimits"] == 50
+    assert result["scenarios"]["expectedGpPerHour"] == 150 * 50
+    assert result["executionPrices"]["inputs"][0]["latestObserved"] is None

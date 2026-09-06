@@ -124,12 +124,6 @@ def _evaluate_scenario(
 
         execution = execution_quote(record, "high", float(entry.get("execution_required_per_hour", quantity * mechanical_cph)), generated_at)
         price = execution["expectedExecutable" if scenario == "EXPECTED_EXECUTION" else "conservative"] if scenario in {"EXPECTED_EXECUTION", "CONSERVATIVE_EXECUTION"} else _input_price(record, scenario)
-        if price is None:
-            missing.append(f"MISSING_INPUT_PRICE_{item_id}")
-            continue
-
-        subtotal = quantity * float(price)
-        input_cost += subtotal
         limit = record["item"].get("limit")
         buy_via_ge = bool(entry.get("buy_via_ge", True))
         cap = None
@@ -137,6 +131,11 @@ def _evaluate_scenario(
             cap = (float(limit) / 4.0) / quantity
             buy_limit_cycle_caps.append(cap)
 
+        if price is None:
+            missing.append(f"MISSING_INPUT_PRICE_{item_id}")
+            continue
+        subtotal = quantity * float(price)
+        input_cost += subtotal
         input_details.append(
             {
                 "execution": execution,
