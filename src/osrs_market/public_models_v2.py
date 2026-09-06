@@ -8,12 +8,6 @@ from .confidence import ConfidenceComponents, method_confidence
 from .public_models import build_public_afk as build_public_afk_legacy
 from .ranking import RANKING_MODES, rank_methods
 
-_HISTORY_SCENARIOS = {
-    "HISTORICAL_INSTANT_24H": "24h",
-    "HISTORICAL_INSTANT_7D": "7d",
-    "HISTORICAL_INSTANT_30D": "30d",
-}
-
 
 def _lower_bound_lookup(afk_results: list[dict[str, Any]]) -> dict[str, dict[str, float | None]]:
     lookup: dict[str, dict[str, float | None]] = {}
@@ -88,7 +82,7 @@ def _participation_fraction(fill_score: float | None, stability_state: str = "un
 def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
     mechanics = method.get("mechanics") or {}
     mechanical = max(0.0, float(mechanics.get("cyclesPerHour") or 0.0))
-    ge_limited = max(0.0, float(mechanics.get("cyclesPerHourByBuyLimits") or mechanical))
+    ge_limited = max(0.0, float(mechanics.get("cyclesPerHourByBuyLimits", mechanical)))
     fill_score_raw = (method.get("fillConfidence") or {}).get("score")
     fill_score = float(fill_score_raw) if fill_score_raw is not None else None
     stability_state = str((method.get("stability") or {}).get("state") or "unknown")
@@ -162,8 +156,8 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
 def _apply_market_capacity(method: dict[str, Any]) -> None:
     capacity = _market_capacity(method)
     method["marketCapacity"] = capacity
-    mechanical = max(0.0, float((method.get("mechanics") or {}).get("cyclesPerHour") or 0.0))
-    ratio = capacity["cyclesPerHour"] / mechanical if mechanical > 0 else 0.0
+    sustainable = float((method.get("mechanics") or {}).get("cyclesPerHourByBuyLimits") or 0.0)
+    ratio = capacity["cyclesPerHour"] / sustainable if sustainable > 0 else 0.0
 
     scenarios = method.get("scenarios") or {}
     raw_expected = scenarios.get("expectedGpPerHour")
@@ -210,20 +204,9 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]], anoma
             "variant": None,
         }
         method["model"] = model
-        candidate_values: list[float] = []
-        lower_current = (lower.get(method_id) or {}).get("CURRENT_INSTANT")
-        if lower_current is not None:
-            candidate_values.append(float(lower_current))
-        for scenario in _HISTORY_SCENARIOS:
-            value = (lower.get(method_id) or {}).get(scenario)
-            if value is not None:
-                candidate_values.append(float(value))
-        if model.get("probabilisticOutputs") and candidate_values:
-            method["scenarios"]["conservativeGpPerHour"] = min(candidate_values)
-            method["priceSource"]["conservative"] = (
-                "Lowest available lower-bound Current, 24H, 7D or 30D profitability. "
-                "Probabilistic outputs use their configured lower-bound expected quantity."
-            )
+        if model.get("probabilisticOutputs"):
+            lower_execution = (lower.get(method_id) or {}).get("CONSERVATIVE_EXECUTION")
+            method["scenarios"]["conservativeGpPerHour"] = lower_execution
         if model.get("variant"):
             variant = model["variant"]
             method["baseMethodId"] = variant.get("baseMethodId")

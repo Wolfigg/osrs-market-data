@@ -118,7 +118,7 @@
   }
 
   function renderAfkOverview(methods) {
-    const ranked = methods.filter(m => m.current?.valid && Number(m.scenarios?.expectedGpPerHour ?? m.recommended?.gpPerHour) > 0)
+    const ranked = methods.filter(m => Number(m.scenarios?.expectedGpPerHour ?? m.recommended?.gpPerHour) > 0)
       .sort((a, b) => Number(b.scenarios?.expectedGpPerHour ?? b.recommended?.gpPerHour) - Number(a.scenarios?.expectedGpPerHour ?? a.recommended?.gpPerHour));
     const leader = ranked[0];
     setText("#afk-leader-value", leader ? `${compactGp(leader.scenarios?.expectedGpPerHour ?? leader.recommended?.gpPerHour)} gp/h` : "No signal");
@@ -139,11 +139,21 @@
     setText("#alch-casts-hour", gp.format(data.assumptions?.castsPerHour || 0));
   }
 
+  function executionPricesHtml(m) {
+    const timestamp = value => value == null ? "Unknown" : new Date(value * 1000).toLocaleString();
+    const rows = ["inputs", "outputs"].flatMap(side => (m.executionPrices?.[side] || []).map(x =>
+      `<tr><td>${esc(x.name)}<small>${side === "inputs" ? "Buy / high" : "Sell / low"}</small></td><td class="num">${gpText(x.latestObserved)}<small>${esc(timestamp(x.latestObservedAt))} (${esc(x.latestFreshness)} at scan)</small></td><td class="num">${gpText(x.expectedExecutable)}</td><td class="num">${gpText(x.conservative)}</td><td class="num">${plainGp(x.directionalVolume)} / ${plainGp(x.windowSeconds / 60)}m</td><td class="num">${plainGp(x.requiredPerHour)}<small>${x.requiredSharePct == null ? "Unknown share" : `${pct.format(x.requiredSharePct)}% of recent hourly flow`}</small></td><td>${esc(x.freshness)} at scan<small>Latest bucket ended ${esc(timestamp(x.latestBucketEnd))}</small></td></tr>`));
+    const expected = m.executionEconomics?.expected;
+    const conservative = m.executionEconomics?.conservative;
+    const equation = (name, e, gp) => `<p>${name}: input ${gpText(e?.inputGpPerCycle)} + fixed ${gpText(e?.fixedCostGpPerCycle)}, output ${gpText(e?.outputGrossGeGpPerCycle)} - tax ${gpText(e?.geTaxGpPerCycle)} = <strong>${gpText(e?.profitGpPerCycle)} / cycle</strong>; ${gpText(gp)} / hour after GE limits and market capacity.</p>`;
+    return `<div class="calculation-block"><h3>Execution prices</h3><div class="execution-table-scroll"><table class="calc-table"><thead><tr><th>Item / direction</th><th>Latest observed</th><th>Expected executable</th><th>Conservative</th><th>Recent directional volume</th><th>Required per hour</th><th>Evidence freshness</th></tr></thead><tbody>${rows.join("") || '<tr><td colspan="7">Execution evidence unavailable.</td></tr>'}</tbody></table></div><p>Expected uses 30-60 minute directional volume-weighted prices. Conservative uses adverse volume-weighted prices from the same window. Observed flow estimates capacity; it does not guarantee fills. Prices above are before seller tax.</p>${equation("Expected", expected, m.scenarios?.expectedGpPerHour)}${equation("Conservative", conservative, m.scenarios?.conservativeGpPerHour)}</div>`;
+  }
+
   function calculationHtml(m) {
     const e = m.economics || {};
     const inputs = (m.inputs || []).map(x => `<tr><td>${esc(x.quantity)} × ${esc(x.name)}</td><td class="num">${gpText(x.price)}</td><td class="num">${gpText(x.subtotal)}</td></tr>`).join("");
     const outputs = (m.outputs || []).map(x => `<tr><td>${esc(x.quantity)} × ${esc(x.name)}</td><td class="num">${gpText(x.gePrice)}</td><td class="num">-${gpText((x.geTaxPerItem || 0) * Number(x.quantity || 0))}</td></tr>`).join("");
-    return `<div class="calculation-block"><h3>Current calculation</h3><table class="calc-table"><thead><tr><th>Input</th><th class="num">Price each</th><th class="num">Cost/cycle</th></tr></thead><tbody>${inputs || '<tr><td colspan="3">No consumed GE inputs.</td></tr>'}</tbody></table><table class="calc-table"><thead><tr><th>Output</th><th class="num">Sell each</th><th class="num">GE tax/cycle</th></tr></thead><tbody>${outputs || '<tr><td colspan="3">No output data.</td></tr>'}</tbody></table><div class="calc-equation"><span>Inputs ${gpText(e.inputGpPerCycle)}</span><span>+ fixed ${gpText(e.fixedCostGpPerCycle)}</span><span>→ net output ${gpText(e.outputNetGpPerCycle)}</span><strong>= ${gpText(e.profitPerCycle)} / cycle</strong></div><p>${plainGp(m.mechanics?.cyclesPerHour)} mechanical cycles/h → ${plainGp(m.mechanics?.cyclesPerHourByBuyLimits)} after GE limits → <strong>${gpText(m.current?.gpPerHour)} current GP/h</strong>.</p></div>`;
+    return `${executionPricesHtml(m)}<div class="calculation-block"><h3>Latest / Mechanical calculation</h3><table class="calc-table"><thead><tr><th>Input</th><th class="num">Price each</th><th class="num">Cost/cycle</th></tr></thead><tbody>${inputs || '<tr><td colspan="3">No consumed GE inputs.</td></tr>'}</tbody></table><table class="calc-table"><thead><tr><th>Output</th><th class="num">Sell each</th><th class="num">GE tax/cycle</th></tr></thead><tbody>${outputs || '<tr><td colspan="3">No output data.</td></tr>'}</tbody></table><div class="calc-equation"><span>Inputs ${gpText(e.inputGpPerCycle)}</span><span>+ fixed ${gpText(e.fixedCostGpPerCycle)}</span><span>→ net output ${gpText(e.outputNetGpPerCycle)}</span><strong>= ${gpText(e.profitPerCycle)} / cycle</strong></div><p>${plainGp(m.mechanics?.cyclesPerHour)} mechanical cycles/h → ${plainGp(m.mechanics?.cyclesPerHourByBuyLimits)} after GE limits → <strong>${gpText(m.current?.gpPerHour)} current GP/h</strong>.</p></div>`;
   }
 
   function liquidityHtml(m) {
@@ -193,7 +203,7 @@
         let rows = methods.filter(m =>
           !(search && !`${m.name} ${m.category} ${(m.tags || []).join(" ")}`.toLowerCase().includes(search)) &&
           !(category !== "all" && m.category !== category) && !(members === "f2p" && m.members) && !(members === "members" && !m.members) &&
-          !(profitability === "profitable" && !(m.current?.valid && Number(m.scenarios?.expectedGpPerHour ?? m.recommended?.gpPerHour) > 0)) &&
+          !(profitability === "profitable" && !(Number(m.scenarios?.expectedGpPerHour ?? m.recommended?.gpPerHour) > 0)) &&
           !(level !== "all" && m.afk.classification !== level) && !(type !== "all" && !(m.tags || []).includes(type)) &&
           !(stability !== "all" && m.stability?.state !== stability) && !(sustainability !== "all" && m.sustainability?.state !== sustainability) &&
           !(capitalLimit != null && Number(m.economics?.capitalOneHour) >= capitalLimit) && !(onlyCanDo && !canDoBySkills(m, levels))

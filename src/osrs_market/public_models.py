@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .recommendation import build_stability, recommended_gp_per_hour, weighted_reference
+from .recommendation import build_stability, weighted_reference
 
 PUBLIC_SCHEMA_VERSION = 1
 
@@ -106,6 +106,7 @@ def _public_inputs(current: dict[str, Any]) -> list[dict[str, Any]]:
     rows = []
     for row in current.get("inputs") or []:
         rows.append({
+            "execution": row.get("execution"),
             "itemId": int(row.get("itemId")), "name": str(row.get("name", "")),
             "quantity": _intish(row.get("quantity")), "price": _number(row.get("price")),
             "subtotal": _number(row.get("subtotal")), "buyViaGe": bool(row.get("buyViaGe", True)),
@@ -119,6 +120,7 @@ def _public_outputs(current: dict[str, Any]) -> list[dict[str, Any]]:
     rows = []
     for row in current.get("outputs") or []:
         rows.append({
+            "execution": row.get("execution"),
             "itemId": int(row.get("itemId")), "name": str(row.get("name", "")),
             "quantity": _intish(row.get("quantity")), "gePrice": _number(row.get("gePrice")),
             "geTaxPerItem": _number(row.get("geTaxPerItem")), "geNetPerItem": _number(row.get("geNetPerItem")),
@@ -140,7 +142,8 @@ def _public_liquidity(current: dict[str, Any], mechanical_cph: float) -> dict[st
             short_directional_key = "observedHighVolume6h" if side == "inputs" else "observedLowVolume6h"
             directional_volume = _number(row.get(directional_key))
             short_directional_volume = _number(row.get(short_directional_key))
-            units_per_hour = quantity * mechanical_cph
+            quote = next((x for x in (current.get("executionPrices") or {}).get(side, []) if x.get("itemId") == item_id), detail.get("execution") or {})
+            units_per_hour = quote.get("requiredPerHour", quantity * mechanical_cph)
             total_share = units_per_hour / total_volume * 100.0 if total_volume and total_volume > 0 else None
             directional_share = units_per_hour / directional_volume * 100.0 if directional_volume and directional_volume > 0 else None
             result[side].append({
@@ -148,6 +151,7 @@ def _public_liquidity(current: dict[str, Any], mechanical_cph: float) -> dict[st
                 "volume24h": _intish(total_volume), "oneHourSharePct24h": total_share,
                 "directionalVolume24h": _intish(directional_volume),
                 "directionalVolume6h": _intish(short_directional_volume),
+                "directionalVolume1h": quote.get("directionalVolumePerHour") if quote.get("freshness") == "fresh" else None,
                 "directionalOneHourSharePct24h": directional_share,
             })
     return result
@@ -229,17 +233,6 @@ def _fill_confidence(mechanical_cph: float, sustainable_cph: float, liquidity: d
     }
 
 
-def _profit_scenarios(current_gp: float | None, expected_gp: float | None, history: dict[str, Any]) -> dict[str, float | None]:
-    references = [current_gp, expected_gp, history.get("6hGpPerHour"), history.get("24hGpPerHour"), history.get("7dGpPerHour"), history.get("30dGpPerHour"), history.get("6mGpPerHour")]
-    available = [float(value) for value in references if value is not None]
-    conservative = min(available) if available else None
-    return {
-        "currentGpPerHour": current_gp,
-        "expectedGpPerHour": expected_gp,
-        "conservativeGpPerHour": conservative,
-    }
-
-
 def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> dict[str, Any]:
     grouped: dict[str, dict[str, dict[str, Any]]] = {}
     for result in afk_results:
@@ -273,12 +266,18 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
         buy_limit_constrained = sustainable_cph + 1e-9 < mechanical_cph
         risk = public_risk(current.get("warnings"), valid=valid)
         stability = build_stability(current_gp, history, current.get("warnings"), valid)
-        expected = recommended_gp_per_hour(current_gp, history, stability["state"])
+        expected_row = scenarios.get("EXPECTED_EXECUTION") or {}
+        conservative_row = scenarios.get("CONSERVATIVE_EXECUTION") or {}
+        expected = (expected_row.get("economics") or {}).get("profitGpPerHourBuyLimitSustainable") if expected_row.get("valid") else None
         reference = weighted_reference(history)
         liquidity = _public_liquidity(current, mechanical_cph)
         sustainability = _sustainability(mechanical_cph, sustainable_cph, liquidity)
         fill_confidence = _fill_confidence(mechanical_cph, sustainable_cph, liquidity)
-        profit_scenarios = _profit_scenarios(current_gp if valid else None, expected, history)
+        profit_scenarios = {
+            "currentGpPerHour": current_gp if valid else None,
+            "expectedGpPerHour": expected,
+            "conservativeGpPerHour": (conservative_row.get("economics") or {}).get("profitGpPerHourBuyLimitSustainable") if conservative_row.get("valid") else None,
+        }
 
         methods.append({
             "methodId": method_id, "name": str(current.get("name", method_id)),
@@ -287,6 +286,8 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             "current": {"valid": valid, "gpPerHour": current_gp if valid else None},
             "recommended": {"gpPerHour": expected, "referenceGpPerHour": reference},
             "scenarios": profit_scenarios,
+            "executionPrices": current.get("executionPrices") or {"inputs": [], "outputs": []},
+            "executionEconomics": {"expected": expected_row.get("economics"), "conservative": conservative_row.get("economics")},
             "history": history, "stability": stability, "sustainability": sustainability, "fillConfidence": fill_confidence,
             "afk": {"classification": classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
             "mechanics": {"cyclesPerHour": mechanical_cph, "cyclesPerHourByBuyLimits": sustainable_cph},
@@ -301,8 +302,8 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             "priceSource": {
                 "provider": "RuneScape Wiki real-time prices API (prices.runescape.wiki)",
                 "current": "Latest observed high trades for inputs and low trades for outputs, including GE tax on outputs.",
-                "expected": "Current profit blended with 6H, 24H, 7D, 30D and 6M historical market references according to price stability.",
-                "conservative": "Lowest available Current, Expected, 6H, 24H, 7D, 30D or 6M profit reference.",
+                "expected": "30-60 minute directional VWAP, with GE tax and market capacity. Unavailable without fresh multi-bucket evidence.",
+                "conservative": "Adverse volume-weighted 90th percentile input and 10th percentile output prices, bounded by Expected, with GE tax and market capacity.",
                 "liquidity": "24H observed directional trade volume for the side required by the method.",
                 "generatedAt": generated_at,
             },

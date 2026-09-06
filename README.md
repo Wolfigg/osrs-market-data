@@ -53,7 +53,7 @@ Live mode:
 - recalculates current AFK profitability
 - reruns the High Alch preliminary scan and current margins
 - combines current values with cached historical metrics
-- makes **zero** `/timeseries` requests
+- refreshes 5m `/timeseries` for method items to estimate execution prices; historical requests are reused within each run
 - rebuilds the public and internal artifacts
 
 The scheduled live workflow uses explicit ten-minute slots (`7,17,27,37,47,57`). GitHub Actions scheduling is best-effort, so the UI derives freshness from the actual `generatedAt` timestamp rather than assuming the cron fired on time.
@@ -310,3 +310,26 @@ No OSRS/Jagex credentials or API key are required.
 ## Completion documentation
 
 `docs/IMPLEMENTATION_CHECKLIST.md` is the current definition-of-done checklist for the two-tool product. The obsolete Market Explorer-era checklist has been removed.
+
+## AFK execution scenarios
+
+Latest / Mechanical retains the latest high input and low output observations and
+existing GE tax and buy-limit accounting. Expected uses directional price-volume
+pairs from completed 5m buckets: 30 minutes when at least three trading buckets
+cover the required hourly quantity at their hourly rate, otherwise 60 minutes.
+Zero-volume, missing-price, future and incomplete buckets are excluded. Duplicate
+timestamps count once. Expected is the directional VWAP; Conservative uses the
+volume-weighted 90th percentile for inputs and 10th for outputs, bounded adversely
+by the VWAP. Executable prices round up for purchases and down for sales to
+whole GP; the unrounded VWAP remains in the payload. Tiny trades therefore have
+proportionately small influence.
+
+Execution estimates require at least three positive-volume buckets and a latest
+bucket end no more than 15 minutes old. Missing or stale evidence gives unavailable
+execution profit, never a silent latest-price fallback. Latest observations remain
+visible independently, with their own timestamps. The public executionPrices and
+executionEconomics fields expose the evidence and scenario arithmetic. Recent
+flow is converted to an hourly rate over the full selected window, including
+empty buckets, and joins the existing participation and GE capacity constraints.
+Historical profit remains context rather than an input to Expected pricing.
+Observed flow is not order-book depth and cannot guarantee an individual fill.
