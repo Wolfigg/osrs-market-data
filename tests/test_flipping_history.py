@@ -131,3 +131,39 @@ def test_flipping_history_legacy_rows_are_treated_as_60_minute_evidence():
     assert summary["byHorizon"]["60"]["sampleCount"] == 1
     assert "64" not in summary["byHorizon"]
     assert summary["calibrationReady"] is True
+
+
+def test_flipping_history_reapplies_fresh_calibration_to_current_public_payload():
+    first = _item(opportunity=20_000)
+    second = _item(opportunity=10_000)
+    second["itemId"] = 200
+    second["name"] = "Second item"
+    public = {"schemaVersion": 3, "generatedAt": 10_000, "items": [first, second]}
+    summary = {
+        "calibrationReady": True,
+        "calibrationHorizonMinutes": 60,
+        "minimumCalibrationSamples": 2,
+        "minimumItemSamples": 1,
+        "byHorizon": {
+            "60": {
+                "sampleCount": 2,
+                "marginSurvivalRate": 0.5,
+                "conservativeSurvivalRate": 0.5,
+                "rankingStabilityRate": 1.0,
+                "meanAbsoluteExpectedMarginError": 2,
+                "meanAbsoluteMidpointDriftPct": 1,
+            }
+        },
+        "itemCalibration": {
+            "100": {"ready": True, "sampleCount": 1, "marginSurvivalRate": 0.2},
+            "200": {"ready": True, "sampleCount": 1, "marginSurvivalRate": 0.8},
+        },
+    }
+
+    updated = flipping_history.apply_calibration_to_public(public, summary)
+
+    assert updated["rankingMode"] == "survival-calibrated"
+    assert updated["calibration"]["sampleCount"] == 2
+    assert [row["itemId"] for row in updated["items"]] == [200, 100]
+    assert updated["items"][0]["rankingScore4h"] == 8_000
+    assert updated["items"][1]["rankingScore4h"] == 4_000
