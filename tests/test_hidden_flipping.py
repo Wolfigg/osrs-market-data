@@ -290,10 +290,18 @@ def test_hidden_flipping_client_reads_generated_same_origin_data():
     assert "Available GP limits planned quantity" in script
 
 
-def test_publish_workflows_build_hidden_flipping_data_and_history():
+def test_publish_workflows_build_hidden_flipping_and_persist_calibration_separately():
     expected = "python -m osrs_market.flipping_site --config config --public-dir build/public-site --web-dir web --history-cache .flipping-cache/flipping-history.json"
-    for name in ("refresh-live.yml", "refresh-history.yml"):
-        workflow = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
-        assert expected in workflow
-        assert "python tools/flipping_history.py" in workflow
-        assert ".flipping-cache" in workflow
+    live = (ROOT / ".github" / "workflows" / "refresh-live.yml").read_text(encoding="utf-8")
+    history = (ROOT / ".github" / "workflows" / "refresh-history.yml").read_text(encoding="utf-8")
+    calibration = (ROOT / ".github" / "workflows" / "refresh-flipping-calibration.yml").read_text(encoding="utf-8")
+
+    assert expected in live
+    assert expected in history
+    assert ".flipping-cache" in live
+    assert "python tools/flipping_history.py" not in live
+    assert "python tools/flipping_history.py" in history
+    assert "python tools/flipping_history.py" in calibration
+    assert "workflow_run:" in calibration
+    assert "Refresh live market data" in calibration
+    assert ".flipping-cache" in calibration
