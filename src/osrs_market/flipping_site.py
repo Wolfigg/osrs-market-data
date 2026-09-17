@@ -15,6 +15,11 @@ from .tax import load_and_resolve_exemptions
 LOGGER = logging.getLogger("osrs_market.flipping")
 
 
+def _flipping_excluded_item_ids(settings: dict) -> set[int]:
+    raw = (settings.get("flipping") or {}).get("excluded_item_ids") or []
+    return {int(item_id) for item_id in raw}
+
+
 def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path = Path("web")) -> None:
     data_dir = public_dir / "data"
     assets_dir = public_dir / "assets"
@@ -26,6 +31,9 @@ def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path
     client = MarketApiClient(api_settings(settings))
 
     mapping = client.get_mapping()
+    excluded_item_ids = _flipping_excluded_item_ids(settings)
+    if excluded_item_ids:
+        mapping = {item_id: item for item_id, item in mapping.items() if item_id not in excluded_item_ids}
     latest = client.get_latest()
     five_minute = client.get_average_prices("5m")
     one_hour = client.get_average_prices("1h")
