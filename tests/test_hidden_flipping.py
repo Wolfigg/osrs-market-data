@@ -62,6 +62,36 @@ def _timeseries():
     return {100: points}
 
 
+def _calibration(ready=True):
+    return {
+        "calibrationReady": ready,
+        "calibrationHorizonMinutes": 60,
+        "minimumCalibrationSamples": 100,
+        "minimumItemSamples": 5,
+        "byHorizon": {
+            "60": {
+                "sampleCount": 200,
+                "marginSurvivalRate": 0.8,
+                "conservativeSurvivalRate": 0.7,
+                "rankingStabilityRate": 0.6,
+                "meanAbsoluteExpectedMarginError": 4,
+                "meanAbsoluteMidpointDriftPct": 1.2,
+            }
+        },
+        "itemCalibration": {
+            "100": {
+                "ready": True,
+                "sampleCount": 10,
+                "marginSurvivalRate": 0.5,
+                "conservativeSurvivalRate": 0.4,
+                "rankingStabilityRate": 0.7,
+                "meanAbsoluteExpectedMarginError": 3,
+                "meanAbsoluteMidpointDriftPct": 0.9,
+            }
+        },
+    }
+
+
 def test_hidden_flipping_page_is_unlisted_and_noindex():
     page = (ROOT / "web" / "flipping.html").read_text(encoding="utf-8")
     public_site = (ROOT / "src" / "osrs_market" / "public_site.py").read_text(encoding="utf-8")
@@ -104,7 +134,47 @@ def test_flipping_model_uses_execution_prices_and_consistent_capacity_horizons()
     assert item["capacityQuantity4h"] == 1000
     assert item["capacityCoverage4hPct"] == 100
     assert item["expectedOpportunity4h"] == 15000
+    assert item["rankingScore4h"] == 15000
+    assert item["calibration"]["applied"] is False
     assert item["drift"]["midpoint60m"] is not None
+
+
+def test_flipping_v3_ranking_only_uses_survival_after_calibration_gate():
+    uncalibrated = build_public_flipping(
+        10_000,
+        _mapping(),
+        _latest(),
+        _five_minute(),
+        _one_hour(),
+        set(),
+        _settings(),
+        _timeseries(),
+        _calibration(False),
+    )
+    calibrated = build_public_flipping(
+        10_000,
+        _mapping(),
+        _latest(),
+        _five_minute(),
+        _one_hour(),
+        set(),
+        _settings(),
+        _timeseries(),
+        _calibration(True),
+    )
+
+    assert uncalibrated["rankingMode"] == "expected-opportunity"
+    assert uncalibrated["items"][0]["rankingScore4h"] == 15000
+    assert uncalibrated["items"][0]["calibration"]["applied"] is False
+
+    item = calibrated["items"][0]
+    assert calibrated["rankingMode"] == "survival-calibrated"
+    assert calibrated["calibration"]["sampleCount"] == 200
+    assert item["calibration"]["source"] == "item"
+    assert item["calibration"]["sampleCount"] == 10
+    assert item["calibration"]["marginSurvivalRate"] == 0.5
+    assert item["calibration"]["applied"] is True
+    assert item["rankingScore4h"] == 7500
 
 
 def test_flipping_conservative_prices_move_against_the_flip():
@@ -196,8 +266,9 @@ def test_hidden_flipping_builder_writes_same_origin_artifacts(tmp_path, monkeypa
     flipping_site.build_hidden_flipping_site(tmp_path / "config", public_dir, web_dir)
 
     payload = json.loads((public_dir / "data" / "flipping.json").read_text(encoding="utf-8"))
-    assert payload["schemaVersion"] == 2
+    assert payload["schemaVersion"] == 3
     assert payload["generatedAt"] == 10_000
+    assert payload["rankingMode"] == "expected-opportunity"
     assert payload["items"][0]["expectedOpportunity4h"] == 15000
     assert payload["executionCandidatesRequested"] == 1
     assert payload["executionCandidatesSucceeded"] == 1
@@ -212,17 +283,25 @@ def test_hidden_flipping_client_reads_generated_same_origin_data():
     assert 'loadJson("data/flipping.json")' in script
     assert "prices.runescape.wiki" not in script
     assert "scenarioPlan" in script
-    assert "expected-profit" in script
+    assert "model-rank" in script
+    assert "rankingPlanScore" in script
     assert "capacityQuantity4h" in script
     assert "profitableBucketPct" in script
     assert "Available GP limits planned quantity" in script
 
 
-def test_publish_workflows_build_hidden_flipping_data_and_history():
-    expected = "python -m osrs_market.flipping_site --config config --public-dir build/public-site --web-dir web"
-    for name in ("refresh-live.yml", "refresh-history.yml"):
-        workflow = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
-        assert expected in workflow
+def test_publish_workflows_build_hidden_flipping_and_persist_calibration_separately():
+    expected = "python -m osrs_market.flipping_site --config config --public-dir build/public-site --web-dir web --history-cache .flipping-cache/flipping-history.json"
+    live = (ROOT / ".github" / "workflows" / "refresh-live.yml").read_text(encoding="utf-8")
+    history = (ROOT / ".github" / "workflows" / "refresh-history.yml").read_text(encoding="utf-8")
+    calibration = (ROOT / ".github" / "workflows" / "refresh-flipping-calibration.yml").read_text(encoding="utf-8")
 
-    history_workflow = (ROOT / ".github" / "workflows" / "refresh-history.yml").read_text(encoding="utf-8")
-    assert "python tools/flipping_history.py" in history_workflow
+    assert expected in live
+    assert expected in history
+    assert ".flipping-cache" in live
+    assert "python tools/flipping_history.py" not in live
+    assert "python tools/flipping_history.py" in history
+    assert "python tools/flipping_history.py" in calibration
+    assert "workflow_run:" in calibration
+    assert "Refresh live market data" in calibration
+    assert ".flipping-cache" in calibration

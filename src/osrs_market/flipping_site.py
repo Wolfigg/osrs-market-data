@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import shutil
 import time
@@ -20,7 +21,19 @@ def _flipping_excluded_item_ids(settings: dict) -> set[int]:
     return {int(item_id) for item_id in raw}
 
 
-def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path = Path("web")) -> None:
+def _load_flipping_calibration(path: Path | None) -> dict:
+    if path is None or not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        LOGGER.warning("flipping calibration cache unreadable path=%s: %s", path, exc)
+        return {}
+    summary = payload.get("summary") if isinstance(payload, dict) else None
+    return dict(summary) if isinstance(summary, dict) else {}
+
+
+def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path = Path("web"), history_cache: Path | None = None) -> None:
     data_dir = public_dir / "data"
     assets_dir = public_dir / "assets"
     if not public_dir.is_dir() or not data_dir.is_dir() or not assets_dir.is_dir():
@@ -41,15 +54,7 @@ def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path
     if unresolved:
         LOGGER.warning("unresolved GE tax exemption names not present in current mapping: %s", ", ".join(unresolved))
 
-    candidate_ids = select_flipping_timeseries_candidates(
-        generated_at,
-        mapping,
-        latest,
-        five_minute,
-        one_hour,
-        exempt_ids,
-        settings,
-    )
+    candidate_ids = select_flipping_timeseries_candidates(generated_at, mapping, latest, five_minute, one_hour, exempt_ids, settings)
     timeseries = {}
     failures = 0
     for item_id in candidate_ids:
@@ -59,16 +64,8 @@ def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path
             failures += 1
             LOGGER.warning("flipping timeseries unavailable item=%s: %s", item_id, exc)
 
-    payload = build_public_flipping(
-        generated_at,
-        mapping,
-        latest,
-        five_minute,
-        one_hour,
-        exempt_ids,
-        settings,
-        timeseries,
-    )
+    calibration = _load_flipping_calibration(history_cache)
+    payload = build_public_flipping(generated_at, mapping, latest, five_minute, one_hour, exempt_ids, settings, timeseries, calibration)
     payload["executionCandidatesRequested"] = len(candidate_ids)
     payload["executionCandidatesSucceeded"] = len(timeseries)
     payload["executionCandidatesFailed"] = failures
@@ -77,10 +74,11 @@ def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path
     shutil.copy2(web_dir / "flipping.html", public_dir / "flipping.html")
     shutil.copy2(web_dir / "assets" / "flipping.js", assets_dir / "flipping.js")
     LOGGER.info(
-        "hidden flipping desk: %s candidates, %s/%s execution histories",
+        "hidden flipping desk: %s candidates, %s/%s execution histories, ranking=%s",
         len(payload["items"]),
         len(timeseries),
         len(candidate_ids),
+        payload.get("rankingMode"),
     )
 
 
@@ -89,10 +87,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", default="config")
     parser.add_argument("--public-dir", default="build/public-site")
     parser.add_argument("--web-dir", default="web")
+    parser.add_argument("--history-cache", default=".flipping-cache/flipping-history.json")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     try:
-        build_hidden_flipping_site(Path(args.config), Path(args.public_dir), Path(args.web_dir))
+        build_hidden_flipping_site(
+            Path(args.config),
+            Path(args.public_dir),
+            Path(args.web_dir),
+            Path(args.history_cache) if args.history_cache else None,
+        )
         return 0
     except (ApiError, OSError, ValueError, KeyError) as exc:
         LOGGER.error("flipping build failed: %s", exc)

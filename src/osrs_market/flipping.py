@@ -12,6 +12,7 @@ EXECUTION_WINDOW_SECONDS = 3600
 SHORT_WINDOW_SECONDS = 1800
 MAX_EXECUTION_AGE_SECONDS = 900
 MIN_EXECUTION_BUCKETS = 3
+DEFAULT_CALIBRATION_HORIZON_MINUTES = 60
 
 
 def _number(value: Any) -> float | None:
@@ -294,6 +295,68 @@ def _spread_state(current_margin: float | None, execution: dict[str, Any]) -> di
     return {"state": "current_only", "label": "Current only"}
 
 
+def _calibration_signal(
+    item_id: int,
+    expected_opportunity4h: float | None,
+    calibration: dict[str, Any] | None,
+) -> dict[str, Any]:
+    summary = calibration or {}
+    ready = bool(summary.get("calibrationReady"))
+    horizon = int(summary.get("calibrationHorizonMinutes") or DEFAULT_CALIBRATION_HORIZON_MINUTES)
+    global_stats = (summary.get("byHorizon") or {}).get(str(horizon)) or {}
+    item_stats = (summary.get("itemCalibration") or {}).get(str(item_id)) or {}
+    item_ready = bool(item_stats.get("ready"))
+
+    source = "collecting"
+    applied_stats: dict[str, Any] = {}
+    if ready and item_ready:
+        source = "item"
+        applied_stats = item_stats
+    elif ready and global_stats:
+        source = "global"
+        applied_stats = global_stats
+
+    survival = _number(applied_stats.get("marginSurvivalRate"))
+    if survival is not None:
+        survival = min(max(survival, 0.0), 1.0)
+    applied = ready and survival is not None and expected_opportunity4h is not None
+    ranking_score = expected_opportunity4h
+    if applied and ranking_score is not None:
+        ranking_score *= survival
+
+    return {
+        "ready": ready,
+        "applied": applied,
+        "source": source,
+        "horizonMinutes": horizon,
+        "sampleCount": int(applied_stats.get("sampleCount") or 0),
+        "marginSurvivalRate": survival,
+        "conservativeSurvivalRate": _number(applied_stats.get("conservativeSurvivalRate")),
+        "rankingStabilityRate": _number(applied_stats.get("rankingStabilityRate")),
+        "meanAbsoluteExpectedMarginError": _number(applied_stats.get("meanAbsoluteExpectedMarginError")),
+        "meanAbsoluteMidpointDriftPct": _number(applied_stats.get("meanAbsoluteMidpointDriftPct")),
+        "rankingScore4h": ranking_score,
+    }
+
+
+def _public_calibration_summary(calibration: dict[str, Any] | None) -> dict[str, Any]:
+    summary = calibration or {}
+    horizon = int(summary.get("calibrationHorizonMinutes") or DEFAULT_CALIBRATION_HORIZON_MINUTES)
+    stats = (summary.get("byHorizon") or {}).get(str(horizon)) or {}
+    return {
+        "ready": bool(summary.get("calibrationReady")),
+        "horizonMinutes": horizon,
+        "sampleCount": int(stats.get("sampleCount") or summary.get("sampleCount") or 0),
+        "minimumSamples": int(summary.get("minimumCalibrationSamples") or 0),
+        "minimumItemSamples": int(summary.get("minimumItemSamples") or 0),
+        "marginSurvivalRate": _number(stats.get("marginSurvivalRate")),
+        "conservativeSurvivalRate": _number(stats.get("conservativeSurvivalRate")),
+        "rankingStabilityRate": _number(stats.get("rankingStabilityRate")),
+        "meanAbsoluteExpectedMarginError": _number(stats.get("meanAbsoluteExpectedMarginError")),
+        "meanAbsoluteMidpointDriftPct": _number(stats.get("meanAbsoluteMidpointDriftPct")),
+    }
+
+
 def select_flipping_timeseries_candidates(
     generated_at: int,
     mapping: dict[int, MappingItem],
@@ -338,6 +401,7 @@ def build_public_flipping(
     exempt_ids: set[int],
     settings: dict[str, Any],
     timeseries: dict[int, list[TimeSeriesPoint | dict[str, Any]]] | None = None,
+    calibration: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     series = timeseries or {}
     items: list[dict[str, Any]] = []
@@ -371,6 +435,7 @@ def build_public_flipping(
         conservative_opportunity4h = conservative["margin"] * quantity4h if conservative["margin"] is not None and quantity4h is not None else None
         capacity_capital = expected["buyPrice"] * quantity4h if expected["buyPrice"] is not None and quantity4h is not None else None
         coverage4h = quantity4h / float(buy_limit) * 100.0 if quantity4h is not None else None
+        calibration_signal = _calibration_signal(item_id, expected_opportunity4h, calibration)
 
         items.append({
             "itemId": item_id,
@@ -408,20 +473,26 @@ def build_public_flipping(
             "capacityCapital": capacity_capital,
             "expectedOpportunity4h": expected_opportunity4h,
             "conservativeOpportunity4h": conservative_opportunity4h,
+            "calibration": calibration_signal,
+            "rankingScore4h": calibration_signal["rankingScore4h"],
             "capitalAtLimit": buy_price * buy_limit,
             "limitProfit4h": current["margin"] * buy_limit if current["margin"] is not None else None,
         })
 
     items.sort(
         key=lambda row: (
+            row["rankingScore4h"] if row["rankingScore4h"] is not None else float("-inf"),
             row["expectedOpportunity4h"] if row["expectedOpportunity4h"] is not None else float("-inf"),
             row["spreadStats"].get("profitableBucketPct") or 0.0,
         ),
         reverse=True,
     )
+    public_calibration = _public_calibration_summary(calibration)
     return {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "generatedAt": generated_at,
         "source": "RuneScape Wiki real-time prices API (prices.runescape.wiki)",
+        "rankingMode": "survival-calibrated" if public_calibration["ready"] else "expected-opportunity",
+        "calibration": public_calibration,
         "items": items,
     }
