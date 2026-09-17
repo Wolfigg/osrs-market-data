@@ -133,9 +133,9 @@ def _stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def _row_horizon(row: dict[str, Any], fallback: int) -> int:
     value = row.get("targetHorizonMinutes")
     if value is None:
-        value = row.get("horizonMinutes")
-    if value is None:
-        value = fallback
+        # V2 stored actual observation age in horizonMinutes, not a target horizon.
+        # Treat all pre-V3 rows as evidence for the old 60-minute calibration gate.
+        return fallback
     return int(round(float(value)))
 
 
