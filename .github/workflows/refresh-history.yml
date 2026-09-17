@@ -82,6 +82,9 @@ jobs:
       - name: Persist recommendation snapshots and evaluate matured forecasts
         run: python tools/recommendation_history.py --public-afk build/public-site/data/afk.json --cache .market-cache/recommendation-history.json --summary build/internal-report/backtesting-summary.json
 
+      - name: Persist flipping snapshots and evaluate matured signals
+        run: python tools/flipping_history.py --public-flipping build/public-site/data/flipping.json --cache .market-cache/flipping-history.json --summary build/internal-report/flipping-backtesting-summary.json
+
       - name: Save derived market cache
         uses: actions/cache/save@v4
         with:

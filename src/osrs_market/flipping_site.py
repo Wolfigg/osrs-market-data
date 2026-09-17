@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .api import ApiError, MarketApiClient
 from .config import api_settings, load_yaml
-from .flipping import build_public_flipping
+from .flipping import build_public_flipping, select_flipping_timeseries_candidates
 from .public_site import write_json
 from .tax import load_and_resolve_exemptions
 
@@ -33,7 +33,7 @@ def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path
     if unresolved:
         LOGGER.warning("unresolved GE tax exemption names not present in current mapping: %s", ", ".join(unresolved))
 
-    payload = build_public_flipping(
+    candidate_ids = select_flipping_timeseries_candidates(
         generated_at,
         mapping,
         latest,
@@ -42,11 +42,38 @@ def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path
         exempt_ids,
         settings,
     )
+    timeseries = {}
+    failures = 0
+    for item_id in candidate_ids:
+        try:
+            timeseries[item_id] = client.get_timeseries(item_id, "5m")
+        except ApiError as exc:
+            failures += 1
+            LOGGER.warning("flipping timeseries unavailable item=%s: %s", item_id, exc)
+
+    payload = build_public_flipping(
+        generated_at,
+        mapping,
+        latest,
+        five_minute,
+        one_hour,
+        exempt_ids,
+        settings,
+        timeseries,
+    )
+    payload["executionCandidatesRequested"] = len(candidate_ids)
+    payload["executionCandidatesSucceeded"] = len(timeseries)
+    payload["executionCandidatesFailed"] = failures
 
     write_json(data_dir / "flipping.json", payload)
     shutil.copy2(web_dir / "flipping.html", public_dir / "flipping.html")
     shutil.copy2(web_dir / "assets" / "flipping.js", assets_dir / "flipping.js")
-    LOGGER.info("hidden flipping desk: %s candidates", len(payload["items"]))
+    LOGGER.info(
+        "hidden flipping desk: %s candidates, %s/%s execution histories",
+        len(payload["items"]),
+        len(timeseries),
+        len(candidate_ids),
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
