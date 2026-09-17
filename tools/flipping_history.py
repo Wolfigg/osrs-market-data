@@ -279,24 +279,7 @@ def main() -> int:
             backtests.append(evaluate(old, current, rank, float(horizon), age_minutes))
             already_evaluated.add(key)
 
-    interval_seconds = max(0.0, float(args.snapshot_interval_minutes)) * 60.0
-    latest_snapshot_by_item: dict[int, int] = {}
-    for row in snapshots:
-        item_id = int(row.get("itemId") or 0)
-        created = int(row.get("generatedAt") or 0)
-        latest_snapshot_by_item[item_id] = max(created, latest_snapshot_by_item.get(item_id, 0))
-
-    snapshot_limit = max(1, int(args.snapshot_limit))
-    for rank, item in enumerate(items[:snapshot_limit], start=1):
-        item_id = int(item["itemId"])
-        previous = latest_snapshot_by_item.get(item_id, 0)
-        if previous and generated_at - previous < interval_seconds:
-            continue
-        snapshots.append(snapshot(item, generated_at, rank))
-        latest_snapshot_by_item[item_id] = generated_at
-
     max_rows = max(1, int(args.max_snapshots))
-    snapshots = sorted(snapshots, key=lambda row: int(row.get("generatedAt") or 0))[-max_rows:]
     backtests = sorted(backtests, key=lambda row: int(row.get("evaluatedAt") or 0))[-max_rows:]
     summary = summarise(
         backtests,
@@ -304,9 +287,29 @@ def main() -> int:
         args.minimum_item_samples,
         args.calibration_horizon_minutes,
     )
+    public = apply_calibration_to_public(public, summary)
+
+    interval_seconds = max(0.0, float(args.snapshot_interval_minutes)) * 60.0
+    latest_snapshot_by_item: dict[int, int] = {}
+    for row in snapshots:
+        item_id = int(row.get("itemId") or 0)
+        created = int(row.get("generatedAt") or 0)
+        latest_snapshot_by_item[item_id] = max(created, latest_snapshot_by_item.get(item_id, 0))
+
+    ranked_items = [row for row in (public.get("items") or []) if (row.get("expected") or {}).get("margin") is not None]
+    snapshot_limit = max(1, int(args.snapshot_limit))
+    for rank, item in enumerate(ranked_items[:snapshot_limit], start=1):
+        item_id = int(item["itemId"])
+        previous = latest_snapshot_by_item.get(item_id, 0)
+        if previous and generated_at - previous < interval_seconds:
+            continue
+        snapshots.append(snapshot(item, generated_at, rank))
+        latest_snapshot_by_item[item_id] = generated_at
+
+    snapshots = sorted(snapshots, key=lambda row: int(row.get("generatedAt") or 0))[-max_rows:]
     write_json(cache_path, {"schemaVersion": 2, "snapshots": snapshots, "backtests": backtests, "summary": summary})
     write_json(Path(args.summary), {**summary, "recentBacktests": backtests[-100:]})
-    write_json(public_path, apply_calibration_to_public(public, summary))
+    write_json(public_path, public)
     print(
         "flipping history: "
         f"{len(snapshots)} snapshots, {len(backtests)} evaluated, "
