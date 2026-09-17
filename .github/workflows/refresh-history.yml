@@ -80,6 +80,7 @@ jobs:
         run: |
           cp web/flipping.html build/public-site/flipping.html
           cp web/assets/flipping.js build/public-site/assets/flipping.js
+          cp config/ge_tax_exemptions.json build/public-site/data/flipping-tax-exemptions.json
 
       - name: Persist recommendation snapshots and evaluate matured forecasts
         run: python tools/recommendation_history.py --public-afk build/public-site/data/afk.json --cache .market-cache/recommendation-history.json --summary build/internal-report/backtesting-summary.json
