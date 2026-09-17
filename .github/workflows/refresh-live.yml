@@ -51,6 +51,22 @@ jobs:
           restore-keys: |
             osrs-history-${{ runner.os }}-${{ github.ref_name }}-
 
+      - name: Restore flipping calibration cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .flipping-cache
+          key: osrs-flipping-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            osrs-flipping-${{ runner.os }}-${{ github.ref_name }}-
+
+      - name: Seed flipping calibration from legacy cache
+        shell: bash
+        run: |
+          if [[ ! -f .flipping-cache/flipping-history.json && -f .market-cache/flipping-history.json ]]; then
+            mkdir -p .flipping-cache
+            cp .market-cache/flipping-history.json .flipping-cache/flipping-history.json
+          fi
+
       - name: Refresh live mapping
         # The item mapping is cheap metadata and may change independently of the
         # historical cache. Never let an old mapping prevent a live deployment.
@@ -60,7 +76,16 @@ jobs:
         run: /usr/bin/time -v python -m osrs_market.cli collect --mode live --output build --cache-dir .market-cache
 
       - name: Build unlisted flipping desk
-        run: python -m osrs_market.flipping_site --config config --public-dir build/public-site --web-dir web
+        run: python -m osrs_market.flipping_site --config config --public-dir build/public-site --web-dir web --history-cache .flipping-cache/flipping-history.json
+
+      - name: Persist flipping snapshots and evaluate calibration horizons
+        run: python tools/flipping_history.py --public-flipping build/public-site/data/flipping.json --cache .flipping-cache/flipping-history.json --legacy-cache .market-cache/flipping-history.json --summary build/internal-report/flipping-backtesting-summary.json
+
+      - name: Save flipping calibration cache
+        uses: actions/cache/save@v4
+        with:
+          path: .flipping-cache
+          key: osrs-flipping-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Upload maintainer diagnostics
         if: always() && hashFiles('build/internal-report/**') != ''
