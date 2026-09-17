@@ -1,7 +1,9 @@
+import json
 from pathlib import Path
 
 import pytest
 
+from osrs_market import flipping_site
 from osrs_market.flipping import build_public_flipping
 from osrs_market.models import LatestPrice, MappingItem
 
@@ -19,6 +21,22 @@ def _settings():
     }
 
 
+def _mapping():
+    return {100: MappingItem(id=100, name="Test item", members=False, limit=1000)}
+
+
+def _latest():
+    return {100: LatestPrice(high=120, high_time=9900, low=100, low_time=9950)}
+
+
+def _five_minute():
+    return {100: {"avgHighPrice": 119, "avgLowPrice": 101, "highPriceVolume": 80, "lowPriceVolume": 100}}
+
+
+def _one_hour():
+    return {100: {"avgHighPrice": 118, "avgLowPrice": 100, "highPriceVolume": 400, "lowPriceVolume": 600}}
+
+
 def test_hidden_flipping_page_is_unlisted_and_noindex():
     page = (ROOT / "web" / "flipping.html").read_text(encoding="utf-8")
     public_site = (ROOT / "src" / "osrs_market" / "public_site.py").read_text(encoding="utf-8")
@@ -31,20 +49,7 @@ def test_hidden_flipping_page_is_unlisted_and_noindex():
 
 
 def test_flipping_model_uses_post_tax_margin_and_directional_flow():
-    mapping = {
-        100: MappingItem(id=100, name="Test item", members=False, limit=1000),
-    }
-    latest = {
-        100: LatestPrice(high=120, high_time=9900, low=100, low_time=9950),
-    }
-    five_minute = {
-        100: {"avgHighPrice": 119, "avgLowPrice": 101, "highPriceVolume": 80, "lowPriceVolume": 100},
-    }
-    one_hour = {
-        100: {"avgHighPrice": 118, "avgLowPrice": 100, "highPriceVolume": 400, "lowPriceVolume": 600},
-    }
-
-    item = build_public_flipping(10_000, mapping, latest, five_minute, one_hour, set(), _settings())["items"][0]
+    item = build_public_flipping(10_000, _mapping(), _latest(), _five_minute(), _one_hour(), set(), _settings())["items"][0]
 
     assert item["buyPrice"] == 100
     assert item["sellPrice"] == 120
@@ -72,6 +77,40 @@ def test_flipping_model_uses_repository_tax_exemptions():
 
     assert item["tax"] == 0
     assert item["margin"] == 20
+
+
+def test_hidden_flipping_builder_writes_same_origin_artifacts(tmp_path, monkeypatch):
+    class FakeClient:
+        def get_mapping(self):
+            return _mapping()
+
+        def get_latest(self):
+            return _latest()
+
+        def get_average_prices(self, timestep):
+            return _five_minute() if timestep == "5m" else _one_hour()
+
+    monkeypatch.setattr(flipping_site, "load_yaml", lambda path: _settings())
+    monkeypatch.setattr(flipping_site, "api_settings", lambda settings: object())
+    monkeypatch.setattr(flipping_site, "MarketApiClient", lambda settings: FakeClient())
+    monkeypatch.setattr(flipping_site, "load_and_resolve_exemptions", lambda path, mapping: (set(), []))
+    monkeypatch.setattr(flipping_site.time, "time", lambda: 10_000)
+
+    public_dir = tmp_path / "public-site"
+    (public_dir / "data").mkdir(parents=True)
+    (public_dir / "assets").mkdir()
+    web_dir = tmp_path / "web"
+    (web_dir / "assets").mkdir(parents=True)
+    (web_dir / "flipping.html").write_text("hidden page", encoding="utf-8")
+    (web_dir / "assets" / "flipping.js").write_text("void 0;", encoding="utf-8")
+
+    flipping_site.build_hidden_flipping_site(tmp_path / "config", public_dir, web_dir)
+
+    payload = json.loads((public_dir / "data" / "flipping.json").read_text(encoding="utf-8"))
+    assert payload["generatedAt"] == 10_000
+    assert payload["items"][0]["flowCappedProfit"] == 7200
+    assert (public_dir / "flipping.html").read_text(encoding="utf-8") == "hidden page"
+    assert (public_dir / "assets" / "flipping.js").read_text(encoding="utf-8") == "void 0;"
 
 
 def test_hidden_flipping_client_reads_generated_same_origin_data():
