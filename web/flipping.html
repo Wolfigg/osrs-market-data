@@ -9,7 +9,7 @@
   <title>Grand Exchange Flips | OSRS Market Board</title>
   <link rel="stylesheet" href="assets/app.css?v=20260906-execution-1">
   <script defer src="assets/app.js?v=20260906-execution-1"></script>
-  <script defer src="assets/flipping.js?v=20260917-hidden-flipping-2"></script>
+  <script defer src="assets/flipping.js?v=20260917-flipping-v2"></script>
 </head>
 <body data-page="flipping">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -18,7 +18,7 @@
       <div class="masthead-title">
         <p class="eyebrow">Grand Exchange intelligence</p>
         <a class="brand" href="index.html">OSRS Market Board</a>
-        <p class="subtitle">Live margins, historical context, and executable market capacity.</p>
+        <p class="subtitle">Execution-aware passive flips with spread history and market capacity.</p>
       </div>
       <nav class="main-nav" aria-label="Primary">
         <a class="nav-link" href="index.html"><span>AFK Money Makers</span><small>Work Board</small></a>
@@ -26,7 +26,7 @@
       </nav>
       <div class="rail-note">
         <span>Flip evidence</span>
-        <strong>NOW · 5M · 1H</strong>
+        <strong>NOW · 5M · 30–60M · 4H</strong>
       </div>
       <div class="status-line" aria-live="polite">
         <span id="health-state" class="status-plaque">Loading</span>
@@ -37,33 +37,33 @@
     <main id="main" class="page-surface">
       <section class="page-heading compact">
         <div><p class="eyebrow">Unlisted desk</p><h1>Grand Exchange Flips</h1></div>
-        <p>Find manual passive flips from the latest observed spread, seller tax, Grand Exchange limits, quote freshness, and recent directional trade flow.</p>
+        <p>Compare the latest spread with 30–60 minute passive execution prices, adverse prices, completed-bucket spread survival, directional trade flow, and the four-hour Grand Exchange limit.</p>
       </section>
 
       <section class="market-overview alch-overview" aria-label="Flipping market overview">
-        <article class="signal-card signal-card-primary"><p class="signal-label">Best flow-capped signal</p><strong id="flip-leader-value">Loading</strong><span id="flip-leader-name">Scanning items</span></article>
-        <article class="signal-card"><p class="signal-label">Persistent spreads</p><strong id="flip-persistent-count">—</strong><span>Positive now, 5M and 1H</span></article>
-        <article class="signal-card"><p class="signal-label">Fresh quotes</p><strong id="flip-fresh-count">—</strong><span>Both latest trade sides within freshness policy</span></article>
+        <article class="signal-card signal-card-primary"><p class="signal-label">Best expected opportunity</p><strong id="flip-leader-value">Loading</strong><span id="flip-leader-name">Scanning items</span></article>
+        <article class="signal-card"><p class="signal-label">Persistent spreads</p><strong id="flip-persistent-count">—</strong><span>All recent completed 5-minute buckets profitable</span></article>
+        <article class="signal-card"><p class="signal-label">Fresh execution evidence</p><strong id="flip-fresh-count">—</strong><span>Fresh 30–60 minute two-sided bucket evidence</span></article>
         <article class="signal-card signal-card-note"><p class="signal-label">Items scanned</p><strong id="flip-item-total">—</strong><span id="flip-source-age">Fetching live Wiki prices</span></article>
       </section>
 
-      <div class="window-strip" aria-label="Flipping evidence windows"><span>Evidence</span><strong>Current spread</strong><strong>5M average</strong><strong>1H average</strong><strong>4H GE limit</strong></div>
+      <div class="window-strip" aria-label="Flipping evidence windows"><span>Evidence</span><strong>Latest spread</strong><strong>30–60M execution</strong><strong>1H spread survival</strong><strong>4H GE capacity</strong></div>
 
       <section class="filter-frame" aria-label="Flipping filters">
         <div class="filter-grid alch-filters">
           <label class="field search-field"><span>Item search</span><input id="flip-search" type="search" placeholder="Item name" autocomplete="off"></label>
           <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="flip-membership" value="all" checked><span>All</span></label><label><input type="radio" name="flip-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="flip-membership" value="members"><span>Members</span></label></fieldset>
           <label class="field"><span>Spread evidence</span><select id="flip-spread"><option value="persistent" selected>Persistent only</option><option value="positive">Positive now</option><option value="all">All</option></select></label>
-          <label class="field"><span>Minimum margin/item</span><input id="flip-min-margin" type="number" value="0" min="0" step="1"></label>
-          <label class="field"><span>Minimum ROI %</span><input id="flip-min-roi" type="number" value="0" min="0" step="0.1"></label>
-          <label class="field"><span>Minimum 1H balanced volume</span><input id="flip-min-volume" type="number" value="0" min="0" step="1"></label>
-          <label class="field"><span>Capital</span><select id="flip-capital"><option value="all">Any capital</option><option value="500000">Under 500k</option><option value="1000000">Under 1m</option><option value="5000000">Under 5m</option><option value="10000000">Under 10m</option><option value="25000000">Under 25m</option></select></label>
-          <label class="field"><span>Sort</span><select id="flip-sort"><option value="flow-profit">Flow-capped profit</option><option value="limit-profit">Theoretical 4H limit profit</option><option value="margin">Margin/item</option><option value="roi">ROI</option><option value="volume">1H balanced volume</option><option value="coverage">1H volume / GE limit</option><option value="balance">1H directional balance</option><option value="capital">Lowest flow-capped capital</option><option value="alphabetic">Alphabetical</option></select></label>
-          <label class="checkbox-field"><input id="flip-stale" type="checkbox"><span>Show stale / unknown quotes</span></label>
+          <label class="field"><span>Minimum expected margin/item</span><input id="flip-min-margin" type="number" value="0" min="0" step="1"></label>
+          <label class="field"><span>Minimum expected ROI %</span><input id="flip-min-roi" type="number" value="0" min="0" step="0.1"></label>
+          <label class="field"><span>Minimum two-sided flow/hour</span><input id="flip-min-volume" type="number" value="0" min="0" step="1"></label>
+          <label class="field"><span>Available GP</span><select id="flip-capital"><option value="all">No capital cap</option><option value="500000">500k</option><option value="1000000">1m</option><option value="2000000">2m</option><option value="5000000">5m</option><option value="10000000">10m</option><option value="25000000">25m</option></select></label>
+          <label class="field"><span>Sort</span><select id="flip-sort"><option value="expected-profit">Expected capital-sized profit</option><option value="conservative-profit">Conservative capital-sized profit</option><option value="expected-margin">Expected margin/item</option><option value="roi">Expected ROI</option><option value="survival">Profitable 5M buckets</option><option value="capacity">4H executable quantity</option><option value="volume">Two-sided flow/hour</option><option value="drift">Lowest absolute 1H drift</option><option value="capital">Lowest planned capital</option><option value="alphabetic">Alphabetical</option></select></label>
+          <label class="checkbox-field"><input id="flip-stale" type="checkbox"><span>Show missing / stale execution evidence</span></label>
         </div>
       </section>
 
-      <div class="ledger-toolbar"><p id="flip-count">Loading candidates...</p><p class="muted">Flow-capped profit is current post-tax margin multiplied by the smaller of the 4H GE buy limit and the thinner observed 1H trade direction. It is an opportunity-size proxy, not guaranteed profit or GP/hour.</p></div>
+      <div class="ledger-toolbar"><p id="flip-count">Loading candidates...</p><p class="muted">Expected prices use completed 5-minute passive-side trades over a fresh 30–60 minute window. Four-hour quantity is capped by both the GE buy limit and two-sided observed flow. Available GP sizes the position instead of excluding a larger market opportunity. These are market-capacity estimates, not guaranteed fills.</p></div>
       <section id="flip-list" class="alchemy-ledger" aria-live="polite"></section>
     </main>
 
