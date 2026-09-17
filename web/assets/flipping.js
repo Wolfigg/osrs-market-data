@@ -10,16 +10,6 @@
   const ACCEPTABLE_SECONDS = 7_200;
   const VERY_STALE_SECONDS = 86_400;
 
-  const TAX_EXEMPT_IDS = new Set([13190, 8007, 8008, 8009, 8010, 8011, 8013, 28790]);
-  const TAX_EXEMPT_NAMES = new Set([
-    "old school bond", "energy potion(1)", "energy potion(2)", "energy potion(3)", "energy potion(4)",
-    "bronze arrow", "bronze dart", "iron arrow", "iron dart", "mind rune", "steel arrow", "steel dart",
-    "bass", "bread", "cake", "cooked chicken", "cooked meat", "herring", "lobster", "mackerel",
-    "meat pie", "pike", "salmon", "shrimps", "tuna", "civitas illa fortis teleport", "games necklace(8)",
-    "ring of dueling(8)", "chisel", "gardening trowel", "glassblowing pipe", "hammer", "needle",
-    "pestle and mortar", "rake", "saw", "secateurs", "seed dibber", "shears", "spade", "watering can"
-  ]);
-
   const gp = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
   const pct = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
   const esc = value => String(value ?? "").replace(/[&<>'\"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]);
@@ -36,24 +26,23 @@
   const membership = members => members ? "P2P" : "F2P";
 
   let cachedMapping = null;
+  let taxExemptIds = null;
+  let taxExemptNames = null;
   let items = [];
   let lastRefreshAt = null;
   let refreshTimer = null;
 
-  async function getJson(path) {
-    const response = await fetch(`${API_BASE}${path}`, { cache: "no-store", mode: "cors" });
+  async function getJson(path, base = API_BASE) {
+    const url = base ? `${base}${path}` : path;
+    const response = await fetch(url, { cache: "no-store", mode: "cors" });
     if (!response.ok) throw new Error(`${path}: ${response.status}`);
     return response.json();
   }
 
   function bulkMap(payload) {
     const data = payload?.data;
-    if (Array.isArray(data)) {
-      return new Map(data.filter(row => row?.id != null).map(row => [Number(row.id), row]));
-    }
-    if (data && typeof data === "object") {
-      return new Map(Object.entries(data).map(([id, row]) => [Number(id), row]));
-    }
+    if (Array.isArray(data)) return new Map(data.filter(row => row?.id != null).map(row => [Number(row.id), row]));
+    if (data && typeof data === "object") return new Map(Object.entries(data).map(([id, row]) => [Number(id), row]));
     return new Map();
   }
 
@@ -71,9 +60,17 @@
     return cachedMapping;
   }
 
+  async function taxExemptions() {
+    if (taxExemptIds && taxExemptNames) return;
+    const payload = await getJson("data/flipping-tax-exemptions.json", "");
+    taxExemptIds = new Set((payload.itemIds || []).map(Number));
+    taxExemptNames = new Set((payload.itemNames || []).map(value => String(value).toLowerCase()));
+  }
+
   function taxPerItem(sellPrice, itemId, name) {
     if (sellPrice == null || sellPrice < 0) return null;
-    if (TAX_EXEMPT_IDS.has(Number(itemId)) || TAX_EXEMPT_NAMES.has(String(name || "").toLowerCase())) return 0;
+    if (!taxExemptIds || !taxExemptNames) throw new Error("tax exemptions unavailable");
+    if (taxExemptIds.has(Number(itemId)) || taxExemptNames.has(String(name || "").toLowerCase())) return 0;
     return Math.min(Math.floor(Number(sellPrice) * GE_TAX_RATE), GE_TAX_CAP);
   }
 
@@ -100,14 +97,19 @@
   }
 
   function windowMetrics(row, itemId, name) {
-    if (!row) return { buyPrice: null, sellPrice: null, tax: null, margin: null, roi: null, buyFlow: null, sellFlow: null, balancedFlow: null };
+    if (!row) return {
+      buyPrice: null, sellPrice: null, tax: null, margin: null, roi: null,
+      buyFlow: null, sellFlow: null, balancedFlow: null, buySellRatio: null, flowBalancePct: null
+    };
     const buyPrice = num(row.avgLowPrice);
     const sellPrice = num(row.avgHighPrice);
     const calc = marginFor(buyPrice, sellPrice, itemId, name);
     const buyFlow = num(row.lowPriceVolume);
     const sellFlow = num(row.highPriceVolume);
     const balancedFlow = buyFlow != null && sellFlow != null ? Math.min(buyFlow, sellFlow) : null;
-    return { buyPrice, sellPrice, ...calc, buyFlow, sellFlow, balancedFlow };
+    const buySellRatio = buyFlow != null && sellFlow > 0 ? buyFlow / sellFlow : null;
+    const flowBalancePct = buyFlow > 0 && sellFlow > 0 ? Math.min(buyFlow, sellFlow) / Math.max(buyFlow, sellFlow) * 100 : null;
+    return { buyPrice, sellPrice, ...calc, buyFlow, sellFlow, balancedFlow, buySellRatio, flowBalancePct };
   }
 
   function spreadState(currentMargin, fiveMinuteMargin, oneHourMargin) {
@@ -136,8 +138,9 @@
     const avg1h = windowMetrics(oneHour, itemId, name);
     const state = spreadState(current.margin, avg5m.margin, avg1h.margin);
 
-    const marketSizedQuantity = avg1h.balancedFlow == null ? null : Math.max(0, Math.min(buyLimit, avg1h.balancedFlow));
-    const marketSizedProfit = current.margin != null && marketSizedQuantity != null ? current.margin * marketSizedQuantity : null;
+    const flowCappedQuantity = avg1h.balancedFlow == null ? null : Math.max(0, Math.min(buyLimit, avg1h.balancedFlow));
+    const flowCappedProfit = current.margin != null && flowCappedQuantity != null ? current.margin * flowCappedQuantity : null;
+    const flowCoveragePct = avg1h.balancedFlow == null ? null : avg1h.balancedFlow / buyLimit * 100;
     const capitalAtLimit = buyPrice * buyLimit;
     const limitProfit4h = current.margin != null ? current.margin * buyLimit : null;
 
@@ -150,6 +153,8 @@
       sellPrice,
       highTime: num(quote?.highTime),
       lowTime: num(quote?.lowTime),
+      highAge,
+      lowAge,
       quoteAge,
       freshness: quoteFreshness,
       tax: current.tax,
@@ -159,9 +164,10 @@
       avg5m,
       avg1h,
       spread: state,
-      marketSizedQuantity,
-      marketSizedProfit,
-      marketSizedCapital: marketSizedQuantity == null ? null : buyPrice * marketSizedQuantity,
+      flowCappedQuantity,
+      flowCappedProfit,
+      flowCappedCapital: flowCappedQuantity == null ? null : buyPrice * flowCappedQuantity,
+      flowCoveragePct,
       capitalAtLimit,
       limitProfit4h
     };
@@ -179,9 +185,7 @@
   function syncQuery(values) {
     const params = new URLSearchParams();
     Object.entries(values).forEach(([key, value]) => {
-      if (value != null && value !== "" && value !== "all" && value !== "persistent" && value !== "market-profit" && value !== "0") {
-        params.set(key, value);
-      }
+      if (value != null && value !== "" && value !== "all" && value !== "persistent" && value !== "flow-profit" && value !== "0") params.set(key, value);
     });
     history.replaceState(null, "", `${location.pathname}${params.toString() ? `?${params}` : ""}`);
   }
@@ -200,12 +204,14 @@
 
   function windowHtml(title, window) {
     return `<div><h3>${esc(title)}</h3>
-      <p>Buy-side average: <strong>${gpText(window.buyPrice)}</strong></p>
-      <p>Sell-side average: <strong>${gpText(window.sellPrice)}</strong></p>
+      <p>Passive-buy average: <strong>${gpText(window.buyPrice)}</strong></p>
+      <p>Passive-sell average: <strong>${gpText(window.sellPrice)}</strong></p>
       <p>Tax-correct margin: <strong>${gpText(window.margin)}</strong></p>
-      <p>Buy-side fill flow: <strong>${plainGp(window.buyFlow)}</strong></p>
-      <p>Sell-side fill flow: <strong>${plainGp(window.sellFlow)}</strong></p>
+      <p>Passive-buy fill flow: <strong>${plainGp(window.buyFlow)}</strong></p>
+      <p>Passive-sell fill flow: <strong>${plainGp(window.sellFlow)}</strong></p>
       <p>Balanced flow: <strong>${plainGp(window.balancedFlow)}</strong></p>
+      <p>Buy/sell flow ratio: <strong>${window.buySellRatio == null ? "-" : pct.format(window.buySellRatio)}</strong></p>
+      <p>Directional balance: <strong>${window.flowBalancePct == null ? "-" : `${pct.format(window.flowBalancePct)}%`}</strong></p>
     </div>`;
   }
 
@@ -214,14 +220,14 @@
     return `<details class="ledger-record">
       <summary class="ledger-summary alch-grid">
         <div class="item-name"><strong>${esc(item.name)}</strong><small>${membership(item.members)} · ${esc(item.spread.label)} · ${esc(item.freshness.label)}</small></div>
-        <div class="num primary-mobile ${cls}">${plainGp(item.marketSizedProfit)}</div>
+        <div class="num primary-mobile ${cls}">${plainGp(item.flowCappedProfit)}</div>
         <div class="num">${plainGp(item.buyPrice)}</div>
         <div class="num">${plainGp(item.sellPrice)}</div>
         <div class="num ${cls}">${plainGp(item.margin)}</div>
         <div class="num desktop-secondary">${item.roi == null ? "-" : `${pct.format(item.roi)}%`}</div>
         <div class="num desktop-secondary">${plainGp(item.buyLimit)}</div>
-        <div class="num desktop-secondary">${plainGp(item.avg1h.balancedFlow)}</div>
-        <div class="num desktop-secondary ${cls}">${plainGp(item.limitProfit4h)}</div>
+        <div class="num desktop-secondary">${item.flowCoveragePct == null ? "-" : `${pct.format(item.flowCoveragePct)}%`}</div>
+        <div class="num desktop-secondary">${item.avg1h.flowBalancePct == null ? "-" : `${pct.format(item.avg1h.flowBalancePct)}%`}</div>
         <div class="desktop-secondary">${esc(item.freshness.label)}</div>
       </summary>
       <div class="detail-panel">
@@ -234,23 +240,25 @@
             <p>Net sell value: <strong>${gpText(item.netSell)}</strong></p>
             <p>Margin/item: <strong>${gpText(item.margin)}</strong></p>
             <p>ROI: <strong>${item.roi == null ? "-" : `${pct.format(item.roi)}%`}</strong></p>
-            <p>Quote age: <strong>${esc(compactAge(item.quoteAge))}</strong></p>
+            <p>Latest passive-buy-side trade: <strong>${esc(compactAge(item.lowAge))} ago</strong></p>
+            <p>Latest passive-sell-side trade: <strong>${esc(compactAge(item.highAge))} ago</strong></p>
           </div>
           <div><h3>Capacity</h3>
             <p>4H GE buy limit: <strong>${plainGp(item.buyLimit)}</strong></p>
             <p>Capital at full limit: <strong>${gpText(item.capitalAtLimit)}</strong></p>
             <p>Theoretical full-limit profit: <strong>${gpText(item.limitProfit4h)}</strong></p>
-            <p>Market-sized quantity: <strong>${plainGp(item.marketSizedQuantity)}</strong></p>
-            <p>Market-sized capital: <strong>${gpText(item.marketSizedCapital)}</strong></p>
-            <p>Market-sized profit: <strong>${gpText(item.marketSizedProfit)}</strong></p>
-            <p>Market-sized quantity is capped by the 4H GE limit and the thinner observed 1H trade direction.</p>
+            <p>1H balanced volume / limit: <strong>${item.flowCoveragePct == null ? "-" : `${pct.format(item.flowCoveragePct)}%`}</strong></p>
+            <p>Flow-capped quantity: <strong>${plainGp(item.flowCappedQuantity)}</strong></p>
+            <p>Flow-capped capital: <strong>${gpText(item.flowCappedCapital)}</strong></p>
+            <p>Flow-capped profit: <strong>${gpText(item.flowCappedProfit)}</strong></p>
           </div>
           ${windowHtml("Recent 1H", item.avg1h)}
           ${windowHtml("Recent 5M", item.avg5m)}
         </div>
         <div class="calculation-block"><h3>Interpretation</h3>
-          <p>Latest low is used as the passive buy target and latest high as the passive sell target. The 2% seller tax is floored per item, capped at 5,000,000 gp, and the repository's current exemption list is applied.</p>
-          <p>Observed volume is evidence of recent flow, not order-book depth. A positive spread does not guarantee either side will fill at the displayed prices.</p>
+          <p>Latest low is treated as the passive buy target and latest high as the passive sell target. Seller tax is floored per item, capped at 5,000,000 gp, and the repository tax-exemption configuration is applied.</p>
+          <p>Flow-capped profit uses current post-tax margin multiplied by the smaller of the 4H GE limit and the thinner observed 1H trade direction. It is an opportunity-size proxy, not guaranteed profit or GP/hour.</p>
+          <p>Directional balance is the thinner 1H side divided by the larger 1H side. It exposes one-sided markets directly instead of hiding them inside a confidence score.</p>
         </div>
       </div>
     </details>`;
@@ -258,9 +266,9 @@
 
   function renderOverview() {
     const persistent = items.filter(item => item.spread.state === "persistent" && item.margin > 0);
-    const ranked = [...persistent].sort((a, b) => Number(b.marketSizedProfit ?? -Infinity) - Number(a.marketSizedProfit ?? -Infinity));
+    const ranked = [...persistent].sort((a, b) => Number(b.flowCappedProfit ?? -Infinity) - Number(a.flowCappedProfit ?? -Infinity));
     const leader = ranked[0];
-    setText("#flip-leader-value", leader ? `${compactGp(leader.marketSizedProfit)} gp` : "No signal");
+    setText("#flip-leader-value", leader ? `${compactGp(leader.flowCappedProfit)} gp` : "No signal");
     setText("#flip-leader-name", leader?.name || "No persistent spread available");
     setText("#flip-persistent-count", gp.format(persistent.length));
     setText("#flip-fresh-count", gp.format(items.filter(item => item.freshness.state === "fresh").length));
@@ -292,17 +300,19 @@
       if (!(item.margin >= minMargin)) return false;
       if (!(item.roi >= minRoi)) return false;
       if (minVolume > 0 && !(Number(item.avg1h.balancedFlow || 0) >= minVolume)) return false;
-      if (capitalLimit != null && !(item.marketSizedCapital != null && item.marketSizedCapital <= capitalLimit)) return false;
+      if (capitalLimit != null && !(item.flowCappedCapital != null && item.flowCappedCapital <= capitalLimit)) return false;
       return true;
     });
 
     const value = item => ({
-      "market-profit": item.marketSizedProfit,
+      "flow-profit": item.flowCappedProfit,
       "limit-profit": item.limitProfit4h,
       margin: item.margin,
       roi: item.roi,
       volume: item.avg1h.balancedFlow,
-      capital: item.marketSizedCapital,
+      coverage: item.flowCoveragePct,
+      balance: item.avg1h.flowBalancePct,
+      capital: item.flowCappedCapital,
       alphabetic: item.name
     })[sort];
     rows.sort((a, b) => {
@@ -313,7 +323,7 @@
 
     const shown = rows.slice(0, DISPLAY_LIMIT);
     setText("#flip-count", rows.length > DISPLAY_LIMIT ? `${rows.length} candidates, showing first ${DISPLAY_LIMIT}` : `${rows.length} candidate${rows.length === 1 ? "" : "s"}`);
-    list.innerHTML = `<div class="ledger-header alch-grid"><div>Item</div><div class="num">Market-sized profit</div><div class="num">Buy</div><div class="num">Sell</div><div class="num">Margin</div><div class="num desktop-secondary">ROI</div><div class="num desktop-secondary">4H limit</div><div class="num desktop-secondary">1H balanced vol</div><div class="num desktop-secondary">Limit profit</div><div class="desktop-secondary">Freshness</div></div>${shown.length ? shown.map(record).join("") : '<p class="empty-state">No flip candidates match these filters.</p>'}`;
+    list.innerHTML = `<div class="ledger-header alch-grid"><div>Item</div><div class="num">Flow-capped profit</div><div class="num">Buy</div><div class="num">Sell</div><div class="num">Margin</div><div class="num desktop-secondary">ROI</div><div class="num desktop-secondary">4H limit</div><div class="num desktop-secondary">1H vol / limit</div><div class="num desktop-secondary">1H balance</div><div class="desktop-secondary">Freshness</div></div>${shown.length ? shown.map(record).join("") : '<p class="empty-state">No flip candidates match these filters.</p>'}`;
     syncQuery({ q: search, members, spread: state, margin: String(minMargin), roi: String(minRoi), volume: String(minVolume), capital, sort, stale: showStale ? "1" : "" });
   }
 
@@ -337,6 +347,7 @@
     const list = document.querySelector("#flip-list");
     try {
       setText("#flip-source-age", "Fetching live Wiki prices");
+      await taxExemptions();
       const [mappingRows, latestPayload, fiveMinutePayload, oneHourPayload] = await Promise.all([
         mapping(), getJson("/latest"), getJson("/5m"), getJson("/1h")
       ]);
