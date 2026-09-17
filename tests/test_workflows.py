@@ -46,6 +46,7 @@ def test_flipping_calibration_runs_after_successful_live_publish_and_owns_cache_
     assert "workflow_run:" in calibration
     assert "Refresh live market data" in calibration
     assert "github.event.workflow_run.conclusion == 'success'" in calibration
+    assert "pip install --no-deps -e ." in calibration
     assert "python tools/flipping_history.py" in calibration
     assert "actions/cache/restore@v4" in calibration
     assert "actions/cache/save@v4" in calibration
