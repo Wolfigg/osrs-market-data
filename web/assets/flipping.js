@@ -9,16 +9,18 @@
   const plainGp = value => value == null ? "-" : gp.format(value);
   const gpText = value => value == null ? "Unavailable" : `${gp.format(value)} gp`;
   const compactGp = value => {
-    if (value == null) return "—";
+    if (value == null) return "-";
     const n = Number(value), abs = Math.abs(n);
     if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2).replace(/\.0+$/, "")}m`;
     if (abs >= 1_000) return `${(n / 1_000).toFixed(abs >= 100_000 ? 0 : 1).replace(/\.0$/, "")}k`;
     return gp.format(n);
   };
   const membership = members => members ? "P2P" : "F2P";
+  const rateText = value => value == null || !Number.isFinite(Number(value)) ? "-" : `${pct.format(Number(value) * 100)}%`;
 
   let items = [];
   let generatedAt = null;
+  let calibrationSummary = {};
   let refreshTimer = null;
 
   async function loadJson(path) {
@@ -39,7 +41,7 @@
   function syncQuery(values) {
     const params = new URLSearchParams();
     Object.entries(values).forEach(([key, value]) => {
-      if (value != null && value !== "" && value !== "all" && value !== "persistent" && value !== "expected-profit" && value !== "0") params.set(key, value);
+      if (value != null && value !== "" && value !== "all" && value !== "persistent" && value !== "model-rank" && value !== "0") params.set(key, value);
     });
     history.replaceState(null, "", `${location.pathname}${params.toString() ? `?${params}` : ""}`);
   }
@@ -81,6 +83,24 @@
     };
   }
 
+  function rankingPlanScore(item, availableGp) {
+    const plan = scenarioPlan(item, "expected", availableGp);
+    if (!plan) return null;
+    const calibration = item.calibration || {};
+    const survival = Number(calibration.marginSurvivalRate);
+    if (calibration.applied && Number.isFinite(survival)) return plan.profit * Math.min(1, Math.max(0, survival));
+    return plan.profit;
+  }
+
+  function calibrationLabel(item) {
+    const calibration = item.calibration || {};
+    if (calibration.applied) {
+      const scope = calibration.source === "item" ? "item history" : "global history";
+      return `Calibrated from ${scope}`;
+    }
+    return calibration.ready ? "Calibration ready, no applicable sample" : "Calibration collecting";
+  }
+
   function survivalText(item) {
     const stats = item.spreadStats || {};
     if (stats.profitableBucketCount == null || stats.bucketCount == null || !stats.bucketCount) return "-";
@@ -110,10 +130,12 @@
   function record(item, availableGp) {
     const expectedPlan = scenarioPlan(item, "expected", availableGp);
     const conservativePlan = scenarioPlan(item, "conservative", availableGp);
+    const modelScore = rankingPlanScore(item, availableGp);
     const expectedClass = Number(expectedPlan?.profit) > 0 ? "profit" : "loss";
     const expectedMarginClass = Number(item.expected?.margin) > 0 ? "profit" : "loss";
     const conservativeClass = Number(conservativePlan?.profit) > 0 ? "profit" : "loss";
     const executionLabel = item.executionFreshness === "fresh" ? "Fresh execution" : item.executionFreshness || "Missing execution";
+    const calibration = item.calibration || {};
     return `<details class="ledger-record">
       <summary class="ledger-summary alch-grid">
         <div class="item-name"><strong>${esc(item.name)}</strong><small>${membership(item.members)} · ${esc(item.spread?.label || "Unknown")} · ${esc(executionLabel)}</small></div>
@@ -128,7 +150,7 @@
         <div class="desktop-secondary">${esc(driftText(item))}</div>
       </summary>
       <div class="detail-panel">
-        <div class="badge-row">${badge(membership(item.members))}${badge(item.spread?.label || "Unknown", item.spread?.state || "")}${badge(executionLabel, item.executionFreshness || "")}${badge(item.freshness?.label || "Unknown", item.freshness?.state || "")}</div>
+        <div class="badge-row">${badge(membership(item.members))}${badge(item.spread?.label || "Unknown", item.spread?.state || "")}${badge(executionLabel, item.executionFreshness || "")}${badge(item.freshness?.label || "Unknown", item.freshness?.state || "")}${badge(calibrationLabel(item), calibration.applied ? "fresh" : "")}</div>
         <div class="detail-grid">
           <div><h3>Current snapshot</h3>
             <p>Latest passive buy: <strong>${gpText(item.buyPrice)}</strong></p>
@@ -156,6 +178,17 @@
             <p>Planned quantity: <strong>${plainGp(conservativePlan?.quantity)}</strong></p>
             <p>Planned capital: <strong>${gpText(conservativePlan?.capital)}</strong></p>
             <p>Conservative planned profit: <strong>${gpText(conservativePlan?.profit)}</strong></p>
+          </div>
+          <div><h3>Historical calibration</h3>
+            <p>Status: <strong>${esc(calibrationLabel(item))}</strong></p>
+            <p>Calibration horizon: <strong>${plainGp(calibration.horizonMinutes)} minutes</strong></p>
+            <p>Applicable samples: <strong>${plainGp(calibration.sampleCount)}</strong></p>
+            <p>Margin survival: <strong>${rateText(calibration.marginSurvivalRate)}</strong></p>
+            <p>Conservative survival: <strong>${rateText(calibration.conservativeSurvivalRate)}</strong></p>
+            <p>Ranking stability: <strong>${rateText(calibration.rankingStabilityRate)}</strong></p>
+            <p>Mean absolute margin error: <strong>${gpText(calibration.meanAbsoluteExpectedMarginError)}</strong></p>
+            <p>Mean absolute midpoint drift: <strong>${calibration.meanAbsoluteMidpointDriftPct == null ? "-" : `${pct.format(calibration.meanAbsoluteMidpointDriftPct)}%`}</strong></p>
+            <p>Model ranking score: <strong>${plainGp(modelScore)}</strong></p>
           </div>
           <div><h3>Four-hour capacity</h3>
             <p>GE buy limit: <strong>${plainGp(item.buyLimit)}</strong></p>
@@ -185,9 +218,10 @@
           ${windowHtml("Bulk recent 5M", item.avg5m)}
         </div>
         <div class="calculation-block"><h3>Calculation</h3>
-          <p>Current uses the latest low as the passive buy and latest high as the passive sell. Expected uses volume-weighted completed 5-minute low-side and high-side trades over a fresh 30–60 minute window. Conservative moves the buy price to the adverse low-side 90th percentile and the sell price to the adverse high-side 10th percentile.</p>
+          <p>Current uses the latest low as the passive buy and latest high as the passive sell. Expected uses volume-weighted completed 5-minute low-side and high-side trades over a fresh 30-60 minute window. Conservative moves the buy price to the adverse low-side 90th percentile and the sell price to the adverse high-side 10th percentile.</p>
           <p>Capacity/hour is the smaller of the GE limit divided by four and observed two-sided flow/hour. The four-hour quantity ceiling is the smaller of the GE buy limit and four hours of observed two-sided flow.</p>
           <p>Available GP limits planned quantity by affordable units. It does not remove an item merely because the full market opportunity costs more than the selected bankroll.</p>
+          <p>Flipping V3 records 15, 30 and 60 minute follow-up observations. The default model ranking remains expected capital-sized profit until the 60-minute calibration sample gate is met. After that gate, the ranking score multiplies expected planned profit by the observed 60-minute positive-margin survival rate for the item when enough item samples exist, otherwise by the global 60-minute survival rate. The score is a ranking signal, not a guaranteed profit estimate.</p>
         </div>
       </div>
     </details>`;
@@ -196,14 +230,19 @@
   function renderOverview() {
     const availableGp = capitalLimit();
     const persistent = items.filter(item => item.spread?.state === "persistent" && Number(item.expected?.margin) > 0);
-    const ranked = [...persistent].sort((a, b) => Number(scenarioPlan(b, "expected", availableGp)?.profit ?? -Infinity) - Number(scenarioPlan(a, "expected", availableGp)?.profit ?? -Infinity));
+    const ranked = [...persistent].sort((a, b) => Number(rankingPlanScore(b, availableGp) ?? -Infinity) - Number(rankingPlanScore(a, availableGp) ?? -Infinity));
     const leader = ranked[0];
     const leaderPlan = leader ? scenarioPlan(leader, "expected", availableGp) : null;
     setText("#flip-leader-value", leaderPlan ? `${compactGp(leaderPlan.profit)} gp` : "No signal");
-    setText("#flip-leader-name", leader?.name || "No persistent spread available");
+    setText("#flip-leader-name", leader ? `${leader.name} · ${calibrationLabel(leader)}` : "No persistent spread available");
     setText("#flip-persistent-count", gp.format(persistent.length));
     setText("#flip-fresh-count", gp.format(items.filter(item => item.executionFreshness === "fresh").length));
     setText("#flip-item-total", gp.format(items.length));
+    const calibrationReady = Boolean(calibrationSummary.ready);
+    const samples = Number(calibrationSummary.sampleCount || 0);
+    const minimum = Number(calibrationSummary.minimumSamples || 0);
+    setText("#flip-calibration-state", calibrationReady ? "Active" : "Collecting");
+    setText("#flip-calibration-detail", calibrationReady ? `${gp.format(samples)} 60M samples · survival ${rateText(calibrationSummary.marginSurvivalRate)}` : `${gp.format(samples)} / ${gp.format(minimum)} 60M samples`);
     if (generatedAt) {
       const age = Math.max(0, Math.floor(Date.now() / 1000) - Number(generatedAt));
       setText("#flip-source-age", `Market scan ${compactAge(age)} ago`);
@@ -243,6 +282,7 @@
       const expectedPlan = scenarioPlan(item, "expected", availableGp);
       const conservativePlan = scenarioPlan(item, "conservative", availableGp);
       return ({
+        "model-rank": rankingPlanScore(item, availableGp),
         "expected-profit": expectedPlan?.profit,
         "conservative-profit": conservativePlan?.profit,
         "expected-margin": item.expected?.margin,
@@ -290,6 +330,7 @@
       const data = await loadJson("data/flipping.json");
       items = Array.isArray(data.items) ? data.items : [];
       generatedAt = data.generatedAt || null;
+      calibrationSummary = data.calibration || {};
       render();
     } catch (error) {
       console.error(error);
