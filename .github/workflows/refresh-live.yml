@@ -59,6 +59,9 @@ jobs:
       - name: Refresh live prices and rebuild public site
         run: /usr/bin/time -v python -m osrs_market.cli collect --mode live --output build --cache-dir .market-cache
 
+      - name: Build unlisted flipping desk
+        run: python -m osrs_market.flipping_site --config config --public-dir build/public-site --web-dir web
+
       - name: Upload maintainer diagnostics
         if: always() && hashFiles('build/internal-report/**') != ''
         uses: actions/upload-artifact@v6

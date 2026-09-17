@@ -60,6 +60,25 @@ class MarketApiClient:
             raise ApiError("/latest returned no prices")
         return result
 
+    def get_average_prices(self, timestep: str) -> dict[int, dict[str, Any]]:
+        if timestep not in {"5m", "1h"}:
+            raise ValueError(f"unsupported average-price timestep: {timestep}")
+        payload = self._get_json(f"/{timestep}")
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if isinstance(data, dict):
+            rows = {int(item_id): dict(raw) for item_id, raw in data.items() if isinstance(raw, dict)}
+        elif isinstance(data, list):
+            rows = {
+                int(raw["id"]): dict(raw)
+                for raw in data
+                if isinstance(raw, dict) and raw.get("id") is not None
+            }
+        else:
+            raise ApiError(f"/{timestep} returned an unexpected response shape")
+        if not rows:
+            raise ApiError(f"/{timestep} returned no price rows")
+        return rows
+
     def get_timeseries(self, item_id: int, timestep: str) -> list[TimeSeriesPoint]:
         if timestep not in {"5m", "1h", "6h", "24h"}:
             raise ValueError(f"unsupported timestep: {timestep}")

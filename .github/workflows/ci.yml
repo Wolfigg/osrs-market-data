@@ -57,6 +57,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Check hidden flipping client syntax
+        run: node --check web/assets/flipping.js
+
       - name: Run cooking backend/frontend parity
         run: node tests/cooking_parity.mjs
 
