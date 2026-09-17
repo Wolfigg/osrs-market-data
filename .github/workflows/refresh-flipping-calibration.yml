@@ -30,6 +30,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install local project
+        run: pip install --no-deps -e .
+
       - name: Restore legacy derived market cache
         uses: actions/cache/restore@v4
         with:
