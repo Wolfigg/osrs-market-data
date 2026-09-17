@@ -169,10 +169,17 @@ def _apply_market_capacity(method: dict[str, Any]) -> None:
     economics["unconstrainedConservativeGpPerHour"] = raw_conservative
     economics["unconstrainedRecommendedGpPerHour"] = raw_recommended
 
-    if raw_expected is not None:
-        scenarios["expectedGpPerHour"] = float(raw_expected) * expected_ratio
+    expected_gp = float(raw_expected) * expected_ratio if raw_expected is not None else None
+    if expected_gp is not None:
+        scenarios["expectedGpPerHour"] = expected_gp
     if raw_conservative is not None:
-        scenarios["conservativeGpPerHour"] = float(raw_conservative) * conservative_ratio
+        # A throughput haircut must not make a losing conservative scenario look
+        # better by merely reducing the number of loss-making actions executed.
+        loss_safe_ratio = expected_ratio if float(raw_conservative) < 0 else conservative_ratio
+        conservative_gp = float(raw_conservative) * loss_safe_ratio
+        if expected_gp is not None:
+            conservative_gp = min(conservative_gp, expected_gp)
+        scenarios["conservativeGpPerHour"] = conservative_gp
     if raw_recommended is not None:
         method.setdefault("recommended", {})["gpPerHour"] = float(raw_recommended) * expected_ratio
     source = method.setdefault("priceSource", {})
