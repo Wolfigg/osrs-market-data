@@ -78,15 +78,6 @@ jobs:
       - name: Build unlisted flipping desk
         run: python -m osrs_market.flipping_site --config config --public-dir build/public-site --web-dir web --history-cache .flipping-cache/flipping-history.json
 
-      - name: Persist flipping snapshots and evaluate calibration horizons
-        run: python tools/flipping_history.py --public-flipping build/public-site/data/flipping.json --cache .flipping-cache/flipping-history.json --legacy-cache .market-cache/flipping-history.json --summary build/internal-report/flipping-backtesting-summary.json
-
-      - name: Save flipping calibration cache
-        uses: actions/cache/save@v4
-        with:
-          path: .flipping-cache
-          key: osrs-flipping-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
-
       - name: Upload maintainer diagnostics
         if: always() && hashFiles('build/internal-report/**') != ''
         uses: actions/upload-artifact@v6
