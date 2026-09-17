@@ -8,6 +8,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from osrs_market.flipping import _calibration_signal, _public_calibration_summary
+
 
 DEFAULT_HORIZONS = (15, 30, 60)
 DEFAULT_CALIBRATION_HORIZON = 60
@@ -188,6 +190,30 @@ def summarise(
     }
 
 
+def apply_calibration_to_public(public: dict[str, Any], summary: dict[str, Any]) -> dict[str, Any]:
+    rows = list(public.get("items") or [])
+    for item in rows:
+        item_id = int(item["itemId"])
+        signal = _calibration_signal(item_id, finite(item.get("expectedOpportunity4h")), summary)
+        item["calibration"] = signal
+        item["rankingScore4h"] = signal["rankingScore4h"]
+
+    rows.sort(
+        key=lambda row: (
+            row.get("rankingScore4h") if row.get("rankingScore4h") is not None else float("-inf"),
+            row.get("expectedOpportunity4h") if row.get("expectedOpportunity4h") is not None else float("-inf"),
+            (row.get("spreadStats") or {}).get("profitableBucketPct") or 0.0,
+        ),
+        reverse=True,
+    )
+    calibration = _public_calibration_summary(summary)
+    public["schemaVersion"] = 3
+    public["rankingMode"] = "survival-calibrated" if calibration["ready"] else "expected-opportunity"
+    public["calibration"] = calibration
+    public["items"] = rows
+    return public
+
+
 def _load_history(cache_path: Path, legacy_cache_path: Path | None) -> dict[str, Any]:
     if cache_path.exists():
         return read_json(cache_path, {})
@@ -216,7 +242,8 @@ def main() -> int:
     if args.calibration_horizon_minutes not in horizons:
         horizons = tuple(sorted(set(horizons) | {int(args.calibration_horizon_minutes)}))
 
-    public = read_json(Path(args.public_flipping), {})
+    public_path = Path(args.public_flipping)
+    public = read_json(public_path, {})
     items = [row for row in (public.get("items") or []) if (row.get("expected") or {}).get("margin") is not None]
     generated_at = int(public.get("generatedAt") or time.time())
     current_by_id = {int(row["itemId"]): (rank, row) for rank, row in enumerate(items, start=1)}
@@ -279,6 +306,7 @@ def main() -> int:
     )
     write_json(cache_path, {"schemaVersion": 2, "snapshots": snapshots, "backtests": backtests, "summary": summary})
     write_json(Path(args.summary), {**summary, "recentBacktests": backtests[-100:]})
+    write_json(public_path, apply_calibration_to_public(public, summary))
     print(
         "flipping history: "
         f"{len(snapshots)} snapshots, {len(backtests)} evaluated, "
