@@ -9,7 +9,7 @@
   <title>Grand Exchange Flips | OSRS Market Board</title>
   <link rel="stylesheet" href="assets/app.css?v=20260906-execution-1">
   <script defer src="assets/app.js?v=20260906-execution-1"></script>
-  <script defer src="assets/flipping.js?v=20260917-hidden-flipping-1"></script>
+  <script defer src="assets/flipping.js?v=20260917-hidden-flipping-2"></script>
 </head>
 <body data-page="flipping">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -41,9 +41,9 @@
       </section>
 
       <section class="market-overview alch-overview" aria-label="Flipping market overview">
-        <article class="signal-card signal-card-primary"><p class="signal-label">Best market-sized signal</p><strong id="flip-leader-value">Loading</strong><span id="flip-leader-name">Scanning items</span></article>
+        <article class="signal-card signal-card-primary"><p class="signal-label">Best flow-capped signal</p><strong id="flip-leader-value">Loading</strong><span id="flip-leader-name">Scanning items</span></article>
         <article class="signal-card"><p class="signal-label">Persistent spreads</p><strong id="flip-persistent-count">—</strong><span>Positive now, 5M and 1H</span></article>
-        <article class="signal-card"><p class="signal-label">Fresh quotes</p><strong id="flip-fresh-count">—</strong><span>Both sides within freshness policy</span></article>
+        <article class="signal-card"><p class="signal-label">Fresh quotes</p><strong id="flip-fresh-count">—</strong><span>Both latest trade sides within freshness policy</span></article>
         <article class="signal-card signal-card-note"><p class="signal-label">Items scanned</p><strong id="flip-item-total">—</strong><span id="flip-source-age">Fetching live Wiki prices</span></article>
       </section>
 
@@ -58,12 +58,12 @@
           <label class="field"><span>Minimum ROI %</span><input id="flip-min-roi" type="number" value="0" min="0" step="0.1"></label>
           <label class="field"><span>Minimum 1H balanced volume</span><input id="flip-min-volume" type="number" value="0" min="0" step="1"></label>
           <label class="field"><span>Capital</span><select id="flip-capital"><option value="all">Any capital</option><option value="500000">Under 500k</option><option value="1000000">Under 1m</option><option value="5000000">Under 5m</option><option value="10000000">Under 10m</option><option value="25000000">Under 25m</option></select></label>
-          <label class="field"><span>Sort</span><select id="flip-sort"><option value="market-profit">Market-sized profit</option><option value="limit-profit">Theoretical 4H limit profit</option><option value="margin">Margin/item</option><option value="roi">ROI</option><option value="volume">1H balanced volume</option><option value="capital">Lowest market-sized capital</option><option value="alphabetic">Alphabetical</option></select></label>
+          <label class="field"><span>Sort</span><select id="flip-sort"><option value="flow-profit">Flow-capped profit</option><option value="limit-profit">Theoretical 4H limit profit</option><option value="margin">Margin/item</option><option value="roi">ROI</option><option value="volume">1H balanced volume</option><option value="coverage">1H volume / GE limit</option><option value="balance">1H directional balance</option><option value="capital">Lowest flow-capped capital</option><option value="alphabetic">Alphabetical</option></select></label>
           <label class="checkbox-field"><input id="flip-stale" type="checkbox"><span>Show stale / unknown quotes</span></label>
         </div>
       </section>
 
-      <div class="ledger-toolbar"><p id="flip-count">Loading candidates...</p><p class="muted">Market-sized profit is current tax-correct margin multiplied by the smaller of the 4H GE buy limit and observed balanced 1H flow. It is not a guaranteed fill or GP/hour estimate.</p></div>
+      <div class="ledger-toolbar"><p id="flip-count">Loading candidates...</p><p class="muted">Flow-capped profit is current post-tax margin multiplied by the smaller of the 4H GE buy limit and the thinner observed 1H trade direction. It is an opportunity-size proxy, not guaranteed profit or GP/hour.</p></div>
       <section id="flip-list" class="alchemy-ledger" aria-live="polite"></section>
     </main>
 
