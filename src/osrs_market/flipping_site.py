@@ -6,7 +6,7 @@ import shutil
 import time
 from pathlib import Path
 
-from .api import MarketApiClient
+from .api import ApiError, MarketApiClient
 from .config import api_settings, load_yaml
 from .flipping import build_public_flipping
 from .public_site import write_json
@@ -16,6 +16,11 @@ LOGGER = logging.getLogger("osrs_market.flipping")
 
 
 def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path = Path("web")) -> None:
+    data_dir = public_dir / "data"
+    assets_dir = public_dir / "assets"
+    if not public_dir.is_dir() or not data_dir.is_dir() or not assets_dir.is_dir():
+        raise ValueError("public site must be built before installing the hidden flipping desk")
+
     settings = load_yaml(config_dir / "settings.yaml")
     generated_at = int(time.time())
     client = MarketApiClient(api_settings(settings))
@@ -38,11 +43,6 @@ def build_hidden_flipping_site(config_dir: Path, public_dir: Path, web_dir: Path
         settings,
     )
 
-    data_dir = public_dir / "data"
-    assets_dir = public_dir / "assets"
-    if not public_dir.is_dir() or not data_dir.is_dir() or not assets_dir.is_dir():
-        raise ValueError("public site must be built before installing the hidden flipping desk")
-
     write_json(data_dir / "flipping.json", payload)
     shutil.copy2(web_dir / "flipping.html", public_dir / "flipping.html")
     shutil.copy2(web_dir / "assets" / "flipping.js", assets_dir / "flipping.js")
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         build_hidden_flipping_site(Path(args.config), Path(args.public_dir), Path(args.web_dir))
         return 0
-    except (OSError, ValueError, KeyError) as exc:
+    except (ApiError, OSError, ValueError, KeyError) as exc:
         LOGGER.error("flipping build failed: %s", exc)
         return 1
 
