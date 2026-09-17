@@ -1,11 +1,11 @@
 ---
-status: in-progress
+status: done
 ---
 # Flipping V2: execution-aware passive flip model
 
 ## Next action
 
-Run repository CI for PR #28. If all required checks pass, review the final diff and merge.
+Merge PR #28. After deployment, accumulate flipping backtest observations until the configured calibration sample gate is reached before applying learned ranking changes.
 
 ## Outcome and scope
 
@@ -48,7 +48,12 @@ Excluded:
 
 Implementation is on `feature/flipping-v2`, PR #28.
 
-Validation status:
+Validation:
 - Local isolated Python syntax/model smoke check: passed before repository writes.
 - Local `node --check` for the revised flipping client: passed before repository writes.
-- Repository CI: queued for PR #28.
+- Tested revision: `eb914ba3b66d5b06478ad4cea353fb39b1e0b98b`.
+- GitHub Actions CI run `35246110215`: Python test job passed.
+- GitHub Actions CI run `35246110215`: hidden flipping JavaScript syntax check passed.
+- GitHub Actions CI run `35246110215`: deterministic browser fixture build passed.
+- GitHub Actions CI run `35246110215`: Chromium and Firefox acceptance passed.
+- Final diff review before this documentation update showed the branch 10 commits ahead of `master` with only the intended flipping model, site, workflow, config, tests, backtesting tool, and task note changed.
