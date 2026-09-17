@@ -5,7 +5,7 @@ status: done
 
 ## Next action
 
-Merge PR #30 after the final documentation-only CI run is green. After merge, verify the first successful post-live calibration workflow writes `.flipping-cache/flipping-history.json` and that later live builds report the restored calibration sample count.
+Merge PR #30 after the final documentation-only CI run is green. After merge, verify the first successful `Refresh flipping calibration` workflow saves `.flipping-cache/flipping-history.json` and that a later live build restores the resulting sample count. This is post-merge deployment verification; the workflow-run path cannot execute from the PR branch itself.
 
 ## Outcome and scope
 
@@ -19,6 +19,7 @@ Included:
 - Evidence-gated ranking: expected opportunity remains the ranking basis until the global sample gate passes. After that gate, the ranking score applies observed 60-minute positive-margin survival, using item history when its own sample gate passes and global history otherwise.
 - Browser visibility into calibration state and the ranking inputs.
 - A separate post-live calibration workflow so `refresh-live.yml` remains public-only and does not save caches.
+- Same-run calibration reapplication in the historical publish path, without a second market API fetch.
 
 Excluded:
 - Claims that observed Wiki volume equals the user's fill probability.
@@ -50,7 +51,8 @@ Excluded:
 - Before the calibration gate, ranking remains expected-opportunity ranking.
 - After the gate, the ranking score applies empirical 60-minute margin survival, preferring item evidence when ready and otherwise using global evidence.
 - Live refresh restores calibration for ranking but remains public-only and does not write caches.
-- The post-live calibration workflow updates and saves the dedicated calibration cache after a successful live publish; the historical workflow remains a persistence fallback.
+- The post-live calibration workflow is configured to update and save the dedicated calibration cache after a successful live publish; the historical workflow remains a persistence fallback.
+- The historical publish path reapplies a newly computed summary to the current `flipping.json` before Pages upload, and snapshots the resulting published rank.
 - Existing V2 history can seed the new cache, including legacy rows whose `horizonMinutes` stored actual observation age rather than a target horizon.
 - The hidden page remains `noindex,nofollow` and absent from primary navigation.
 - Python tests, hidden flipping JavaScript syntax check and browser acceptance pass for the PR revision.
@@ -59,14 +61,17 @@ Excluded:
 
 Implemented on `feature/flipping-v3` in PR #30.
 
-Tested code revision: `75ee6b67b5066122b14b07e9af6ccdaaa4341fc8`.
+Tested code revision: `ba314dd801225a104cc34b815e25c4a2628705a2`.
 
 Validation:
-- GitHub Actions CI run `35256649232`: `228 passed` in the Python test job.
+- GitHub Actions CI run `35257254968`: `229 passed` in the Python test job.
 - Hidden flipping JavaScript syntax check: passed.
 - Cooking backend/frontend parity check: passed.
 - Deterministic browser fixture build: passed.
 - Chromium and Firefox acceptance: passed.
-- Diff review against `master`: branch was 16 commits ahead, 0 behind, with only the intended flipping model, history, workflows, UI, tests and task note changed at the tested revision.
+- PR review threads covering V2 horizon migration, live-workflow cache ownership and historical same-run calibration were addressed and resolved.
+- Changed-file review contains only the flipping model, history collector, three related workflows, hidden flipping UI, tests and this task note.
 
-A preceding CI run correctly rejected cache persistence inside `refresh-live.yml`. The implementation was changed so a separate `refresh-flipping-calibration.yml` owns the post-live cache write instead of weakening the live-workflow invariant.
+An earlier CI run correctly rejected cache persistence inside `refresh-live.yml`. The implementation was changed so `refresh-flipping-calibration.yml` owns post-live cache writes instead of weakening the live-workflow invariant. The live path intentionally applies newly matured calibration on the next live refresh; the hourly historical path applies its newly matured calibration in the same deployment.
+
+Post-merge limitation: the new `workflow_run` path has not executed on the default branch yet. Its first run must be checked after merge before claiming deployment-level validation.
