@@ -38,11 +38,11 @@ def _confidence_for(method: dict[str, Any], model: dict[str, Any]) -> dict[str, 
 
 
 def _participation_fraction(fill_score: float | None, stability_state: str = "unknown") -> float:
-    """Prudent share of observed directional flow available to one user.
+    """Prudent conservative share of observed directional flow for one user.
 
-    Fill confidence sets the base participation ceiling. Price instability then
-    reduces that ceiling because historic volume at unstable prices is weaker
-    evidence of executable depth at the current margin.
+    Expected capacity is allowed to use the observed directional flow directly.
+    This haircut is reserved for the conservative scenario so the same liquidity
+    evidence is not applied twice to the expected result.
     """
     if fill_score is None:
         base = 0.02
@@ -76,7 +76,7 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
     fill_score_raw = (method.get("fillConfidence") or {}).get("score")
     fill_score = float(fill_score_raw) if fill_score_raw is not None else None
     stability_state = str((method.get("stability") or {}).get("state") or "unknown")
-    participation = _participation_fraction(fill_score, stability_state)
+    conservative_participation = _participation_fraction(fill_score, stability_state)
 
     candidates: list[dict[str, Any]] = []
     for side in ("inputs", "outputs"):
@@ -115,28 +115,38 @@ def _market_capacity(method: dict[str, Any]) -> dict[str, Any]:
 
     limiting = min(candidates, key=lambda row: row["rawCyclesPerHour"]) if candidates else None
     raw_directional = limiting["rawCyclesPerHour"] if limiting else None
+    base_capacity = min(mechanical, ge_limited)
     if raw_directional is None:
-        capacity = min(mechanical, ge_limited)
+        expected_capacity = base_capacity
+        conservative_capacity = base_capacity
         basis = "No directional market volume is available; mechanical and GE limits are the only capacity evidence."
         evidence = "limited"
     else:
-        capacity = min(mechanical, ge_limited, raw_directional * participation)
+        expected_capacity = min(base_capacity, raw_directional)
+        conservative_capacity = min(expected_capacity, raw_directional * conservative_participation)
         evidence = "strong" if fill_score is not None and fill_score >= 75 and stability_state in {"stable", "watch"} else "moderate" if fill_score is not None and fill_score >= 55 else "weak"
         limiter_name = str(limiting.get("name") or "limiting item")
         limiter_side = str(limiting.get("side") or "market")
         basis = (
             f"{limiter_name} {limiter_side} flow is the limiting directional market signal. "
-            f"Capacity uses {participation * 100:.1f}% of the weakest available short/long directional flow after fill-confidence and price-stability adjustment."
+            "Expected capacity uses the weakest observed short/long directional flow directly, capped by mechanical and GE limits. "
+            f"Conservative capacity applies a {conservative_participation * 100:.1f}% participation haircut after fill-confidence and price-stability adjustment."
         )
-    ratio = capacity / mechanical if mechanical > 0 else 0.0
+    expected_ratio = expected_capacity / mechanical if mechanical > 0 else 0.0
+    conservative_ratio = conservative_capacity / mechanical if mechanical > 0 else 0.0
     return {
-        "cyclesPerHour": capacity,
+        "cyclesPerHour": expected_capacity,
         "mechanicalCyclesPerHour": mechanical,
         "marketSupportedCyclesPerHour": raw_directional,
-        "expectedExecutableCyclesPerHour": capacity,
+        "expectedExecutableCyclesPerHour": expected_capacity,
+        "conservativeExecutableCyclesPerHour": conservative_capacity,
         "rawDirectionalCyclesPerHour": raw_directional,
-        "participationPct": participation * 100.0,
-        "mechanicalRatioPct": ratio * 100.0,
+        # participationPct used to describe the expected capacity in the browser.
+        # Expected no longer receives the conservative participation haircut.
+        "participationPct": None,
+        "conservativeParticipationPct": conservative_participation * 100.0,
+        "mechanicalRatioPct": expected_ratio * 100.0,
+        "conservativeMechanicalRatioPct": conservative_ratio * 100.0,
         "evidence": evidence,
         "limitingItem": limiting,
         "basis": basis,
@@ -147,27 +157,30 @@ def _apply_market_capacity(method: dict[str, Any]) -> None:
     capacity = _market_capacity(method)
     method["marketCapacity"] = capacity
     sustainable = float((method.get("mechanics") or {}).get("cyclesPerHourByBuyLimits") or 0.0)
-    ratio = capacity["cyclesPerHour"] / sustainable if sustainable > 0 else 0.0
+    expected_ratio = capacity["expectedExecutableCyclesPerHour"] / sustainable if sustainable > 0 else 0.0
+    conservative_ratio = capacity["conservativeExecutableCyclesPerHour"] / sustainable if sustainable > 0 else 0.0
 
     scenarios = method.get("scenarios") or {}
     raw_expected = scenarios.get("expectedGpPerHour")
     raw_conservative = scenarios.get("conservativeGpPerHour")
     raw_recommended = (method.get("recommended") or {}).get("gpPerHour")
-    method.setdefault("economics", {})["unconstrainedExpectedGpPerHour"] = raw_expected
-    method["economics"]["unconstrainedRecommendedGpPerHour"] = raw_recommended
+    economics = method.setdefault("economics", {})
+    economics["unconstrainedExpectedGpPerHour"] = raw_expected
+    economics["unconstrainedConservativeGpPerHour"] = raw_conservative
+    economics["unconstrainedRecommendedGpPerHour"] = raw_recommended
 
     if raw_expected is not None:
-        scenarios["expectedGpPerHour"] = float(raw_expected) * ratio
+        scenarios["expectedGpPerHour"] = float(raw_expected) * expected_ratio
     if raw_conservative is not None:
-        scenarios["conservativeGpPerHour"] = float(raw_conservative) * ratio
+        scenarios["conservativeGpPerHour"] = float(raw_conservative) * conservative_ratio
     if raw_recommended is not None:
-        method.setdefault("recommended", {})["gpPerHour"] = float(raw_recommended) * ratio
+        method.setdefault("recommended", {})["gpPerHour"] = float(raw_recommended) * expected_ratio
     source = method.setdefault("priceSource", {})
     source["provider"] = "RuneScape Wiki real-time prices API (prices.runescape.wiki)"
     source["current"] = "Latest high/low trade observations from prices.runescape.wiki, using the required input/output direction and GE tax on outputs."
     source["liquidity"] = (
-        "Available short-window and 24H directional trade volume from prices.runescape.wiki is converted into a per-user capacity. "
-        "The participation ceiling is reduced when fill confidence or price stability is weak."
+        "Expected capacity uses the weakest available 1H/6H/24H directional flow directly, capped by mechanical and GE throughput. "
+        "Only the conservative scenario applies the additional fill-confidence and price-stability participation haircut."
     )
 
 
