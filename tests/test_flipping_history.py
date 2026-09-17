@@ -119,6 +119,7 @@ def test_flipping_history_calibration_readiness_is_gated_on_60_minute_samples():
 def test_flipping_history_legacy_rows_are_treated_as_60_minute_evidence():
     rows = [{
         "itemId": 100,
+        "horizonMinutes": 64.0,
         "absoluteExpectedMarginError": 1,
         "conservativeSurvived": True,
         "marginSurvived": True,
@@ -128,4 +129,5 @@ def test_flipping_history_legacy_rows_are_treated_as_60_minute_evidence():
     summary = flipping_history.summarise(rows, minimum_calibration_samples=1, minimum_item_samples=1)
 
     assert summary["byHorizon"]["60"]["sampleCount"] == 1
+    assert "64" not in summary["byHorizon"]
     assert summary["calibrationReady"] is True
