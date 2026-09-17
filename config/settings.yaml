@@ -29,6 +29,8 @@ alchemy:
 
 flipping:
   candidate_timeseries_limit: 100
+  excluded_item_ids:
+    - 13190  # Old school bond: purchased bonds require a tradeability activation fee before resale.
 
 liquidity:
   notice_market_share_pct: 1
