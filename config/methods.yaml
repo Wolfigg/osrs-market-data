@@ -389,7 +389,7 @@ methods:
     notes: One cycle is one redwood-log batch that produces 105 seeking dragon arrows. The 16 cycles/hour working rate follows the Wiki guide's whole method output, including arrow processing. A log basket is recommended for longer trips; it is not required for the modelled batch.
     reference: https://oldschool.runescape.wiki/w/Money_making_guide/Chopping_the_engorged_bloodwood_tree
 
-recharge_dragonstone_amulet_glory:
+  recharge_dragonstone_amulet_glory:
     enabled: true
     name: Recharge amulets of glory
     category: bankstanding/magic

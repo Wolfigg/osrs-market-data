@@ -239,7 +239,7 @@ methods:
       output_units_per_cycle: 105
     notes: One sap bucket treats one redwood log for 105 shafts; feathers and dragon arrows upgrade these into tradeable seeking dragon arrows. The Wiki guide's 16 batches/hour includes the full processing method. With a dragon axe, tree progress takes about 118 seconds on average; sap draining adds a 45-second interaction phase.
 
-recharge_dragonstone_amulet_glory:
+  recharge_dragonstone_amulet_glory:
     status: verified
     verified_at: "2026-11-25"
     method_types: [bankstanding]
