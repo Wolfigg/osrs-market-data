@@ -237,7 +237,7 @@ The controls include skills currently used by the catalogue, including Sailing f
 
 Skill matching does not imply that quest or equipment requirements are satisfied. Those remain visible separately.
 
-The frontend also supports capital, method-type and stability filtering.
+The frontend also supports preset capital, method-type and stability filtering. AFK rows show stability beside market capacity. An exact one-hour input-capital ceiling is available in the expanded filters and is shareable through the URL.
 
 ## High Alch branch
 
@@ -255,6 +255,8 @@ Public High Alch data includes:
 - membership
 - price freshness
 - recent volume context
+
+An optional four-hour buy-list budget caps the displayed quantity by the GP needed to buy the item's full four-hour supply and runes. The High Alch list shows each candidate's existing market-risk label in its summary.
 
 Historical item and rune prices use matching windows.
 

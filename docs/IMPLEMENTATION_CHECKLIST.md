@@ -97,6 +97,8 @@ See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 - [x] Bankstanding/Make-X/Autocast/Gathering.
 - [x] Stability state.
 - [x] Strict-under capital filters.
+- [x] Exact one-hour input-capital ceiling, shareable in the URL.
+- [x] AFK summary rows show price stability beside market capacity.
 - [x] Sort by Recommended, Current, 24H, 7D, 30D, GP/interaction, interval, capital and name.
 - [x] Optional browser-local eligibility levels, without an account/profile concept.
 - [x] Skill gate checks all published skill requirements.
@@ -112,6 +114,8 @@ See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 - [x] 24H, 7D and 30D profit/cast use matching historical item/rune windows.
 - [x] Candidate history can be unavailable without blocking current scanning.
 - [x] Capital filtering uses strict-under semantics.
+- [x] Optional four-hour buy-list budget recalculates affordable quantity, capital and profit.
+- [x] Market-risk label is visible in each High Alch summary row.
 - [x] Search, membership, profitability, minimum-profit and unavailable filters exist.
 - [x] Current/24H/7D/30D and practical-profit sorting exists.
 

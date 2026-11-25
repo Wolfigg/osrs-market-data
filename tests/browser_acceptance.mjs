@@ -44,8 +44,16 @@ async function run(browserType, name) {
     assert.equal(await page.locator("#afk-capital").inputValue(), "500000");
     assert.equal(await page.locator("#afk-sort").inputValue(), "alphabetical");
 
+    await page.goto(`${base}/index.html?profit=all&budget=500000`, { waitUntil: "networkidle" });
+    await waitForCount(page, "#afk-count", "2 methods");
+    assert.equal(await page.locator("#afk-budget").inputValue(), "500000");
+    assert.match(page.url(), /budget=500000/);
+    assert.doesNotMatch(await page.locator("#afk-list").textContent(), /Cut ruby bolt tips/);
+    assert.match(await page.locator("#afk-list").textContent(), /Craft gold ring/);
+
     // Expanded method keeps a compact summary; full economics is another explicit disclosure.
     const camphor = page.locator('[data-method-id="camphor"]');
+    assert.match(await camphor.locator(":scope > summary").textContent(), /Stable/);
     await camphor.locator(":scope > summary").click();
     assert.equal(await camphor.locator(".method-more").getAttribute("open"), null);
     assert.match(await camphor.textContent(), /Expected executable/i);
@@ -105,6 +113,17 @@ async function run(browserType, name) {
     await waitForCount(page, "#alch-count", "1 candidate");
     assert.equal(await page.locator("#alch-sort").inputValue(), "profit-30d");
     assert.match(await page.locator("#alch-list").textContent(), /Rune platebody/);
+
+    await page.goto(`${base}/alchemy.html?budget=500000`, { waitUntil: "networkidle" });
+    await waitForCount(page, "#alch-count", "2 candidates");
+    assert.equal(await page.locator("#alch-budget").inputValue(), "500000");
+    assert.match(page.url(), /budget=500000/);
+    const exactMillion = page.locator("#alch-list .ledger-record").filter({ hasText: "Exact million item" });
+    const exactMillionText = await exactMillion.innerText();
+    assert.match(exactMillionText, /454/);
+    assert.match(exactMillionText, /499,400/);
+    assert.match(exactMillionText, /181,600/);
+    assert.match(exactMillionText, /Normal market risk/);
   } finally {
     await browser.close();
   }
