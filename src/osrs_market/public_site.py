@@ -8,7 +8,7 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20260906-execution-1"
+PUBLIC_ASSET_VERSION = "20261125-alch-batch-clarity-1"
 
 PUBLIC_REQUIRED_FILES = (
     "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js",
@@ -144,9 +144,9 @@ def _afk_page() -> str:
 
 def _alchemy_page() -> str:
     main = f"""
-<section class="page-heading compact"><div><p class="eyebrow">Alchemy desk / 02</p><h1>High Alch</h1></div><p>Scan practical four-hour batches with live buy prices, rune cost, GE limits, liquidity, and six historical horizons.</p></section>
+<section class="page-heading compact"><div><p class="eyebrow">Alchemy desk / 02</p><h1>High Alch</h1></div><p>Estimate maximum four-hour batches from current quotes, rune costs, GE limits, and six historical horizons.</p></section>
 <section class="market-overview alch-overview" aria-label="High Alch market overview">
-  <article class="signal-card signal-card-primary"><p class="signal-label">Best four-hour batch</p><strong id="alch-leader-value">Loading</strong><span id="alch-leader-name">Scanning candidates</span></article>
+  <article class="signal-card signal-card-primary"><p class="signal-label">Highest 4H batch profit</p><strong id="alch-leader-value">Loading</strong><span id="alch-leader-name">Scanning candidates</span></article>
   <article class="signal-card"><p class="signal-label">Profitable now</p><strong id="alch-profitable-count">—</strong><span>Positive after rune cost</span></article>
   <article class="signal-card"><p class="signal-label">Fresh quotes</p><strong id="alch-fresh-count">—</strong><span>Within current freshness policy</span></article>
   <article class="signal-card signal-card-note"><p class="signal-label">Spell throughput</p><strong id="alch-casts-hour">—</strong><span>Casts per modelled hour</span></article>
@@ -159,9 +159,9 @@ def _alchemy_page() -> str:
 <label class="field"><span>Minimum profit/cast</span><input id="alch-min-profit" type="number" value="0" min="0" step="1"></label>
 <label class="field"><span>Capital</span><select id="alch-capital">{_capital_options()}</select></label>
 <label class="field"><span>4H buy-list budget (GP)</span><input id="alch-budget" type="number" min="0" step="1" placeholder="Any amount"></label>
-<label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-6h">6H profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="profit-6m">6M profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
+<label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Maximum 4H batch profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-6h">6H profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="profit-6m">6M profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
 <label class="checkbox-field"><input id="alch-unavailable" type="checkbox"><span>Show unavailable / stale</span></label></div></section>
-<div class="ledger-toolbar"><p id="alch-count">Loading candidates...</p><p class="muted">Requirement: 55 Magic. Budget caps the full four-hour buy list. Market risk is shown beside each item.</p></div><section id="alch-list" class="alchemy-ledger" aria-live="polite"></section>
+<div class="ledger-toolbar"><p id="alch-count">Loading candidates...</p><p class="muted">Requirement: 55 Magic. 4H figures are maximum batch estimates, capped by GE buy limits and modelled casts. They price every item at the latest quote. Enter a budget to cap spend; fills are not guaranteed. Missing GE limits leave batch quantity and profit unknown.</p></div><section id="alch-list" class="alchemy-ledger" aria-live="polite"></section>
 """
     return _base("High Alch", "alchemy", "alchemy", main)
 

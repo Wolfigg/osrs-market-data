@@ -42,6 +42,13 @@ def test_ge_limit_over_4800_uses_mechanical_cap():
     assert cap["maxQuantity"] == 4800
 
 
+def test_missing_ge_limit_leaves_four_hour_quantity_unknown():
+    cap = four_hour_capacity(700, 100, None, available_gp=8000)
+    assert cap["mechanicalCasts"] == 4800
+    assert cap["maxByCapital"] == 10
+    assert cap["maxQuantity"] is None
+
+
 def test_insufficient_capital_caps_quantity():
     cap = four_hour_capacity(700, 100, 10_000, available_gp=8000)
     assert cap["maxQuantity"] == 10
@@ -127,3 +134,27 @@ def test_no_fire_staff_candidate_uses_matching_fire_rune_windows():
     assert result["historicalInstant24h"]["profitPerCast"] == 175
     assert result["historicalInstant7d"]["profitPerCast"] == 205
     assert result["historicalInstant30d"]["profitPerCast"] == 235
+
+
+def test_missing_ge_limit_keeps_cast_margin_but_withholds_batch_estimate():
+    from osrs_market.alchemy import build_alchemy_candidate
+
+    it = item(limit=None)
+    latest_item = LatestPrice(700, 9999, 690, 9999)
+    latest_nature = LatestPrice(100, 9999, 95, 9999)
+    settings = {
+        "alchemy": {"use_fire_staff": True, "casts_per_hour": 1200, "xp_per_cast": 65},
+        "liquidity": {"notice_market_share_pct": 1, "caution_market_share_pct": 5, "high_risk_market_share_pct": 10},
+        "freshness": {"acceptable_seconds": 7200},
+    }
+
+    result = build_alchemy_candidate(it, latest_item, latest_nature, {}, {}, 10_000, settings)
+
+    assert result["currentInstant"]["profitPerCast"] == 200
+    assert result["capacity4h"]["mechanicalCasts"] == 4800
+    assert result["capacity4h"]["maxQuantity"] is None
+    assert result["profitPer4hGeLimit"] is None
+    assert result["capitalRequired"] is None
+    assert result["plannedSharePct24hVolume"] is None
+    assert result["magicXpPer4hBatch"] is None
+    assert "MISSING_BUY_LIMIT" in result["warnings"]
