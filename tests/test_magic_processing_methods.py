@@ -1,11 +1,12 @@
 from pathlib import Path
 
 from osrs_market.config import load_yaml
-from osrs_market.public_models import _requirements
+from osrs_market.public_models import _requirements, classify_afk
 
 
 def test_plank_make_catalogue_covers_all_supported_log_tiers():
     methods = load_yaml("config/methods.yaml")["methods"]
+    audit = load_yaml("config/method_audit.yaml")["methods"]
     tiers = {
         "logs": (1511, 960, 70),
         "oak": (1521, 8778, 175),
@@ -32,34 +33,48 @@ def test_plank_make_catalogue_covers_all_supported_log_tiers():
         assert method["requirements"]["quests"] == ["Dream Mentor"]
         assert method["requirements"]["equipment"] == ["Earth-rune supplying staff"]
         assert method["method_types"] == ["autocast", "bankstanding"]
-        assert method["audit"]["verified_at"] == "2026-11-25"
+        assert method["reference"] == "https://oldschool.runescape.wiki/w/Plank_Make"
+        audit_entry = audit[f"{tier}_plank_make_afk"]
+        assert audit_entry["status"] == "verified"
+        assert audit_entry["verified_at"] == "2026-11-25"
+        assert audit_entry["checks"]["input_units_per_cycle"] == 4
+        assert audit_entry["checks"]["output_units_per_cycle"] == 1
+        assert audit_entry["checks"]["fixed_cost_gp_per_cycle"] == fee
 
 
 def test_recharge_dragonstone_methods_charge_full_inventory_with_correct_requirements():
     methods = load_yaml("config/methods.yaml")["methods"]
+    audit = load_yaml("config/method_audit.yaml")["methods"]
     outputs = {
-        "amulet_glory": ("Amulet of glory", "Amulet of glory(4)", []),
-        "combat_bracelet": ("Combat bracelet", "Combat bracelet(4)", ["Legends' Quest"]),
-        "skills_necklace": ("Skills necklace", "Skills necklace(4)", ["Legends' Quest"]),
+        "amulet_glory": (1704, 1712, []),
+        "combat_bracelet": (11126, 11118, ["Legends' Quest"]),
+        "skills_necklace": (11113, 11105, ["Legends' Quest"]),
     }
 
-    for suffix, (input_name, output_name, extra_quests) in outputs.items():
+    for suffix, (input_id, output_id, extra_quests) in outputs.items():
         method = methods[f"recharge_dragonstone_{suffix}"]
-        assert [(row["item_name"], row["quantity"]) for row in method["inputs"]] == [
-            (input_name, 26),
-            ("Astral rune", 1),
-            ("Soul rune", 1),
+        assert [(row["item_id"], row["quantity"]) for row in method["inputs"]] == [
+            (input_id, 26),
+            (9075, 1),
+            (566, 1),
         ]
-        assert method["outputs"] == [{"item_name": output_name, "quantity": 26}]
+        assert method["outputs"] == [{"item_id": output_id, "quantity": 26}]
         assert method["cycles_per_hour"] == 360
         assert method["theoretical_cycles_per_hour"] == 360
         assert 35_100 / 97.5 == method["cycles_per_hour"]
         assert method["afk"]["interval_seconds"] == 10
+        assert classify_afk(method["afk"]["interval_seconds"]) == "Low interaction"
         assert method["requirements"]["magic"] == 89
         assert method["requirements"]["quests"] == ["Lunar Diplomacy", *extra_quests]
         assert method["requirements"]["diaries"] == ["Hard Fremennik Diary"]
         assert method["requirements"]["equipment"] == ["Water-rune supplying staff"]
-        assert method["audit"]["status"] == "verified"
+        assert method["method_types"] == ["bankstanding"]
+        audit_entry = audit[f"recharge_dragonstone_{suffix}"]
+        assert audit_entry["status"] == "verified"
+        assert audit_entry["method_types"] == ["bankstanding"]
+        assert audit_entry["checks"]["input_units_per_cycle"] == 28
+        assert audit_entry["checks"]["output_units_per_cycle"] == 26
+        assert method["reference"] == "https://oldschool.runescape.wiki/w/Recharge_Dragonstone"
 
 
 def test_public_requirements_preserve_diaries_and_unlocks():
@@ -86,3 +101,4 @@ def test_public_requirements_preserve_diaries_and_unlocks():
     app = Path("web/assets/app.js").read_text(encoding="utf-8")
     assert "r?.diaries" in app and "<h3>Diaries</h3>" in app
     assert "r?.unlocks" in app and "<h3>Unlocks</h3>" in app
+
