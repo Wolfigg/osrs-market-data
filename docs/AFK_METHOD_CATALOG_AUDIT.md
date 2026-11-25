@@ -50,7 +50,7 @@ The public capital calculation now includes fixed coin charges, correcting the p
 
 The catalogue has separate batch methods for amulets of glory, combat bracelets and skills necklaces. One spell cast recharges 26 items to four charges. A Water-rune-supplying staff covers the four Water runes; each cast consumes one Astral rune and one Soul rune. The model uses 360 inventories/hour, derived from 35,100 Magic XP/hour divided by 97.5 XP/cast, and assumes no faster bank-processing rate. Casting requires 89 Magic, Lunar Diplomacy and the hard Fremennik Diary; combat bracelets and skills necklaces also require Legends' Quest. The spell does not recharge rings of wealth.
 
-### Longbow cutting### Longbow cutting
+### Longbow cutting
 
 Maple, yew and magic unstrung longbows use the regular-knife Make-X model. A 27-log batch at three ticks per bow gives 48.6 seconds of uninterrupted processing. The public working rate remains 1,500 logs/hour and the sourced regular-knife theoretical ceiling is 1,800/hour.
 

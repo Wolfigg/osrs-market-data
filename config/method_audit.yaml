@@ -162,7 +162,7 @@ methods:
       fixed_cost_gp_per_cycle: 5250
     notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune and two Astral runes; 15 Earth runes are supplied by the required staff. Plank Make charges 5,250 coins per rosewood log.
 
-  bronze_dart_tips:  bronze_dart_tips:
+  bronze_dart_tips:
     status: verified
     verified_at: "2026-08-29"
     method_types: [bankstanding, make-x]
