@@ -76,7 +76,7 @@ methods:
       input_units_per_cycle: 4
       output_units_per_cycle: 1
       fixed_cost_gp_per_cycle: 1050
-    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune, two Astral runes and 15 Earth runes; an Earth-supplying staff makes Earth runes reusable equipment rather than consumed capital. Plank Make charges 70% of the sawmill fee, 1,050 coins for mahogany. The working rate is 75,000 XP/hour divided by 90 XP/cast, about 833 planks/hour; the theoretical rate is 90,000 XP/hour, or 1,000 casts/hour. Autocasting repeats every 3.6 seconds, so a 26-log inventory takes about 94 seconds.
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune, two Astral runes and 15 Earth runes; an Earth-supplying staff makes Earth runes reusable equipment rather than consumed capital. Plank Make charges 70% of the sawmill fee, 1,050 coins for mahogany. The working rate is 75,000 XP/hour divided by 90 XP/cast, about 833 planks/hour; the theoretical rate is 90,000 XP/hour, or 1,000 casts/hour. Autocasting repeats every 3.6 seconds, and the Wiki describes about 90 seconds per 26-log inventory.
 
   camphor_plank_make_afk:
     status: verified
@@ -243,37 +243,37 @@ methods:
     status: verified
     verified_at: "2026-11-25"
     method_types: [bankstanding]
-    source: https://oldschool.runescape.wiki/w/Pay-to-play_Magic_training
+    source: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
     checks:
       cycles_per_hour: 360
       theoretical_cycles_per_hour: 360
       afk_interval_seconds: 10
       input_units_per_cycle: 28
       output_units_per_cycle: 26
-    notes: One cast recharges up to 26 eligible items in the inventory to four charges. The 360 casts/hour rate is derived from the Wiki's 35,100 Magic XP/hour divided by 97.5 XP per cast; no higher bank-processing rate is assumed. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
+    notes: One cast recharges up to 26 eligible items in the inventory to four charges. The 360 casts/hour working rate is calculated from the Pay-to-play Magic training page's 35,100 Magic XP/hour divided by 97.5 XP per cast; it is an average 10-second batch cadence, not an unattended AFK window. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
 
   recharge_dragonstone_combat_bracelet:
     status: verified
     verified_at: "2026-11-25"
     method_types: [bankstanding]
-    source: https://oldschool.runescape.wiki/w/Pay-to-play_Magic_training
+    source: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
     checks:
       cycles_per_hour: 360
       theoretical_cycles_per_hour: 360
       afk_interval_seconds: 10
       input_units_per_cycle: 28
       output_units_per_cycle: 26
-    notes: One cast recharges up to 26 eligible items in the inventory to four charges; Combat bracelets additionally require Legends' Quest. The 360 casts/hour rate is derived from the Wiki's 35,100 Magic XP/hour divided by 97.5 XP per cast; no higher bank-processing rate is assumed. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
+    notes: One cast recharges up to 26 eligible items in the inventory to four charges; Combat bracelets additionally require Legends' Quest. The 360 casts/hour working rate is calculated from the Pay-to-play Magic training page's 35,100 Magic XP/hour divided by 97.5 XP per cast; it is an average 10-second batch cadence, not an unattended AFK window. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
 
   recharge_dragonstone_skills_necklace:
     status: verified
     verified_at: "2026-11-25"
     method_types: [bankstanding]
-    source: https://oldschool.runescape.wiki/w/Pay-to-play_Magic_training
+    source: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
     checks:
       cycles_per_hour: 360
       theoretical_cycles_per_hour: 360
       afk_interval_seconds: 10
       input_units_per_cycle: 28
       output_units_per_cycle: 26
-    notes: One cast recharges up to 26 eligible items in the inventory to four charges; Skills necklaces additionally require Legends' Quest. The 360 casts/hour rate is derived from the Wiki's 35,100 Magic XP/hour divided by 97.5 XP per cast; no higher bank-processing rate is assumed. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
+    notes: One cast recharges up to 26 eligible items in the inventory to four charges; Skills necklaces additionally require Legends' Quest. The 360 casts/hour working rate is calculated from the Pay-to-play Magic training page's 35,100 Magic XP/hour divided by 97.5 XP per cast; it is an average 10-second batch cadence, not an unattended AFK window. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
