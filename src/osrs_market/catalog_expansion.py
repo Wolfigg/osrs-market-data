@@ -45,12 +45,15 @@ def expanded_method_catalog() -> dict[str, dict[str, Any]]:
             "reference": reference,
         }
 
-    # Missing Plank Make tiers. Nature and astral runes are consumed; an earth
-    # rune supplying staff is modelled as reusable equipment.
+    # Nature and astral runes are consumed; an earth-rune supplying staff is
+    # modelled as reusable equipment. Mahogany and Camphor tiers are configured
+    # separately where their method assumptions need hand-tuned audit entries.
     for key, log_id, plank_id, coin_cost in (
         ("logs", 1511, 960, 70),
         ("oak", 1521, 8778, 175),
         ("teak", 6333, 8780, 350),
+        ("ironwood", 32907, 31435, 3500),
+        ("rosewood", 32910, 31438, 5250),
     ):
         add(
             f"{key}_plank_make_afk",

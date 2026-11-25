@@ -78,16 +78,15 @@ def public_risk(warnings: list[str] | None, valid: bool = True) -> dict[str, Any
 def _requirements(result: dict[str, Any]) -> dict[str, Any]:
     raw = result.get("requirements") or {}
     skills: dict[str, int | float] = {}
-    quests: list[str] = []
-    equipment: list[str] = []
+    named = {key: [] for key in ("quests", "diaries", "unlocks", "equipment")}
     for key, value in raw.items():
         lowered = str(key).lower()
-        if lowered == "quests" and isinstance(value, list): quests = [str(x) for x in value]
-        elif lowered == "equipment" and isinstance(value, list): equipment = [str(x) for x in value]
+        if lowered in named and isinstance(value, list): named[lowered] = [str(x) for x in value]
         elif lowered == "members": continue
         elif not isinstance(value, bool) and isinstance(value, (int, float)): skills[lowered] = _intish(value)  # type: ignore[assignment]
-    return {"skills": skills, "quests": quests, "equipment": equipment}
-
+    output: dict[str, Any] = {"skills": skills, "quests": named["quests"], "equipment": named["equipment"]}
+    output.update({key: value for key, value in named.items() if key not in output and value})
+    return output
 
 def _members(result: dict[str, Any]) -> bool:
     requirements = result.get("requirements") or {}

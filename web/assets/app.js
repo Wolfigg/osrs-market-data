@@ -87,8 +87,10 @@
   function requirementsHtml(r) {
     const skills = Object.entries(r?.skills || {}).map(([name, level]) => `<li>${esc(name[0].toUpperCase() + name.slice(1))}: ${esc(level)}</li>`).join("");
     const quests = (r?.quests || []).map(x => `<li>${esc(x)}</li>`).join("");
+    const diaries = (r?.diaries || []).map(x => `<li>${esc(x)}</li>`).join("");
+    const unlocks = (r?.unlocks || []).map(x => `<li>${esc(x)}</li>`).join("");
     const equipment = (r?.equipment || []).map(x => `<li>${esc(x)}</li>`).join("");
-    return `${skills ? `<h3>Skills</h3><ul class="detail-list">${skills}</ul>` : ""}${quests ? `<h3>Quests</h3><ul class="detail-list">${quests}</ul>` : ""}${equipment ? `<h3>Equipment</h3><ul class="detail-list">${equipment}</ul>` : ""}` || "<p>No additional requirements listed.</p>";
+    return `${skills ? `<h3>Skills</h3><ul class="detail-list">${skills}</ul>` : ""}${quests ? `<h3>Quests</h3><ul class="detail-list">${quests}</ul>` : ""}${diaries ? `<h3>Diaries</h3><ul class="detail-list">${diaries}</ul>` : ""}${unlocks ? `<h3>Unlocks</h3><ul class="detail-list">${unlocks}</ul>` : ""}${equipment ? `<h3>Equipment</h3><ul class="detail-list">${equipment}</ul>` : ""}` || "<p>No additional requirements listed.</p>";
   }
 
   function itemsHtml(title, items) {

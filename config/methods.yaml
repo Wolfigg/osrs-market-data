@@ -388,3 +388,116 @@ methods:
         - Knife or Fletching knife
     notes: One cycle is one redwood-log batch that produces 105 seeking dragon arrows. The 16 cycles/hour working rate follows the Wiki guide's whole method output, including arrow processing. A log basket is recommended for longer trips; it is not required for the modelled batch.
     reference: https://oldschool.runescape.wiki/w/Money_making_guide/Chopping_the_engorged_bloodwood_tree
+
+  recharge_dragonstone_amulet_glory:
+    enabled: true
+    name: Recharge amulets of glory
+    category: bankstanding/magic
+    inputs:
+      - item_name: Amulet of glory
+        quantity: 26
+        buy_via_ge: true
+      - item_name: Astral rune
+        quantity: 1
+        buy_via_ge: true
+      - item_name: Soul rune
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_name: Amulet of glory(4)
+        quantity: 26
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 360
+    theoretical_cycles_per_hour: 360
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 10
+      intensity: low
+      description: One cast recharges all 26 eligible items in the batch to four charges. The model uses the sourced 360 casts per hour and assumes no faster rate.
+    requirements:
+      members: true
+      magic: 89
+      quests:
+        - Lunar Diplomacy
+      diaries:
+        - Hard Fremennik Diary
+      equipment:
+        - Water-rune supplying staff
+    notes: One Recharge Dragonstone cast recharges all eligible amulets of glory in the inventory to four charges. A water-rune staff supplies the spell's four Water runes; each cast consumes one Astral rune and one Soul rune. The rate is 35,100 Magic XP/hour divided by 97.5 XP per cast; no faster bank-processing rate is assumed. This spell does not recharge rings of wealth.
+    reference: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
+
+  recharge_dragonstone_combat_bracelet:
+    enabled: true
+    name: Recharge combat bracelets
+    category: bankstanding/magic
+    inputs:
+      - item_name: Combat bracelet
+        quantity: 26
+        buy_via_ge: true
+      - item_name: Astral rune
+        quantity: 1
+        buy_via_ge: true
+      - item_name: Soul rune
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_name: Combat bracelet(4)
+        quantity: 26
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 360
+    theoretical_cycles_per_hour: 360
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 10
+      intensity: low
+      description: One cast recharges all 26 eligible items in the batch to four charges. The model uses the sourced 360 casts per hour and assumes no faster rate.
+    requirements:
+      members: true
+      magic: 89
+      quests:
+        - Lunar Diplomacy
+        - Legends' Quest
+      diaries:
+        - Hard Fremennik Diary
+      equipment:
+        - Water-rune supplying staff
+    notes: One Recharge Dragonstone cast recharges all eligible combat bracelets in the inventory to four charges; Legends' Quest is also required. A water-rune staff supplies the spell's four Water runes; each cast consumes one Astral rune and one Soul rune. The rate is 35,100 Magic XP/hour divided by 97.5 XP per cast; no faster bank-processing rate is assumed. This spell does not recharge rings of wealth.
+    reference: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
+
+  recharge_dragonstone_skills_necklace:
+    enabled: true
+    name: Recharge skills necklaces
+    category: bankstanding/magic
+    inputs:
+      - item_name: Skills necklace
+        quantity: 26
+        buy_via_ge: true
+      - item_name: Astral rune
+        quantity: 1
+        buy_via_ge: true
+      - item_name: Soul rune
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_name: Skills necklace(4)
+        quantity: 26
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 360
+    theoretical_cycles_per_hour: 360
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 10
+      intensity: low
+      description: One cast recharges all 26 eligible items in the batch to four charges. The model uses the sourced 360 casts per hour and assumes no faster rate.
+    requirements:
+      members: true
+      magic: 89
+      quests:
+        - Lunar Diplomacy
+        - Legends' Quest
+      diaries:
+        - Hard Fremennik Diary
+      equipment:
+        - Water-rune supplying staff
+    notes: One Recharge Dragonstone cast recharges all eligible skills necklaces in the inventory to four charges; Legends' Quest is also required. A water-rune staff supplies the spell's four Water runes; each cast consumes one Astral rune and one Soul rune. The rate is 35,100 Magic XP/hour divided by 97.5 XP per cast; no faster bank-processing rate is assumed. This spell does not recharge rings of wealth.
+    reference: https://oldschool.runescape.wiki/w/Recharge_Dragonstone

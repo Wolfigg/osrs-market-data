@@ -66,7 +66,7 @@ methods:
 
   mahogany_plank_make_afk:
     status: verified
-    verified_at: "2026-08-29"
+    verified_at: "2026-11-25"
     method_types: [bankstanding, autocast]
     source: https://oldschool.runescape.wiki/w/Plank_Make
     checks:
@@ -76,11 +76,11 @@ methods:
       input_units_per_cycle: 4
       output_units_per_cycle: 1
       fixed_cost_gp_per_cycle: 1050
-    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune, two Astral runes and 15 Earth runes; an Earth-supplying staff makes Earth runes reusable equipment rather than consumed capital. Plank Make charges 1,050 coins for mahogany. The 833/hour rate is the conservative 75k XP/hour AFK rate divided by 90 XP/cast.
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune, two Astral runes and 15 Earth runes; an Earth-supplying staff makes Earth runes reusable equipment rather than consumed capital. Plank Make charges 70% of the sawmill fee, 1,050 coins for mahogany. The working rate is 75,000 XP/hour divided by 90 XP/cast, about 833 planks/hour; the theoretical rate is 90,000 XP/hour, or 1,000 casts/hour. Autocasting repeats every 3.6 seconds, so a 26-log inventory takes about 94 seconds.
 
   camphor_plank_make_afk:
     status: verified
-    verified_at: "2026-08-29"
+    verified_at: "2026-11-25"
     method_types: [bankstanding, autocast]
     source: https://oldschool.runescape.wiki/w/Plank_Make
     checks:
@@ -90,7 +90,77 @@ methods:
       input_units_per_cycle: 4
       output_units_per_cycle: 1
       fixed_cost_gp_per_cycle: 1750
-    notes: Same autocast mechanics as mahogany. Current Wiki spell data lists 1,750 coins per Camphor log, one Nature rune, two Astral runes and 15 Earth runes. Earth runes are supplied by the assumed staff.
+    notes: Same autocast mechanics as mahogany. Each cast uses one Nature rune, two Astral runes and 15 Earth runes; the assumed Earth-rune staff supplies the Earth runes. Plank Make charges 1,750 coins per Camphor log. The method uses the same 833/hour working and 1,000/hour theoretical rates as the other plank tiers.
+
+  logs_plank_make_afk:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [autocast, bankstanding]
+    source: https://oldschool.runescape.wiki/w/Plank_Make
+    checks:
+      cycles_per_hour: 833
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 90
+      input_units_per_cycle: 4
+      output_units_per_cycle: 1
+      fixed_cost_gp_per_cycle: 70
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune and two Astral runes; 15 Earth runes are supplied by the required staff. Plank Make charges 70 coins per regular log.
+
+  oak_plank_make_afk:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [autocast, bankstanding]
+    source: https://oldschool.runescape.wiki/w/Plank_Make
+    checks:
+      cycles_per_hour: 833
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 90
+      input_units_per_cycle: 4
+      output_units_per_cycle: 1
+      fixed_cost_gp_per_cycle: 175
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune and two Astral runes; 15 Earth runes are supplied by the required staff. Plank Make charges 175 coins per oak log.
+
+  teak_plank_make_afk:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [autocast, bankstanding]
+    source: https://oldschool.runescape.wiki/w/Plank_Make
+    checks:
+      cycles_per_hour: 833
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 90
+      input_units_per_cycle: 4
+      output_units_per_cycle: 1
+      fixed_cost_gp_per_cycle: 350
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune and two Astral runes; 15 Earth runes are supplied by the required staff. Plank Make charges 350 coins per teak log.
+
+  ironwood_plank_make_afk:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [autocast, bankstanding]
+    source: https://oldschool.runescape.wiki/w/Plank_Make
+    checks:
+      cycles_per_hour: 833
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 90
+      input_units_per_cycle: 4
+      output_units_per_cycle: 1
+      fixed_cost_gp_per_cycle: 3500
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune and two Astral runes; 15 Earth runes are supplied by the required staff. Plank Make charges 3,500 coins per ironwood log.
+
+  rosewood_plank_make_afk:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [autocast, bankstanding]
+    source: https://oldschool.runescape.wiki/w/Plank_Make
+    checks:
+      cycles_per_hour: 833
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 90
+      input_units_per_cycle: 4
+      output_units_per_cycle: 1
+      fixed_cost_gp_per_cycle: 5250
+    notes: Level 86 Magic and Dream Mentor. Each cast uses one log, one Nature rune and two Astral runes; 15 Earth runes are supplied by the required staff. Plank Make charges 5,250 coins per rosewood log.
 
   bronze_dart_tips:
     status: verified
@@ -168,3 +238,42 @@ methods:
       input_units_per_cycle: 211
       output_units_per_cycle: 105
     notes: One sap bucket treats one redwood log for 105 shafts; feathers and dragon arrows upgrade these into tradeable seeking dragon arrows. The Wiki guide's 16 batches/hour includes the full processing method. With a dragon axe, tree progress takes about 118 seconds on average; sap draining adds a 45-second interaction phase.
+
+  recharge_dragonstone_amulet_glory:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Magic_training
+    checks:
+      cycles_per_hour: 360
+      theoretical_cycles_per_hour: 360
+      afk_interval_seconds: 10
+      input_units_per_cycle: 28
+      output_units_per_cycle: 26
+    notes: One cast recharges up to 26 eligible items in the inventory to four charges. The 360 casts/hour rate is derived from the Wiki's 35,100 Magic XP/hour divided by 97.5 XP per cast; no higher bank-processing rate is assumed. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
+
+  recharge_dragonstone_combat_bracelet:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Magic_training
+    checks:
+      cycles_per_hour: 360
+      theoretical_cycles_per_hour: 360
+      afk_interval_seconds: 10
+      input_units_per_cycle: 28
+      output_units_per_cycle: 26
+    notes: One cast recharges up to 26 eligible items in the inventory to four charges; Combat bracelets additionally require Legends' Quest. The 360 casts/hour rate is derived from the Wiki's 35,100 Magic XP/hour divided by 97.5 XP per cast; no higher bank-processing rate is assumed. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
+
+  recharge_dragonstone_skills_necklace:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Pay-to-play_Magic_training
+    checks:
+      cycles_per_hour: 360
+      theoretical_cycles_per_hour: 360
+      afk_interval_seconds: 10
+      input_units_per_cycle: 28
+      output_units_per_cycle: 26
+    notes: One cast recharges up to 26 eligible items in the inventory to four charges; Skills necklaces additionally require Legends' Quest. The 360 casts/hour rate is derived from the Wiki's 35,100 Magic XP/hour divided by 97.5 XP per cast; no higher bank-processing rate is assumed. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
