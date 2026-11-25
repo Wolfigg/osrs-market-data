@@ -72,9 +72,16 @@
   function syncQuery(values) {
     const p = new URLSearchParams();
     Object.entries(values).forEach(([key, value]) => {
-      if (value != null && value !== "" && value !== "all" && value !== "profitable" && value !== "recommended" && value !== "profit-4h" && value !== "0") p.set(key, value);
+      if (value != null && value !== "" && value !== "all" && value !== "profitable" && value !== "recommended" && value !== "profit-4h" && !(value === "0" && key !== "budget")) p.set(key, value);
     });
     history.replaceState(null, "", `${location.pathname}${p.toString() ? `?${p}` : ""}`);
+  }
+
+  function readBudget(selector) {
+    const raw = document.querySelector(selector).value.trim();
+    if (!raw) return null;
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 0 ? value : null;
   }
 
   function requirementsHtml(r) {
@@ -128,9 +135,9 @@
     setText("#afk-method-total", gp.format(methods.length));
   }
 
-  function renderAlchemyOverview(data) {
+  function renderAlchemyOverview(data, batchItems = data.items || []) {
     const items = data.items || [];
-    const ranked = items.filter(i => Number(i.profit4h) > 0).sort((a, b) => Number(b.profit4h) - Number(a.profit4h));
+    const ranked = batchItems.filter(i => Number(i.profit4h) > 0).sort((a, b) => Number(b.profit4h) - Number(a.profit4h));
     const leader = ranked[0];
     setText("#alch-leader-value", leader ? `${compactGp(leader.profit4h)} gp` : "No signal");
     setText("#alch-leader-name", leader?.name || "No profitable batch available");
@@ -166,7 +173,7 @@
     const current = m.current?.gpPerHour;
     const expected = m.scenarios?.expectedGpPerHour ?? m.recommended?.gpPerHour;
     const cls = current != null && current < 0 ? "loss" : "profit";
-    return `<details class="ledger-record" data-method-id="${esc(m.methodId)}"><summary class="ledger-summary afk-grid"><div class="method-name"><strong>${esc(m.name)}</strong><small>${esc(m.category)} · ${esc(m.afk.classification)} · ${membership(m.members)}</small></div><div class="num primary-mobile ${expected != null && expected < 0 ? "loss" : "profit"}">${plainGp(expected)}</div><div class="num ${cls}">${plainGp(current)}</div><div class="num">${m.afk.intervalSeconds == null ? "-" : `${plainGp(m.afk.intervalSeconds)}s`}</div><div>${sustainabilityBadge(m.sustainability)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(m.afk.classification)}${(m.tags || []).map(t => badge(t)).join("")}${sustainabilityBadge(m.sustainability)}${stabilityBadge(m.stability)}${riskBadge(m.risk)}</div><p>${esc(m.description || m.afk.description || "")}</p><div class="detail-grid"><div>${requirementsHtml(m.requirements)}</div><div>${itemsHtml("Inputs", m.inputs)}${itemsHtml("Outputs", m.outputs)}</div><div><h3>Profit view</h3><p>Expected executable GP/h: <strong>${gpText(expected)}</strong></p><p>Current mechanical GP/h: <strong>${gpText(current)}</strong></p><p>Conservative GP/h: <strong>${gpText(m.scenarios?.conservativeGpPerHour)}</strong></p><p>Weighted historical reference: <strong>${gpText(m.recommended?.referenceGpPerHour)}</strong></p></div></div>${calculationHtml(m)}${liquidityHtml(m)}<div class="history-grid"><div class="history-cell"><span>Expected</span><strong>${gpText(expected)}</strong></div><div class="history-cell"><span>Current</span><strong>${gpText(current)}</strong></div><div class="history-cell"><span>6H</span><strong>${gpText(m.history?.["6hGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs6hPct)}</small></div><div class="history-cell"><span>24H</span><strong>${gpText(m.history?.["24hGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs24hPct)}</small></div><div class="history-cell"><span>7D</span><strong>${gpText(m.history?.["7dGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs7dPct)}</small></div><div class="history-cell"><span>30D</span><strong>${gpText(m.history?.["30dGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs30dPct)}</small></div><div class="history-cell"><span>6M</span><strong>${gpText(m.history?.["6mGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs6mPct)}</small></div></div>${m.reference ? `<a class="action-link" href="${esc(m.reference)}" target="_blank" rel="noopener noreferrer">Source / reference</a>` : ""}</div></details>`;
+    return `<details class="ledger-record" data-method-id="${esc(m.methodId)}"><summary class="ledger-summary afk-grid"><div class="method-name"><strong>${esc(m.name)}</strong><small>${esc(m.category)} · ${esc(m.afk.classification)} · ${membership(m.members)}</small></div><div class="num primary-mobile ${expected != null && expected < 0 ? "loss" : "profit"}">${plainGp(expected)}</div><div class="num ${cls}">${plainGp(current)}</div><div class="num">${m.afk.intervalSeconds == null ? "-" : `${plainGp(m.afk.intervalSeconds)}s`}</div><div>${sustainabilityBadge(m.sustainability)} ${stabilityBadge(m.stability)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(m.afk.classification)}${(m.tags || []).map(t => badge(t)).join("")}${sustainabilityBadge(m.sustainability)}${stabilityBadge(m.stability)}${riskBadge(m.risk)}</div><p>${esc(m.description || m.afk.description || "")}</p><div class="detail-grid"><div>${requirementsHtml(m.requirements)}</div><div>${itemsHtml("Inputs", m.inputs)}${itemsHtml("Outputs", m.outputs)}</div><div><h3>Profit view</h3><p>Expected executable GP/h: <strong>${gpText(expected)}</strong></p><p>Current mechanical GP/h: <strong>${gpText(current)}</strong></p><p>Conservative GP/h: <strong>${gpText(m.scenarios?.conservativeGpPerHour)}</strong></p><p>Weighted historical reference: <strong>${gpText(m.recommended?.referenceGpPerHour)}</strong></p></div></div>${calculationHtml(m)}${liquidityHtml(m)}<div class="history-grid"><div class="history-cell"><span>Expected</span><strong>${gpText(expected)}</strong></div><div class="history-cell"><span>Current</span><strong>${gpText(current)}</strong></div><div class="history-cell"><span>6H</span><strong>${gpText(m.history?.["6hGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs6hPct)}</small></div><div class="history-cell"><span>24H</span><strong>${gpText(m.history?.["24hGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs24hPct)}</small></div><div class="history-cell"><span>7D</span><strong>${gpText(m.history?.["7dGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs7dPct)}</small></div><div class="history-cell"><span>30D</span><strong>${gpText(m.history?.["30dGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs30dPct)}</small></div><div class="history-cell"><span>6M</span><strong>${gpText(m.history?.["6mGpPerHour"])}</strong><small>${deviationText(m.stability?.currentVs6mPct)}</small></div></div>${m.reference ? `<a class="action-link" href="${esc(m.reference)}" target="_blank" rel="noopener noreferrer">Source / reference</a>` : ""}</div></details>`;
   }
 
   async function initAfk() {
@@ -189,6 +196,7 @@
         const node = document.querySelector(`#afk-${id}`);
         if (value && node?.querySelector(`option[value="${CSS.escape(value)}"]`)) node.value = value;
       }
+      if (params.has("budget")) document.querySelector("#afk-budget").value = params.get("budget");
       if (params.get("sort") && sortNode.querySelector(`option[value="${CSS.escape(params.get("sort"))}"]`)) sortNode.value = params.get("sort");
       const savedLevels = loadSkillLevels();
       document.querySelectorAll(".skill-level").forEach(input => { input.value = savedLevels[input.dataset.skill] || ""; });
@@ -199,6 +207,7 @@
         const level = document.querySelector("#afk-level").value, type = document.querySelector("#afk-type").value;
         const stability = document.querySelector("#afk-stability").value, sustainability = document.querySelector("#afk-sustainability").value;
         const capital = document.querySelector("#afk-capital").value, capitalLimit = capital === "all" ? null : Number(capital);
+        const budgetLimit = readBudget("#afk-budget");
         const onlyCanDo = document.querySelector("#afk-can-do").checked, levels = saveSkillLevels(), sort = sortNode.value;
         let rows = methods.filter(m =>
           !(search && !`${m.name} ${m.category} ${(m.tags || []).join(" ")}`.toLowerCase().includes(search)) &&
@@ -206,7 +215,9 @@
           !(profitability === "profitable" && !(Number(m.scenarios?.expectedGpPerHour ?? m.recommended?.gpPerHour) > 0)) &&
           !(level !== "all" && m.afk.classification !== level) && !(type !== "all" && !(m.tags || []).includes(type)) &&
           !(stability !== "all" && m.stability?.state !== stability) && !(sustainability !== "all" && m.sustainability?.state !== sustainability) &&
-          !(capitalLimit != null && Number(m.economics?.capitalOneHour) >= capitalLimit) && !(onlyCanDo && !canDoBySkills(m, levels))
+          !(capitalLimit != null && Number(m.economics?.capitalOneHour) >= capitalLimit) &&
+          !(budgetLimit != null && (m.economics?.capitalOneHour == null || Number(m.economics.capitalOneHour) > budgetLimit)) &&
+          !(onlyCanDo && !canDoBySkills(m, levels))
         );
         const sustainabilityRank = { strong: 7, moderate: 6, watch: 5, constrained: 4, thin: 3, limited: 2, unknown: 1 };
         const val = (m, key) => ({
@@ -218,14 +229,15 @@
         })[key];
         rows.sort((a, b) => sort === "alphabetical" ? a.name.localeCompare(b.name) : sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#afk-count").textContent = `${rows.length} method${rows.length === 1 ? "" : "s"}`;
-        list.innerHTML = `<div class="ledger-header afk-grid"><div>Method</div><div class="num">Expected GP/h</div><div class="num">Current GP/h</div><div class="num">AFK</div><div>Market capacity</div></div>${rows.length ? rows.map(afkRecord).join("") : `<p class="empty-state">No methods match these filters.</p>`}`;
-        syncQuery({ q: search, category, members, profit: profitability, level, type, stability, sustainability, capital, sort });
+        list.innerHTML = `<div class="ledger-header afk-grid"><div>Method</div><div class="num">Expected GP/h</div><div class="num">Current GP/h</div><div class="num">AFK</div><div>Capacity / stability</div></div>${rows.length ? rows.map(afkRecord).join("") : `<p class="empty-state">No methods match these filters.</p>`}`;
+        syncQuery({ q: search, category, members, profit: profitability, level, type, stability, sustainability, capital, budget: document.querySelector("#afk-budget").value, sort });
         const requested = params.get("method");
         if (requested) list.querySelector(`[data-method-id="${CSS.escape(requested)}"]`)?.setAttribute("open", "");
       };
 
       document.querySelectorAll("#afk-category,#afk-profit,#afk-level,#afk-type,#afk-stability,#afk-sustainability,#afk-capital,#afk-sort,#afk-can-do,input[name='afk-membership'],.skill-level").forEach(el => el.addEventListener("change", render));
       document.querySelectorAll("#afk-search,.skill-level").forEach(el => el.addEventListener("input", render));
+      document.querySelector("#afk-budget").addEventListener("input", render);
       render();
     } catch (_) {
       list.innerHTML = `<p class="empty-state">AFK method data could not be loaded.</p>`;
@@ -234,7 +246,7 @@
 
   function alchRecord(i) {
     const cls = i.profitPerCast != null && i.profitPerCast < 0 ? "loss" : "profit";
-    return `<details class="ledger-record"><summary class="ledger-summary alch-grid"><div class="item-name"><strong>${esc(i.name)}</strong><small>${membership(i.members)} · ${esc(i.freshness)}</small></div><div class="num primary-mobile ${cls}">${plainGp(i.profit4h)}</div><div class="num">${plainGp(i.buyPrice)}</div><div class="num">${plainGp(i.highAlchValue)}</div><div class="num ${cls}">${plainGp(i.profitPerCast)}</div><div class="num desktop-secondary">${i.roi == null ? "-" : `${pct.format(i.roi)}%`}</div><div class="num desktop-secondary">${plainGp(i.quantity4h)}</div><div class="num desktop-secondary ${cls}">${plainGp(i.profit4h)}</div><div class="num desktop-secondary">${plainGp(i.capitalRequired)}</div><div class="desktop-secondary">${esc(i.freshness)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(membership(i.members))}${badge(i.freshness)}${riskBadge(i.risk)}</div><div class="detail-grid"><div><h3>Current calculation</h3><p>Buy price: <strong>${gpText(i.buyPrice)}</strong></p><p>High Alch value: <strong>${gpText(i.highAlchValue)}</strong></p><p>Rune cost: <strong>${gpText(i.runeCost)}</strong></p><p>Profit/cast: <strong>${gpText(i.profitPerCast)}</strong></p></div><div><h3>Four-hour batch</h3><p>Available quantity: <strong>${plainGp(i.quantity4h)}</strong></p><p>GE buy limit: <strong>${plainGp(i.buyLimit)}</strong></p><p>Capital required: <strong>${gpText(i.capitalRequired)}</strong></p><p>Practical profit: <strong>${gpText(i.profit4h)}</strong></p></div><div><h3>Market context</h3><p>24H volume: <strong>${plainGp(i.volume24h)}</strong></p><p>6H margin: <strong>${gpText(i.history?.["6hProfitPerCast"])}</strong></p><p>24H margin: <strong>${gpText(i.history?.["24hProfitPerCast"])}</strong></p><p>7D margin: <strong>${gpText(i.history?.["7dProfitPerCast"])}</strong></p><p>30D margin: <strong>${gpText(i.history?.["30dProfitPerCast"])}</strong></p><p>6M margin: <strong>${gpText(i.history?.["6mProfitPerCast"])}</strong></p><p>${esc(i.risk?.reasons?.[0] || "No material current warning.")}</p></div></div></div></details>`;
+    return `<details class="ledger-record"><summary class="ledger-summary alch-grid"><div class="item-name"><strong>${esc(i.name)}</strong><small>${membership(i.members)} · ${esc(i.freshness)} · ${esc(i.risk?.label || "Unknown risk")}</small></div><div class="num primary-mobile ${cls}">${plainGp(i.profit4h)}</div><div class="num">${plainGp(i.buyPrice)}</div><div class="num">${plainGp(i.highAlchValue)}</div><div class="num ${cls}">${plainGp(i.profitPerCast)}</div><div class="num desktop-secondary">${i.roi == null ? "-" : `${pct.format(i.roi)}%`}</div><div class="num desktop-secondary">${plainGp(i.quantity4h)}</div><div class="num desktop-secondary ${cls}">${plainGp(i.profit4h)}</div><div class="num desktop-secondary">${plainGp(i.capitalRequired)}</div><div class="desktop-secondary">${esc(i.freshness)}</div></summary><div class="detail-panel"><div class="badge-row">${badge(membership(i.members))}${badge(i.freshness)}${riskBadge(i.risk)}</div><div class="detail-grid"><div><h3>Current calculation</h3><p>Buy price: <strong>${gpText(i.buyPrice)}</strong></p><p>High Alch value: <strong>${gpText(i.highAlchValue)}</strong></p><p>Rune cost: <strong>${gpText(i.runeCost)}</strong></p><p>Profit/cast: <strong>${gpText(i.profitPerCast)}</strong></p></div><div><h3>Four-hour batch</h3><p>Available quantity: <strong>${plainGp(i.quantity4h)}</strong></p><p>GE buy limit: <strong>${plainGp(i.buyLimit)}</strong></p><p>Capital required: <strong>${gpText(i.capitalRequired)}</strong></p><p>Practical profit: <strong>${gpText(i.profit4h)}</strong></p></div><div><h3>Market context</h3><p>24H volume: <strong>${plainGp(i.volume24h)}</strong></p><p>6H margin: <strong>${gpText(i.history?.["6hProfitPerCast"])}</strong></p><p>24H margin: <strong>${gpText(i.history?.["24hProfitPerCast"])}</strong></p><p>7D margin: <strong>${gpText(i.history?.["7dProfitPerCast"])}</strong></p><p>30D margin: <strong>${gpText(i.history?.["30dProfitPerCast"])}</strong></p><p>6M margin: <strong>${gpText(i.history?.["6mProfitPerCast"])}</strong></p><p>${esc(i.risk?.reasons?.[0] || "No material current warning.")}</p></div></div></div></details>`;
   }
 
   async function initAlchemy() {
@@ -242,28 +254,38 @@
     try {
       const data = await loadJson("data/alchemy.json");
       const items = data.items || [], params = new URLSearchParams(location.search);
-      renderAlchemyOverview(data);
       document.querySelector("#alch-search").value = params.get("q") || "";
       if (["f2p", "members"].includes(params.get("members"))) document.querySelector(`input[name="alch-membership"][value="${params.get("members")}"]`).checked = true;
       if (params.get("profit") === "all") document.querySelector("#alch-profit").value = "all";
       if (params.get("min")) document.querySelector("#alch-min-profit").value = params.get("min");
       if (params.get("capital")) document.querySelector("#alch-capital").value = params.get("capital");
+      if (params.has("budget")) document.querySelector("#alch-budget").value = params.get("budget");
       if (params.get("sort") && document.querySelector(`#alch-sort option[value="${CSS.escape(params.get("sort"))}"]`)) document.querySelector("#alch-sort").value = params.get("sort");
       document.querySelector("#alch-unavailable").checked = params.get("unavailable") === "1";
       const render = () => {
         const search = document.querySelector("#alch-search").value.trim().toLowerCase(), members = readRadio("alch-membership"), profitability = document.querySelector("#alch-profit").value;
         const min = Number(document.querySelector("#alch-min-profit").value || 0), capital = document.querySelector("#alch-capital").value, capitalLimit = capital === "all" ? null : Number(capital);
+        const budget = readBudget("#alch-budget");
         const sort = document.querySelector("#alch-sort").value, showUnavailable = document.querySelector("#alch-unavailable").checked;
-        let rows = items.filter(i => !(search && !i.name.toLowerCase().includes(search)) && !(members === "f2p" && i.members) && !(members === "members" && !i.members) && !(!showUnavailable && i.profitPerCast == null) && !(profitability === "profitable" && !(Number(i.profitPerCast) > 0)) && !(i.profitPerCast != null && Number(i.profitPerCast) < min) && !(capitalLimit != null && (i.capitalRequired == null || Number(i.capitalRequired) >= capitalLimit)));
+        const budgetRows = items.map(i => {
+          if (budget == null || i.quantity4h == null || i.profitPerCast == null || i.buyPrice == null || i.runeCost == null) return i;
+          const costPerCast = Number(i.buyPrice) + Number(i.runeCost);
+          if (!(costPerCast > 0)) return i;
+          const quantity = Math.min(Number(i.quantity4h), Math.floor(budget / costPerCast));
+          return { ...i, quantity4h: quantity, profit4h: quantity * Number(i.profitPerCast), capitalRequired: quantity * costPerCast };
+        });
+        renderAlchemyOverview(data, budgetRows);
+        let rows = budgetRows.filter(i => !(search && !i.name.toLowerCase().includes(search)) && !(members === "f2p" && i.members) && !(members === "members" && !i.members) && !(!showUnavailable && i.profitPerCast == null) && !(profitability === "profitable" && !(Number(i.profitPerCast) > 0)) && !(i.profitPerCast != null && Number(i.profitPerCast) < min) && !(budget != null && Number(i.quantity4h || 0) <= 0) && !(capitalLimit != null && (i.capitalRequired == null || Number(i.capitalRequired) >= capitalLimit)));
         const val = (i, key) => ({ "profit-4h": i.profit4h, "profit-cast": i.profitPerCast, "profit-6h": i.history?.["6hProfitPerCast"], "profit-24h": i.history?.["24hProfitPerCast"], "profit-7d": i.history?.["7dProfitPerCast"], "profit-30d": i.history?.["30dProfitPerCast"], "profit-6m": i.history?.["6mProfitPerCast"], roi: i.roi, capital: i.capitalRequired, volume: i.volume24h })[key];
         rows.sort((a, b) => sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#alch-count").textContent = `${rows.length} candidate${rows.length === 1 ? "" : "s"}`;
         list.innerHTML = `<div class="ledger-header alch-grid"><div>Item</div><div class="num">4H profit</div><div class="num">Buy</div><div class="num">Alch</div><div class="num">Profit/cast</div><div class="num desktop-secondary">ROI</div><div class="num desktop-secondary">4H qty</div><div class="num desktop-secondary">4H profit</div><div class="num desktop-secondary">Capital</div><div class="desktop-secondary">Freshness</div></div>${rows.length ? rows.map(alchRecord).join("") : `<p class="empty-state">No High Alch candidates match these filters.</p>`}`;
-        syncQuery({ q: search, members, profit: profitability, min: String(min), capital, sort, unavailable: showUnavailable ? "1" : "" });
+        syncQuery({ q: search, members, profit: profitability, min: String(min), capital, budget: document.querySelector("#alch-budget").value, sort, unavailable: showUnavailable ? "1" : "" });
       };
       document.querySelectorAll("#alch-profit,#alch-capital,#alch-sort,#alch-unavailable,input[name='alch-membership']").forEach(el => el.addEventListener("change", render));
       document.querySelector("#alch-search").addEventListener("input", render);
       document.querySelector("#alch-min-profit").addEventListener("input", render);
+      document.querySelector("#alch-budget").addEventListener("input", render);
       render();
     } catch (_) {
       list.innerHTML = `<p class="empty-state">High Alch data could not be loaded.</p>`;

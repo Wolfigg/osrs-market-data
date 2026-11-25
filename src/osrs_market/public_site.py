@@ -128,6 +128,7 @@ def _afk_page() -> str:
       <label class="field"><span>Price stability</span><select id="afk-stability"><option value="all">All states</option><option value="stable">Stable</option><option value="watch">Watch</option><option value="volatile">Volatile</option><option value="thin_market">Thin market</option><option value="stale">Stale</option></select></label>
       <label class="field"><span>Market capacity</span><select id="afk-sustainability"><option value="all">All levels</option><option value="strong">Strong</option><option value="moderate">Moderate</option><option value="watch">Liquidity watch</option><option value="constrained">Constrained</option><option value="thin">Thin market</option><option value="limited">GE limited</option><option value="unknown">Unknown</option></select></label>
       <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
+      <label class="field"><span>Max 1h input capital (GP)</span><input id="afk-budget" type="number" min="0" step="1" placeholder="Any amount"></label>
     </div>
     <div class="profile-panel compact-profile-panel">
       <p class="muted">Optional skill filters stay in this browser. Quest and equipment requirements remain visible inside each method.</p>
@@ -157,9 +158,10 @@ def _alchemy_page() -> str:
 <label class="field"><span>Profitability</span><select id="alch-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
 <label class="field"><span>Minimum profit/cast</span><input id="alch-min-profit" type="number" value="0" min="0" step="1"></label>
 <label class="field"><span>Capital</span><select id="alch-capital">{_capital_options()}</select></label>
+<label class="field"><span>4H buy-list budget (GP)</span><input id="alch-budget" type="number" min="0" step="1" placeholder="Any amount"></label>
 <label class="field"><span>Sort</span><select id="alch-sort"><option value="profit-4h">Practical 4H profit</option><option value="profit-cast">Current profit/cast</option><option value="profit-6h">6H profit/cast</option><option value="profit-24h">24H profit/cast</option><option value="profit-7d">7D profit/cast</option><option value="profit-30d">30D profit/cast</option><option value="profit-6m">6M profit/cast</option><option value="roi">ROI</option><option value="capital">Lowest capital</option><option value="volume">24H volume</option></select></label>
 <label class="checkbox-field"><input id="alch-unavailable" type="checkbox"><span>Show unavailable / stale</span></label></div></section>
-<div class="ledger-toolbar"><p id="alch-count">Loading candidates...</p><p class="muted">Requirement: 55 Magic.</p></div><section id="alch-list" class="alchemy-ledger" aria-live="polite"></section>
+<div class="ledger-toolbar"><p id="alch-count">Loading candidates...</p><p class="muted">Requirement: 55 Magic. Budget caps the full four-hour buy list. Market risk is shown beside each item.</p></div><section id="alch-list" class="alchemy-ledger" aria-live="polite"></section>
 """
     return _base("High Alch", "alchemy", "alchemy", main)
 

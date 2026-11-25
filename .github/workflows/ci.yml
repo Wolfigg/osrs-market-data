@@ -33,7 +33,7 @@ jobs:
         run: pytest
 
   browser-acceptance:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test
     timeout-minutes: 15
     steps:
