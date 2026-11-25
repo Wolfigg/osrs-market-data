@@ -1,5 +1,5 @@
 schemaVersion: 1
-catalogueVersion: 9
+catalogueVersion: 10
 policy:
   duplicateIds: error
   discoveryAutoPromote: false

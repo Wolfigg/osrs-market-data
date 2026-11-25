@@ -1,6 +1,7 @@
 # AFK Method Catalogue Audit
 
-Date: 2026-08-29
+Audit baseline: 2026-08-29
+Updated: 2026-11-25
 Status: complete for the enabled catalogue
 
 This document records the completed catalogue-quality pass for OSRS Market Board. It is maintainer documentation and is not part of the GitHub Pages public artifact.
@@ -57,6 +58,8 @@ Karambwan, sharks, monkfish, anglerfish and dark crabs use a deterministic zero-
 
 Cooking karambwan also requires Tai Bwo Wannai Trio. The method intentionally models AFK Make-X cooking, not the high-attention one-tick karambwan technique.
 
+Yellowfin cooking was added from the current Wiki success chart: level 79 minimum, 1,300 fish/hour working throughput, and four location-specific success curves. Cooking gauntlets do not affect yellowfin. A per-food source override preserves the exact money-making guide and its verification date in the compiled method.
+
 `minimum_cooking` remains informational metadata rather than a second fake skill requirement.
 
 ### Jewellery
@@ -94,6 +97,8 @@ Gathering methods intentionally omit random secondary drops so market profit is 
 - dark crabs: 308/hour with lobster pot, one dark fishing bait per catch and the 50 gp Piles noting fee; Wilderness PK risk is not monetised
 
 Gathering AFK intervals are estimates rather than deterministic Make-X timers. They represent the expected interaction cadence for the modelled method and should not be interpreted as guaranteed idle periods.
+
+The engorged bloodwood method converts one sap bucket and one redwood log into 105 seeking arrow shafts, then uses 105 feathers and 105 dragon arrows to make 105 tradeable seeking dragon arrows. The model uses the Wiki guide's 16 full batches/hour; its `118`-second AFK interval is only the average tree progress time with a dragon axe. Sap harvesting adds a click and 45-second drain, and arrow processing is included in the guide's hourly method rate.
 
 ## Corrections discovered during the audit
 

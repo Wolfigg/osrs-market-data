@@ -38,7 +38,8 @@ def _infer_method_types(method: dict[str, Any]) -> list[str]:
 
 def _set_generated_audit(methods: dict[str, Any]) -> None:
     for method in methods.values():
-        method["audit"] = {"status": "verified", "verified_at": "2026-08-30", "source": method.get("reference"), "notes": "Verified in the Wave 8 catalogue family audit."}
+        source = method.get("source") or {}
+        method["audit"] = {"status": "verified", "verified_at": source.get("verifiedAt", "2026-08-30"), "source": method.get("reference"), "notes": "Verified in the Wave 8 catalogue family audit."}
 
 
 def _apply_known_catalog_corrections(methods: dict[str, Any]) -> None:

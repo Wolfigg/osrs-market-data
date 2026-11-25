@@ -351,3 +351,40 @@ methods:
         - Hammer
     notes: Often low-margin or negative, but retained as a candidate because live prices can flip the economics and the method remains genuinely AFK.
     reference: https://oldschool.runescape.wiki/w/Pay-to-play_Smithing_training
+
+  gather_engorged_bloodwood_seeking_dragon_arrows:
+    enabled: true
+    name: Chop engorged bloodwood into seeking dragon arrows
+    category: gathering/woodcutting
+    inputs:
+      - item_name: Redwood logs
+        quantity: 1
+        buy_via_ge: true
+      - item_name: Feather
+        quantity: 105
+        buy_via_ge: true
+      - item_name: Dragon arrow
+        quantity: 105
+        buy_via_ge: true
+    outputs:
+      - item_id: 33595
+        quantity: 105
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 16
+    planned_hours_per_day: 4
+    afk:
+      interval_seconds: 118
+      intensity: low
+      description: A Dragon axe takes about 118 seconds on average to fill the tree's progress bar; harvesting then needs another click and 45-second drain.
+    requirements:
+      members: true
+      woodcutting: 77
+      fletching: 90
+      quests:
+        - The Blood Moon Rises
+      equipment:
+        - Dragon axe
+        - Bucket
+        - Knife or Fletching knife
+    notes: One cycle is one redwood-log batch that produces 105 seeking dragon arrows. The 16 cycles/hour working rate follows the Wiki guide's whole method output, including arrow processing. A log basket is recommended for longer trips; it is not required for the modelled batch.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Chopping_the_engorged_bloodwood_tree
