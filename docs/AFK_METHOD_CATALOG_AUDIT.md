@@ -40,11 +40,17 @@ Bronze, iron, steel, mithril, adamant and rune dart tips use one bar -> ten tips
 
 ### Plank Make
 
-Mahogany and camphor Plank Make remain autocast/bankstanding methods, not High Alch exits. Nature/Astral runes and per-log coin charges are consumed costs. Earth runes are excluded because the configured method assumes an Earth-rune-supplying staff, which is reusable equipment.
+All seven supported log tiers are represented: regular, oak, teak, mahogany, camphor, ironwood and rosewood. Each cast consumes one log, one Nature rune and two Astral runes, then charges the corresponding coin fee. The required Earth-rune-supplying staff is reusable equipment and supplies the 15 Earth runes, so those runes are excluded from consumed costs. The ordinary one-log-to-one-plank route is modelled; the optional Sawmill voucher output is not.
+
+Autocast processes one plank every 3.6 seconds. The catalogue uses 833 casts/hour from the Wiki's 75,000 Magic XP/hour lower-attention rate and 1,000/hour as its 90,000 XP/hour theoretical ceiling. A 26-log inventory takes about 94 seconds at the autocast interval; the displayed 90-second interaction window is rounded.
 
 The public capital calculation now includes fixed coin charges, correcting the previous understatement for Plank Make.
 
-### Longbow cutting
+### Recharge Dragonstone
+
+The catalogue has separate batch methods for amulets of glory, combat bracelets and skills necklaces. One spell cast recharges 26 items to four charges. A Water-rune-supplying staff covers the four Water runes; each cast consumes one Astral rune and one Soul rune. The model uses 360 inventories/hour, derived from 35,100 Magic XP/hour divided by 97.5 XP/cast, and assumes no faster bank-processing rate. Casting requires 89 Magic, Lunar Diplomacy and the hard Fremennik Diary; combat bracelets and skills necklaces also require Legends' Quest. The spell does not recharge rings of wealth.
+
+### Longbow cutting### Longbow cutting
 
 Maple, yew and magic unstrung longbows use the regular-knife Make-X model. A 27-log batch at three ticks per bow gives 48.6 seconds of uninterrupted processing. The public working rate remains 1,500 logs/hour and the sourced regular-knife theoretical ceiling is 1,800/hour.
 
