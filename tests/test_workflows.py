@@ -38,6 +38,23 @@ def test_history_refresh_has_short_long_full_tiers_and_cache_persistence():
     assert "group: osrs-market-publish" in workflow
 
 
+def test_flipping_calibration_runs_after_successful_live_publish_and_owns_cache_writes():
+    live = text(".github/workflows/refresh-live.yml")
+    calibration = text(".github/workflows/refresh-flipping-calibration.yml")
+
+    assert "actions/cache/save@v4" not in live
+    assert "workflow_run:" in calibration
+    assert "Refresh live market data" in calibration
+    assert "github.event.workflow_run.conclusion == 'success'" in calibration
+    assert "pip install --no-deps -e ." in calibration
+    assert "python tools/flipping_history.py" in calibration
+    assert "actions/cache/restore@v4" in calibration
+    assert "actions/cache/save@v4" in calibration
+    assert ".flipping-cache/flipping-history.json" in calibration
+    assert "data/flipping.json" in calibration
+    assert "group: osrs-market-publish" in calibration
+
+
 def test_public_site_has_no_session_planner_asset_or_module():
     public_site = text("src/osrs_market/public_site.py")
     assert 'src="assets/planner_v3.js' not in public_site

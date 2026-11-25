@@ -33,7 +33,7 @@ jobs:
         run: pytest
 
   browser-acceptance:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test
     timeout-minutes: 15
     steps:
@@ -56,6 +56,9 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
+
+      - name: Check hidden flipping client syntax
+        run: node --check web/assets/flipping.js
 
       - name: Run cooking backend/frontend parity
         run: node tests/cooking_parity.mjs

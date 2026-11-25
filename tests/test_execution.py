@@ -104,7 +104,7 @@ def test_public_headline_uses_execution_prices_tax_and_recent_capacity():
     assert payload["current"]["valid"]
 
 
-def test_capacity_applies_ge_limit_once_and_recent_flow_can_limit_further():
+def test_capacity_applies_ge_limit_once_and_recent_flow_limits_expected_before_conservative_haircut():
     method = {"mechanics": {"cyclesPerHour": 100, "cyclesPerHourByBuyLimits": 50},
               "scenarios": {"expectedGpPerHour": 500, "conservativeGpPerHour": 400},
               "liquidity": {"outputs": [{"name": "Output", "unitsPerHour": 100,
@@ -113,10 +113,14 @@ def test_capacity_applies_ge_limit_once_and_recent_flow_can_limit_further():
     thin = deepcopy(method)
     _apply_market_capacity(method)
     assert method["scenarios"]["expectedGpPerHour"] == 500
-    thin["liquidity"]["outputs"][0]["directionalVolume1h"] = 100
+    assert method["scenarios"]["conservativeGpPerHour"] == 400
+
+    thin["liquidity"]["outputs"][0]["directionalVolume1h"] = 20
     _apply_market_capacity(thin)
-    assert thin["marketCapacity"]["cyclesPerHour"] == 25
-    assert thin["scenarios"]["expectedGpPerHour"] == 250
+    assert thin["marketCapacity"]["expectedExecutableCyclesPerHour"] == 20
+    assert thin["marketCapacity"]["conservativeExecutableCyclesPerHour"] == 5
+    assert thin["scenarios"]["expectedGpPerHour"] == 200
+    assert thin["scenarios"]["conservativeGpPerHour"] == 40
 
 
 def test_execution_collection_reuses_history_requests_and_failure_is_missing():

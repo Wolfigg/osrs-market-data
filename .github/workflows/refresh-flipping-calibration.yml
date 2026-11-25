@@ -1,0 +1,85 @@
+name: Refresh flipping calibration
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Refresh live market data
+    types:
+      - completed
+
+concurrency:
+  group: osrs-market-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  calibrate:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install local project
+        run: pip install --no-deps -e .
+
+      - name: Restore legacy derived market cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .market-cache
+          key: osrs-history-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            osrs-history-${{ runner.os }}-${{ github.ref_name }}-
+
+      - name: Restore flipping calibration cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .flipping-cache
+          key: osrs-flipping-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            osrs-flipping-${{ runner.os }}-${{ github.ref_name }}-
+
+      - name: Seed flipping calibration from V2 cache
+        shell: bash
+        run: |
+          if [[ ! -f .flipping-cache/flipping-history.json && -f .market-cache/flipping-history.json ]]; then
+            mkdir -p .flipping-cache
+            cp .market-cache/flipping-history.json .flipping-cache/flipping-history.json
+          fi
+
+      - name: Download deployed flipping snapshot
+        shell: bash
+        run: |
+          mkdir -p build/public-site/data build/internal-report
+          curl --fail --silent --show-error --location --retry 3 \
+            -H 'Cache-Control: no-cache' \
+            "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/data/flipping.json?run=${{ github.run_id }}" \
+            -o build/public-site/data/flipping.json
+
+      - name: Evaluate flipping calibration horizons
+        run: python tools/flipping_history.py --public-flipping build/public-site/data/flipping.json --cache .flipping-cache/flipping-history.json --legacy-cache .market-cache/flipping-history.json --summary build/internal-report/flipping-backtesting-summary.json
+
+      - name: Save flipping calibration cache
+        uses: actions/cache/save@v4
+        with:
+          path: .flipping-cache
+          key: osrs-flipping-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Upload calibration diagnostics
+        if: always() && hashFiles('build/internal-report/**') != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: osrs-flipping-calibration-${{ github.run_id }}
+          path: build/internal-report
+          retention-days: 5
+          if-no-files-found: ignore
