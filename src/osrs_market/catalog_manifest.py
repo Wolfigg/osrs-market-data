@@ -238,6 +238,7 @@ def compile_probabilistic_cooking(path: str | Path) -> dict[str, dict[str, Any]]
     defaults = payload.get("defaults") or {}; source = dict(payload.get("source") or {})
     methods: dict[str, dict[str, Any]] = {}
     for key, row in (payload.get("foods") or {}).items():
+        method_source = {**source, **(row.get("source") or {})}
         curves = {str(name): {"low": float(values[0]), "high": float(values[1])} for name, values in (row.get("curves") or {}).items()}
         level = int(row["minimumLevel"]); raw = str(row["raw"]); cooked = str(row["cooked"])
         methods[f"cook_probabilistic_{key}"] = _method(
@@ -246,7 +247,7 @@ def compile_probabilistic_cooking(path: str | Path) -> dict[str, dict[str, Any]]
             theoretical=float(defaults.get("theoreticalCyclesPerHour", 1500)), interval=float(defaults.get("intervalSeconds", 67.2)),
             requirements={"members": True, "cooking": level},
             notes="User-level burn model using Wiki skilling-success chart parameters, location, gauntlets and explicit 99/Cooking-cape zero-burn mode.",
-            reference=str(source.get("url")), method_types=["bankstanding", "make-x", "probabilistic"], source=source,
+            reference=str(method_source.get("url")), method_types=["bankstanding", "make-x", "probabilistic"], source=method_source,
             model={"cooking": {"minimumLevel": level, "gauntletsAffected": bool(row.get("gauntletsAffected")), "curves": curves, "defaults": {"level": 99, "location": "range", "gauntlets": False, "cookingCape": True}}},
         )
     return methods

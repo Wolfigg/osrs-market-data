@@ -33,3 +33,12 @@ foods:
     minimumLevel: 90
     gauntletsAffected: false
     curves: {fire: [10,222], range: [10,222], hosidius_5: [22,234], hosidius_10: [35,247]}
+  yellowfin:
+    raw: Raw yellowfin
+    cooked: Yellowfin
+    minimumLevel: 79
+    gauntletsAffected: false
+    source:
+      url: https://oldschool.runescape.wiki/w/Money_making_guide/Cooking_raw_yellowfin
+      verifiedAt: '2026-11-25'
+    curves: {fire: [-505,232], range: [-495,242], hosidius_5: [-483,254], hosidius_10: [-470,267]}

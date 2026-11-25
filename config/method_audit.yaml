@@ -156,3 +156,15 @@ methods:
       input_units_per_cycle: 1
       output_units_per_cycle: 10
     notes: Same audited dart-tip production mechanics; level 74 Smithing after The Tourist Trap.
+
+  gather_engorged_bloodwood_seeking_dragon_arrows:
+    status: verified
+    verified_at: "2026-11-25"
+    method_types: [gathering, make-x]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Chopping_the_engorged_bloodwood_tree
+    checks:
+      cycles_per_hour: 16
+      afk_interval_seconds: 118
+      input_units_per_cycle: 211
+      output_units_per_cycle: 105
+    notes: One sap bucket treats one redwood log for 105 shafts; feathers and dragon arrows upgrade these into tradeable seeking dragon arrows. The Wiki guide's 16 batches/hour includes the full processing method. With a dragon axe, tree progress takes about 118 seconds on average; sap draining adds a 45-second interaction phase.

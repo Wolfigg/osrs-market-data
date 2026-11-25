@@ -15,6 +15,15 @@ def test_jewellery_yaml_compiles_all_existing_methods():
     assert set(new) == expected_ids
 
 
+def test_yellowfin_cooking_is_present_in_both_cooking_catalogue_sources():
+    from osrs_market.catalog_manifest import compile_probabilistic_cooking
+
+    old = wave5_method_catalog()
+    new = compile_probabilistic_cooking(Path("catalogue/cooking/foods.yml"))
+    expected_ids = {method_id for method_id in old if method_id.startswith("cook_probabilistic_")}
+    assert set(new) == expected_ids
+
+
 def test_jewellery_yaml_preserves_stable_legacy_shape_but_is_mechanics_authority():
     old = wave5_method_catalog()
     new = compile_jewellery_enchanting(Path("catalogue/enchanting/jewellery.yml"))

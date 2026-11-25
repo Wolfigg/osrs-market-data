@@ -117,6 +117,24 @@ def test_gathering_requirements_match_modelled_rate_gear_and_access():
     assert methods["gather_fishing_dark_crabs"]["requirements"]["equipment"] == ["Lobster pot"]
 
 
+def test_engorged_bloodwood_method_models_the_full_tradeable_arrow_batch():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    method = methods["gather_engorged_bloodwood_seeking_dragon_arrows"]
+    assert method["cycles_per_hour"] == 16
+    assert method["afk"]["interval_seconds"] == 118
+    assert [(row.get("item_name"), row.get("item_id"), row["quantity"]) for row in method["inputs"]] == [
+        ("Redwood logs", None, 1),
+        ("Feather", None, 105),
+        ("Dragon arrow", None, 105),
+    ]
+    assert method["outputs"] == [{"item_id": 33595, "quantity": 105}]
+    assert method["requirements"]["woodcutting"] == 77
+    assert method["requirements"]["fletching"] == 90
+    assert method["requirements"]["quests"] == ["The Blood Moon Rises"]
+    assert method["method_types"] == ["gathering", "make-x"]
+    assert method["audit"]["verified_at"] == "2026-11-25"
+
+
 def _public_result(category: str, method_types: list[str]):
     return {
         "methodId": "test",

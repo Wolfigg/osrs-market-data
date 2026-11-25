@@ -11,6 +11,7 @@ from osrs_market.catalog_manifest import (
 from osrs_market.catalog_wave5 import wave5_method_catalog
 from osrs_market.catalog_wave6 import wave6_method_catalog
 from osrs_market.config import load_yaml
+from osrs_market.methods_v2 import cooking_success_probability
 
 
 def _base():
@@ -21,7 +22,7 @@ def _base():
 
 def test_manifest_is_authoritative_for_wave8_data_families():
     effective, report = compile_catalogue_manifest(Path("catalogue/manifest.yml"), _base())
-    assert report["catalogueVersion"] == 9
+    assert report["catalogueVersion"] == 10
     assert report["familyCount"] == 7
     assert report["policy"]["sourceOfTruth"] == "data-first"
     owners = report["methodOwners"]
@@ -31,6 +32,7 @@ def test_manifest_is_authoritative_for_wave8_data_families():
         "make_teleport_tablet_standard_varrock",
         "make_prayer_potions_v2",
         "cook_probabilistic_shark",
+        "cook_probabilistic_yellowfin",
         "gather_fishing_tuna_swordfish",
     ):
         assert method_id in effective
@@ -82,16 +84,27 @@ def test_cooking_curves_are_data_driven():
     assert cooking["gauntletsAffected"] is True
     assert cooking["curves"]["range"] == {"low": 1.0, "high": 232.0}
 
+    yellowfin = methods["cook_probabilistic_yellowfin"]
+    profile = yellowfin["model"]["cooking"]
+    assert profile["minimumLevel"] == 79
+    assert profile["gauntletsAffected"] is False
+    assert cooking_success_probability(profile, 79, "range", False) == 0.36328125
+    assert cooking_success_probability(profile, 79, "hosidius_10", False) == 0.4609375
+    assert cooking_success_probability(profile, 98, "hosidius_10", False) == 1.0
+    assert yellowfin["reference"] == "https://oldschool.runescape.wiki/w/Money_making_guide/Cooking_raw_yellowfin"
+
 
 def test_production_config_exposes_manifest_report_and_data_owned_methods():
     config = load_yaml("config/methods.yaml")
     report = config["catalogueManifest"]
-    assert report["catalogueVersion"] == 9
+    assert report["catalogueVersion"] == 10
     assert report["dataOwnedMethodCount"] >= 90
     methods = config["methods"]
     assert methods["charge_air_orb"]["source"]["verifiedAt"] == "2026-08-30"
     assert methods["make_prayer_potions_v2"]["model"]["modifierEngine"] == "v2"
     assert methods["cook_probabilistic_shark"]["source"]["verifiedAt"] == "2026-08-30"
+    assert methods["cook_probabilistic_yellowfin"]["source"]["verifiedAt"] == "2026-11-25"
+    assert methods["cook_probabilistic_yellowfin"]["audit"]["verified_at"] == "2026-11-25"
 
 
 def test_afk_eels_use_probabilistic_tradeable_outputs():
