@@ -37,19 +37,21 @@ def four_hour_capacity(
     extra_rune_cost_per_cast: float = 0.0,
 ) -> dict[str, int | None]:
     mechanical = casts_per_hour * 4
-    by_limit = ge_buy_limit if ge_buy_limit is not None else mechanical
     capital_per_cast = float(buy_price) + float(nature_rune_price) + float(extra_rune_cost_per_cast)
     by_capital = None
     if available_gp is not None:
         by_capital = math.floor(available_gp / capital_per_cast) if capital_per_cast > 0 else 0
-    candidates = [mechanical, by_limit]
-    if by_capital is not None:
-        candidates.append(by_capital)
+    max_quantity = None
+    if ge_buy_limit is not None:
+        candidates = [mechanical, ge_buy_limit]
+        if by_capital is not None:
+            candidates.append(by_capital)
+        max_quantity = max(min(candidates), 0)
     return {
         "mechanicalCasts": mechanical,
         "geBuyLimit": ge_buy_limit,
         "maxByCapital": by_capital,
-        "maxQuantity": max(min(candidates), 0),
+        "maxQuantity": max_quantity,
     }
 
 
@@ -207,12 +209,12 @@ def build_alchemy_candidate(
             extra_rune_cost_per_cast=extra_fire_cost,
         )
 
-    max_quantity = capacity["maxQuantity"] if capacity else 0
-    profit_per_4h = instant["profit"] * max_quantity if instant["profit"] is not None and instant_fresh else None
-    capital_required = instant["cost"] * max_quantity if instant["cost"] is not None and instant_fresh else None
+    max_quantity = capacity["maxQuantity"] if capacity else None
+    profit_per_4h = instant["profit"] * max_quantity if instant["profit"] is not None and instant_fresh and max_quantity is not None else None
+    capital_required = instant["cost"] * max_quantity if instant["cost"] is not None and instant_fresh and max_quantity is not None else None
     volume_24h = int(windows.get("24h", {}).get("totalVolume") or 0)
     volume_7d = int(windows.get("7d", {}).get("totalVolume") or 0)
-    planned_share = max_quantity / volume_24h * 100.0 if volume_24h > 0 and max_quantity else None
+    planned_share = max_quantity / volume_24h * 100.0 if volume_24h > 0 and max_quantity is not None and max_quantity > 0 else None
     liquidity_warn = liquidity_warnings(planned_share, liquidity_settings)
 
     age = max(generated_at - latest_item.high_time, 0) if latest_item.high_time is not None else None
@@ -264,7 +266,7 @@ def build_alchemy_candidate(
         "profitPer4hGeLimit": profit_per_4h,
         "capitalRequired": capital_required,
         "magicXpPerHour": casts_per_hour * xp_per_cast,
-        "magicXpPer4hBatch": max_quantity * xp_per_cast,
+        "magicXpPer4hBatch": max_quantity * xp_per_cast if max_quantity is not None else None,
         "volume24h": volume_24h,
         "volume7d": volume_7d,
         "highVwap24h": windows.get("24h", {}).get("highVwap"),

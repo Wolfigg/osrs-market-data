@@ -67,6 +67,8 @@ def public_risk(warnings: list[str] | None, valid: bool = True) -> dict[str, Any
         reasons.append("Thin market: planned volume is large relative to recent trading.")
     if "CROSSED" in joined:
         reasons.append("Current market observations disagree, so this entry needs caution.")
+    if "MISSING_BUY_LIMIT" in joined:
+        reasons.append("GE buy limit is missing, so four-hour batch quantity and profit cannot be estimated.")
     if not reasons and warnings:
         reasons.append("Margin or liquidity deserves attention.")
     labels = {"normal": "Normal market risk", "watch": "Watch market conditions", "high": "High market risk", "unavailable": "Unavailable"}

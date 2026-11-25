@@ -140,9 +140,33 @@ def test_high_liquidity_warning_is_public_high_risk():
     assert "Thin market" in risk["reasons"][0]
 
 
+def test_missing_ge_buy_limit_is_public_watch_with_clear_reason():
+    risk = public_risk(["MISSING_BUY_LIMIT"])
+    assert risk["level"] == "watch"
+    assert "GE buy limit is missing" in risk["reasons"][0]
+
+
 def test_public_alchemy_contains_matching_historical_windows():
     payload = build_public_alchemy(123, [_candidate()], {"castsPerHour": 1200, "useFireStaff": True})
     assert payload["items"][0]["history"] == {"6hProfitPerCast": 825.0, "24hProfitPerCast": 800.0, "7dProfitPerCast": 750.0, "30dProfitPerCast": 700.0, "6mProfitPerCast": 650.0}
+
+
+def test_public_alchemy_does_not_estimate_batch_without_ge_buy_limit():
+    candidate = _candidate()
+    candidate["geBuyLimit"] = None
+    candidate["capacity4h"] = {"maxQuantity": None}
+    candidate["profitPer4hGeLimit"] = None
+    candidate["capitalRequired"] = None
+    candidate["warnings"] = ["MISSING_BUY_LIMIT"]
+
+    item = build_public_alchemy(123, [candidate], {"castsPerHour": 1200, "useFireStaff": True})["items"][0]
+
+    assert item["profitPerCast"] == 900
+    assert item["buyLimit"] is None
+    assert item["quantity4h"] is None
+    assert item["profit4h"] is None
+    assert item["capitalRequired"] is None
+    assert item["risk"]["level"] == "watch"
 
 
 def test_unavailable_alchemy_never_emits_numeric_profit():
@@ -170,6 +194,10 @@ def test_public_site_contains_afk_market_filters_and_no_account_or_planner(tmp_p
     assert "More filters & skill levels" in index
     assert "High Alch" in index
     assert "enhancements.js" in index
+
+    alchemy_page = (site / "alchemy.html").read_text(encoding="utf-8")
+    assert "Maximum 4H batch profit" in alchemy_page
+    assert "Missing GE limits leave batch quantity and profit unknown" in alchemy_page
     assert "OSRS Market Board" in index
     assert "prices.runescape.wiki" in index
     assert "OSRS Profit Finder" not in index

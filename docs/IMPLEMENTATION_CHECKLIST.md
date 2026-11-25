@@ -110,14 +110,16 @@ See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 - [x] Independent preliminary scanner over current `/mapping` + `/latest` data.
 - [x] Nature rune cost is included.
 - [x] Fire-rune cost is included when a fire staff is disabled.
-- [x] Current profit/cast and practical 4H profit are exposed.
+- [x] Current profit/cast and 4H batch profit are exposed when the GE buy limit is known.
 - [x] 24H, 7D and 30D profit/cast use matching historical item/rune windows.
 - [x] Candidate history can be unavailable without blocking current scanning.
 - [x] Capital filtering uses strict-under semantics.
 - [x] Optional four-hour buy-list budget recalculates affordable quantity, capital and profit.
 - [x] Market-risk label is visible in each High Alch summary row.
+- [x] Missing GE buy limits leave four-hour quantity, batch profit and required capital unknown.
+- [x] Unbudgeted totals are labelled maximum batch estimates and disclose the current-quote assumption.
 - [x] Search, membership, profitability, minimum-profit and unavailable filters exist.
-- [x] Current/24H/7D/30D and practical-profit sorting exists.
+- [x] Current/24H/7D/30D and maximum batch-profit sorting exists.
 
 ## Freshness and reliability
 
@@ -149,7 +151,7 @@ See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 - [x] Chromium browser acceptance is part of CI.
 - [x] Firefox browser acceptance is part of CI.
 - [x] Responsive browser acceptance covers 360, 390, 768 and desktop widths.
-- [x] Browser tests cover search, filters, URL restoration, local skill storage, details and unavailable High Alch rows.
+- [x] Browser tests cover search, filters, URL restoration, local skill storage, details, unavailable rows and unknown-limit High Alch batches.
 - [x] Browser tests verify the exactly-2.5-hour Delayed boundary.
 
 ## Explicit non-goals

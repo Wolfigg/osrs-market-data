@@ -99,7 +99,9 @@ async function run(browserType, name) {
 
     // High Alch filters, strict capital boundary and unavailable visibility.
     await page.goto(`${base}/alchemy.html`, { waitUntil: "networkidle" });
-    await waitForCount(page, "#alch-count", "2 candidates");
+    await waitForCount(page, "#alch-count", "3 candidates");
+    assert.match(await page.locator("#alch-sort").textContent(), /Maximum 4H batch profit/);
+    assert.match(await page.locator(".ledger-toolbar").textContent(), /maximum batch estimates/);
     await page.locator("#alch-capital").selectOption("1000000");
     await waitForCount(page, "#alch-count", "1 candidate");
     assert.match(await page.locator("#alch-list").textContent(), /Rune platebody/);
@@ -107,7 +109,7 @@ async function run(browserType, name) {
     await page.locator("#alch-profit").selectOption("all");
     await page.locator("#alch-capital").selectOption("all");
     await page.locator("#alch-unavailable").check();
-    await waitForCount(page, "#alch-count", "3 candidates");
+    await waitForCount(page, "#alch-count", "4 candidates");
     assert.match(await page.locator("#alch-list").textContent(), /Unavailable item/);
     await page.goto(`${base}/alchemy.html?q=rune&sort=profit-30d`, { waitUntil: "networkidle" });
     await waitForCount(page, "#alch-count", "1 candidate");
@@ -115,7 +117,7 @@ async function run(browserType, name) {
     assert.match(await page.locator("#alch-list").textContent(), /Rune platebody/);
 
     await page.goto(`${base}/alchemy.html?budget=500000`, { waitUntil: "networkidle" });
-    await waitForCount(page, "#alch-count", "2 candidates");
+    await waitForCount(page, "#alch-count", "3 candidates");
     assert.equal(await page.locator("#alch-budget").inputValue(), "500000");
     assert.match(page.url(), /budget=500000/);
     const exactMillion = page.locator("#alch-list .ledger-record").filter({ hasText: "Exact million item" });
@@ -124,6 +126,12 @@ async function run(browserType, name) {
     assert.match(exactMillionText, /499,400/);
     assert.match(exactMillionText, /181,600/);
     assert.match(exactMillionText, /Normal market risk/);
+    const unknownLimit = page.locator("#alch-list .ledger-record").filter({ hasText: "Unknown limit item" });
+    assert.equal(await unknownLimit.count(), 1);
+    assert.match(await unknownLimit.innerText(), /Watch market conditions/);
+    assert.equal(await unknownLimit.locator(".ledger-summary .desktop-secondary").nth(1).textContent(), "-");
+    assert.equal(await unknownLimit.locator(".ledger-summary .desktop-secondary").nth(2).textContent(), "-");
+    assert.equal(await unknownLimit.locator(".ledger-summary .desktop-secondary").nth(3).textContent(), "-");
   } finally {
     await browser.close();
   }
