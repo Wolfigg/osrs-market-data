@@ -205,7 +205,7 @@ methods:
       equipment:
         - Earth-rune supplying staff
     notes: Camphor Plank Make charges 1,750 coins per log, plus one Nature rune and two Astral runes. Earth rune cost is excluded because an earth-providing staff is assumed.
-    reference: https://oldschool.runescape.wiki/w/Camphor_plank
+    reference: https://oldschool.runescape.wiki/w/Plank_Make
 
   bronze_dart_tips:
     enabled: true
@@ -394,17 +394,17 @@ methods:
     name: Recharge amulets of glory
     category: bankstanding/magic
     inputs:
-      - item_name: Amulet of glory
+      - item_id: 1704
         quantity: 26
         buy_via_ge: true
-      - item_name: Astral rune
+      - item_id: 9075
         quantity: 1
         buy_via_ge: true
-      - item_name: Soul rune
+      - item_id: 566
         quantity: 1
         buy_via_ge: true
     outputs:
-      - item_name: Amulet of glory(4)
+      - item_id: 1712
         quantity: 26
     fixed_cost_gp_per_cycle: 0
     cycles_per_hour: 360
@@ -413,7 +413,7 @@ methods:
     afk:
       interval_seconds: 10
       intensity: low
-      description: One cast recharges all 26 eligible items in the batch to four charges. The model uses the sourced 360 casts per hour and assumes no faster rate.
+      description: This is a low-interaction bankstanding conversion, not unattended AFK. The sourced working rate averages one cast per 10 seconds, with each cast recharging the 26-item batch.
     requirements:
       members: true
       magic: 89
@@ -431,17 +431,17 @@ methods:
     name: Recharge combat bracelets
     category: bankstanding/magic
     inputs:
-      - item_name: Combat bracelet
+      - item_id: 11126
         quantity: 26
         buy_via_ge: true
-      - item_name: Astral rune
+      - item_id: 9075
         quantity: 1
         buy_via_ge: true
-      - item_name: Soul rune
+      - item_id: 566
         quantity: 1
         buy_via_ge: true
     outputs:
-      - item_name: Combat bracelet(4)
+      - item_id: 11118
         quantity: 26
     fixed_cost_gp_per_cycle: 0
     cycles_per_hour: 360
@@ -450,7 +450,7 @@ methods:
     afk:
       interval_seconds: 10
       intensity: low
-      description: One cast recharges all 26 eligible items in the batch to four charges. The model uses the sourced 360 casts per hour and assumes no faster rate.
+      description: This is a low-interaction bankstanding conversion, not unattended AFK. The sourced working rate averages one cast per 10 seconds, with each cast recharging the 26-item batch.
     requirements:
       members: true
       magic: 89
@@ -469,17 +469,17 @@ methods:
     name: Recharge skills necklaces
     category: bankstanding/magic
     inputs:
-      - item_name: Skills necklace
+      - item_id: 11113
         quantity: 26
         buy_via_ge: true
-      - item_name: Astral rune
+      - item_id: 9075
         quantity: 1
         buy_via_ge: true
-      - item_name: Soul rune
+      - item_id: 566
         quantity: 1
         buy_via_ge: true
     outputs:
-      - item_name: Skills necklace(4)
+      - item_id: 11105
         quantity: 26
     fixed_cost_gp_per_cycle: 0
     cycles_per_hour: 360
@@ -488,7 +488,7 @@ methods:
     afk:
       interval_seconds: 10
       intensity: low
-      description: One cast recharges all 26 eligible items in the batch to four charges. The model uses the sourced 360 casts per hour and assumes no faster rate.
+      description: This is a low-interaction bankstanding conversion, not unattended AFK. The sourced working rate averages one cast per 10 seconds, with each cast recharging the 26-item batch.
     requirements:
       members: true
       magic: 89
