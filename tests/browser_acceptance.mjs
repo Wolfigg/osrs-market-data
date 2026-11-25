@@ -117,7 +117,7 @@ async function run(browserType, name) {
     assert.match(await page.locator("#alch-list").textContent(), /Rune platebody/);
 
     await page.goto(`${base}/alchemy.html?budget=500000`, { waitUntil: "networkidle" });
-    await waitForCount(page, "#alch-count", "2 candidates");
+    await waitForCount(page, "#alch-count", "3 candidates");
     assert.equal(await page.locator("#alch-budget").inputValue(), "500000");
     assert.match(page.url(), /budget=500000/);
     const exactMillion = page.locator("#alch-list .ledger-record").filter({ hasText: "Exact million item" });
