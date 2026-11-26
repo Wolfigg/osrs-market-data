@@ -4,25 +4,25 @@ Audit baseline: 2026-08-29
 Updated: 2026-11-25
 Status: complete for the enabled catalogue
 
-This document records the completed catalogue-quality pass for OSRS Market Board. It is maintainer documentation and is not part of the GitHub Pages public artifact.
+This document records the catalogue-quality pass for OSRS Market Board. It is maintainer documentation and is not part of the GitHub Pages public artifact.
 
 ## Audit standard
 
-Every enabled AFK/bankstanding method must have defensible values for:
+Every enabled money-making method must have defensible values for:
 
-- item IDs and input/output quantities
-- realistic cycles per hour
+- item IDs and input/output or NPC shop-sale quantities
+- a sourced working rate or a clearly labelled rate ceiling
 - theoretical cycles per hour where applicable
 - interaction/idle interval
 - membership status
 - skill, quest and equipment requirements
 - reusable equipment vs consumed inputs
 - GE buy-limit applicability
-- fixed coin costs
+- fixed coin costs and NPC shop-sale proceeds
 - source/reference provenance
 - explicit method type rather than frontend inference from text
 
-`load_yaml(config/methods.yaml)` now enforces this at runtime. An enabled method must have positive throughput and interval, valid item quantities, at least one output, an OSRS Wiki reference, a method type, and `audit.status: verified` with an OSRS Wiki audit source. Invalid catalogue data fails CI/collection instead of silently reaching public rankings.
+`load_yaml(config/methods.yaml)` now enforces this at runtime. An enabled method must have positive throughput and interval, valid item quantities, at least one GE output or NPC shop sale, an OSRS Wiki reference, a method type, and `audit.status: verified` with an OSRS Wiki audit source. Invalid catalogue data fails CI/collection instead of silently reaching public rankings.
 
 ## Catalogue families verified
 
@@ -106,6 +106,14 @@ Gathering AFK intervals are estimates rather than deterministic Make-X timers. T
 
 The engorged bloodwood method converts one sap bucket and one redwood log into 105 seeking arrow shafts, then uses 105 feathers and 105 dragon arrows to make 105 tradeable seeking dragon arrows. The model uses the Wiki guide's 16 full batches/hour; its `118`-second AFK interval is only the average tree progress time with a dragon axe. Sap harvesting adds a click and 45-second drain, and arrow processing is included in the guide's hourly method rate.
 
+### Shop hopping
+
+The catalogue includes Pellem's mixed hide base guide, astral runes from Baba Yaga, cosmic runes from Tal Teklan, jaguar fur from Pellem and Fortis, and GE rune warhammers sold to Skulgrimen. Mixed hide bases use the Wiki money-making guide's 1,485 items/hour and exact 18,803,070 gp shop-purchase total, normalized to 55 batches of 27 items at a 12,662 gp average purchase price. Its Stamina potion input is priced from live GE data.
+
+Astral runes, cosmic runes and jaguar furs use configured average per-item NPC purchase costs, then use live GE directional prices and seller tax for sale proceeds. These purchase costs are shown as a separate table and included in profit and capital calculations. Rune warhammers instead use live GE purchase costs and fixed NPC proceeds of 29,050 gp for the first item sold to an empty Skulgrimen stock; this NPC payment has no GE seller tax and the item's 70-per-four-hours GE buy limit caps sustained throughput at 17.5 per hour.
+
+The non-guide shop-hopping entries use the user's 7-second world-switch time as an upper-bound rate. They exclude shop interactions, travel, banking and GE offer time, so their displayed hourly profit is not a measured end-to-end rate. The app labels these entries Shop hopping and repeats the rate limitation in each method's details.
+
 ## Corrections discovered during the audit
 
 The completion pass fixed material catalogue/model errors:
@@ -130,6 +138,7 @@ Canonical public interaction types are:
 - `make-x`
 - `autocast`
 - `gathering`
+- `shop-hopping`
 
 Generated internal category prefixes such as `strict_afk/fletching`, `bankstanding/crafting`, and `gathering/mining` are normalized to the actual public skill category. Frontend filters consume the explicit method types instead of inspecting method names/descriptions.
 
