@@ -4,14 +4,14 @@ Updated: 2026-08-29
 
 This checklist supersedes the obsolete V2 checklist that described the removed public Market Explorer and monolithic hourly publisher.
 
-The production product has exactly two public tools:
+The public product has two tools:
 
-1. AFK Money Makers at `/`
+1. Money Makers at `/`
 2. High Alch at `/alchemy.html`
 
 ## Public product boundary
 
-- [x] AFK Money Makers is the homepage.
+- [x] Money Makers is the homepage.
 - [x] High Alch is the only secondary public tool.
 - [x] High Alch is not an AFK method or AFK exit strategy.
 - [x] Market Explorer is removed from the public product.
@@ -52,10 +52,10 @@ data/status.json
 - [x] Shared `(item_id, timestep)` requests are deduplicated by `SeriesCollector`.
 - [x] Obsolete per-item 24h time-series requests were removed from the public 30D-only product.
 
-## AFK catalogue
+## Money-maker catalogue
 
 - [x] Every enabled method has positive throughput and interaction interval.
-- [x] Every enabled method has valid input/output quantities and item IDs.
+- [x] Every enabled method has valid input/output quantities and item IDs, with an NPC shop sale allowed as the revenue path.
 - [x] Every enabled method has an OSRS Wiki source.
 - [x] Every enabled method has a verified audit marker.
 - [x] Realistic and theoretical throughput are separate.
@@ -71,10 +71,12 @@ data/status.json
 - [x] Karambwan includes Tai Bwo Wannai Trio.
 - [x] Camphor logging includes current Sailing/Troubled Tortugans access requirements.
 - [x] Gathering equipment assumptions are published with the method.
+- [x] Shop-hopping methods expose their method type and do not use the AFK classification.
+- [x] NPC shop sale proceeds are shown separately from GE output proceeds and tax.
 
 See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 
-## AFK ranking and confidence
+## Money-maker ranking and confidence
 
 - [x] Current, 24H, 7D and 30D GP/hour are retained separately.
 - [x] Stability states are Stable, Watch, Volatile, Thin market, Stale and Unavailable.
@@ -85,20 +87,20 @@ See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 - [x] Recommended GP/hour uses explicit 50/30/20 historical weights.
 - [x] Stable/Watch/Volatile/Thin-market behavior is deterministic and tested.
 - [x] Stale/Unavailable recommendation is null.
-- [x] Recommended GP/hour is the default AFK ranking while Current remains visible/sortable.
+- [x] Expected GP/hour is the default Money Makers ranking while Current remains visible/sortable.
 
-## AFK filtering
+## Money-maker filtering
 
 - [x] Search.
 - [x] Skill/category.
 - [x] F2P/Members.
 - [x] Profitable/all.
-- [x] AFK classification.
-- [x] Bankstanding/Make-X/Autocast/Gathering.
+- [x] Interaction classification.
+- [x] Bankstanding/Make-X/Autocast/Gathering/Shop hopping.
 - [x] Stability state.
 - [x] Strict-under capital filters.
 - [x] Exact one-hour input-capital ceiling, shareable in the URL.
-- [x] AFK summary rows show price stability beside market capacity.
+- [x] Summary rows show price stability beside market capacity.
 - [x] Sort by Recommended, Current, 24H, 7D, 30D, GP/interaction, interval, capital and name.
 - [x] Optional browser-local eligibility levels, without an account/profile concept.
 - [x] Skill gate checks all published skill requirements.
