@@ -8,7 +8,7 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20261125-alch-batch-clarity-1"
+PUBLIC_ASSET_VERSION = "20261126-shop-hopping-1"
 
 PUBLIC_REQUIRED_FILES = (
     "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js",
@@ -34,7 +34,7 @@ def _esc(value: Any) -> str:
 
 
 def _nav(active: str) -> str:
-    links = [("afk", "index.html", "AFK Money Makers", "Work Board"), ("alchemy", "alchemy.html", "High Alch", "Alchemist's Desk")]
+    links = [("afk", "index.html", "Money Makers", "Work Board"), ("alchemy", "alchemy.html", "High Alch", "Alchemist's Desk")]
     return "".join(
         f'<a class="nav-link{" active" if key == active else ""}" href="{href}"'
         f'{" aria-current=\"page\"" if key == active else ""}>'
@@ -51,7 +51,7 @@ def _base(title: str, active: str, page: str, main: str) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="OSRS Market Board: live AFK money-making and High Alchemy opportunities using RuneScape Wiki real-time prices from prices.runescape.wiki.">
+  <meta name="description" content="OSRS Market Board: live AFK processing, shop-hopping and High Alchemy opportunities using RuneScape Wiki real-time prices from prices.runescape.wiki.">
   <title>{_esc(title)} | OSRS Market Board</title>
   <link rel="stylesheet" href="assets/app.css?v={version}">
   <script defer src="assets/app.js?v={version}"></script>
@@ -102,29 +102,29 @@ def _skill_fields() -> str:
 def _afk_page() -> str:
     main = f"""
 <section class="page-heading compact">
-  <div><p class="eyebrow">Opportunity desk / 01</p><h1>AFK Money Makers</h1></div>
-  <p>Rank low-interaction methods using live prices, realistic throughput, directional Grand Exchange market capacity, and six market horizons.</p>
+  <div><p class="eyebrow">Opportunity desk / 01</p><h1>Money Makers</h1></div>
+  <p>Rank AFK processing and active shop-hopping methods using live prices, modelled throughput, directional Grand Exchange market capacity, and six market horizons.</p>
 </section>
-<section class="market-overview" aria-label="AFK market overview">
+<section class="market-overview" aria-label="Money maker overview">
   <article class="signal-card signal-card-primary"><p class="signal-label">Best executable signal</p><strong id="afk-leader-value">Loading</strong><span id="afk-leader-name">Scanning methods</span></article>
   <article class="signal-card"><p class="signal-label">Stable methods</p><strong id="afk-stable-count">—</strong><span>Current margin tracks history</span></article>
   <article class="signal-card"><p class="signal-label">Strong capacity</p><strong id="afk-capacity-count">—</strong><span>Low pressure on observed flow</span></article>
   <article class="signal-card signal-card-note"><p class="signal-label">Methods audited</p><strong id="afk-method-total">—</strong><span>Mechanics and GE rules checked</span></article>
 </section>
 <div class="window-strip" aria-label="Available price windows"><span>Price basis</span><strong>Current</strong><strong>6H</strong><strong>24H</strong><strong>7D</strong><strong>30D</strong><strong>6M</strong></div>
-<section class="filter-frame compact-filter-frame" aria-label="AFK filters">
+<section class="filter-frame compact-filter-frame" aria-label="Money maker filters">
   <div class="filter-grid primary-filter-grid">
     <label class="field search-field"><span>Search</span><input id="afk-search" type="search" placeholder="Method name" autocomplete="off"></label>
     <label class="field"><span>Category</span><select id="afk-category"><option value="all">All categories</option></select></label>
     <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="afk-membership" value="all" checked><span>All</span></label><label><input type="radio" name="afk-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="afk-membership" value="members"><span>Members</span></label></fieldset>
     <label class="field"><span>Profitability</span><select id="afk-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
-    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-6h">6H reference GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-6m">6M reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">AFK interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
+    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-6h">6H reference GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-6m">6M reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">Interaction interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
   </div>
   <details class="advanced-filters">
     <summary>More filters & skill levels</summary>
     <div class="filter-grid advanced-filter-grid">
-      <label class="field"><span>AFK level</span><select id="afk-level"><option value="all">All levels</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option></select></label>
-      <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option><option value="gathering">Gathering</option></select></label>
+      <label class="field"><span>Interaction class</span><select id="afk-level"><option value="all">All classes</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option><option>Shop hopping</option></select></label>
+      <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option><option value="gathering">Gathering</option><option value="shop-hopping">Shop hopping</option></select></label>
       <label class="field"><span>Price stability</span><select id="afk-stability"><option value="all">All states</option><option value="stable">Stable</option><option value="watch">Watch</option><option value="volatile">Volatile</option><option value="thin_market">Thin market</option><option value="stale">Stale</option></select></label>
       <label class="field"><span>Market capacity</span><select id="afk-sustainability"><option value="all">All levels</option><option value="strong">Strong</option><option value="moderate">Moderate</option><option value="watch">Liquidity watch</option><option value="constrained">Constrained</option><option value="thin">Thin market</option><option value="limited">GE limited</option><option value="unknown">Unknown</option></select></label>
       <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
@@ -136,10 +136,10 @@ def _afk_page() -> str:
     </div>
   </details>
 </section>
-<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Expected profit is market-capacity aware. Open a method for requirements, recipe and price/liquidity evidence.</p></div>
+<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Expected profit is market-capacity aware. Shop-hopping entries identify hop-only rate ceilings in their method notes. Open a method for requirements, recipe and price/liquidity evidence.</p></div>
 <section id="afk-list" class="ranking-ledger" aria-live="polite"></section>
 """
-    return _base("AFK Money Makers", "afk", "afk", main)
+    return _base("Money Makers", "afk", "afk", main)
 
 
 def _alchemy_page() -> str:
