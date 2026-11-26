@@ -312,7 +312,7 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             "executionPrices": current.get("executionPrices") or {"inputs": [], "outputs": []},
             "executionEconomics": {"expected": expected_row.get("economics"), "conservative": conservative_row.get("economics")},
             "history": history, "stability": stability, "sustainability": sustainability, "fillConfidence": fill_confidence,
-            "afk": {"classification": "Shop hopping" if "shop-hopping" in (current.get("methodTypes") or []) else classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
+            "afk": {"classification": "Active route" if "active-route" in (current.get("methodTypes") or []) else "Shop hopping" if "shop-hopping" in (current.get("methodTypes") or []) else classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
             "mechanics": {"cyclesPerHour": mechanical_cph, "cyclesPerHourByBuyLimits": sustainable_cph},
             "economics": {
                 "capitalPerCycle": capital_gp_per_cycle, "capitalOneHour": round(capital_one_hour), "capitalFourHours": round(capital_four_hours),
