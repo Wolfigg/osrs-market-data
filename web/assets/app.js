@@ -241,7 +241,7 @@
         })[key];
         rows.sort((a, b) => sort === "alphabetical" ? a.name.localeCompare(b.name) : sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#afk-count").textContent = `${rows.length} method${rows.length === 1 ? "" : "s"}`;
-        list.innerHTML = `<div class="ledger-header afk-grid"><div>Method</div><div class="num">Expected GP/h</div><div class="num">Current GP/h</div><div class="num">Interval</div><div>Capacity / stability</div></div>${rows.length ? rows.map(afkRecord).join("") : `<p class="empty-state">No methods match these filters.</p>`}`;
+        list.innerHTML = `<div class="ledger-header afk-grid"><div>Method</div><div class="num">Expected GP/h</div><div class="num">Current GP/h</div><div class="num">Cycle / window</div><div>Capacity / stability</div></div>${rows.length ? rows.map(afkRecord).join("") : `<p class="empty-state">No methods match these filters.</p>`}`;
         syncQuery({ q: search, category, members, profit: profitability, level, type, stability, sustainability, capital, budget: document.querySelector("#afk-budget").value, sort });
         const requested = params.get("method");
         if (requested) list.querySelector(`[data-method-id="${CSS.escape(requested)}"]`)?.setAttribute("open", "");
