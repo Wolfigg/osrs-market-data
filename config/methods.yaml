@@ -502,6 +502,429 @@ methods:
     notes: One Recharge Dragonstone cast recharges all eligible skills necklaces in the inventory to four charges; Legends' Quest is also required. A water-rune staff supplies the spell's four Water runes; each cast consumes one Astral rune and one Soul rune. The rate is 35,100 Magic XP/hour divided by 97.5 XP per cast; no faster bank-processing rate is assumed. This spell does not recharge rings of wealth.
     reference: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
 
+  fountain_recharge_glory_obelisk_route:
+    enabled: true
+    name: Recharge amulets of glory at the Fountain of Rune
+    category: processing
+    inputs:
+      - item_id: 1704
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11978
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 40
+    theoretical_cycles_per_hour: 40
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 90
+      intensity: high
+      description: Active Wilderness route. Each cycle is one 27-amulet inventory and the configured 90-second interval represents the Wiki route estimate, not AFK time.
+    requirements:
+      members: true
+      quests:
+        - Heroes' Quest
+      diaries:
+        - Hard Wilderness Diary
+      equipment:
+        - Ring of wealth for the return teleport
+    notes: The Fountain charges all eligible jewellery in the inventory and equipped slots to six charges. Rate uses the ring-charging guide's approximately 40 inventories/hour for its Wilderness Obelisk route. The route guide does not give a separate rate for amulets. One full Super energy(4) is costed per trip; Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  fountain_recharge_combat_bracelet_obelisk_route:
+    enabled: true
+    name: Recharge combat bracelets at the Fountain of Rune
+    category: processing
+    inputs:
+      - item_id: 11126
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11972
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 40
+    theoretical_cycles_per_hour: 40
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 90
+      intensity: high
+      description: Active Wilderness route. Each cycle is one 27-bracelet inventory and the configured 90-second interval represents the Wiki route estimate, not AFK time.
+    requirements:
+      members: true
+      quests:
+        - Legends' Quest
+      diaries:
+        - Hard Wilderness Diary
+      equipment:
+        - Ring of wealth for the return teleport
+    notes: The Fountain charges all eligible jewellery in the inventory and equipped slots to six charges. Rate uses the ring-charging guide's approximately 40 inventories/hour for its Wilderness Obelisk route. The route guide does not give a separate rate for combat bracelets. One full Super energy(4) is costed per trip; Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  fountain_recharge_skills_necklace_obelisk_route:
+    enabled: true
+    name: Recharge skills necklaces at the Fountain of Rune
+    category: processing
+    inputs:
+      - item_id: 11113
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11968
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 40
+    theoretical_cycles_per_hour: 40
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 90
+      intensity: high
+      description: Active Wilderness route. Each cycle is one 27-necklace inventory and the configured 90-second interval represents the Wiki route estimate, not AFK time.
+    requirements:
+      members: true
+      quests:
+        - Legends' Quest
+      diaries:
+        - Hard Wilderness Diary
+      equipment:
+        - Ring of wealth for the return teleport
+    notes: The Fountain charges all eligible jewellery in the inventory and equipped slots to six charges. Rate uses the ring-charging guide's approximately 40 inventories/hour for its Wilderness Obelisk route. The route guide does not give a separate rate for skills necklaces. One full Super energy(4) is costed per trip; Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  fountain_recharge_rings_of_wealth_obelisk_route:
+    enabled: true
+    name: Recharge rings of wealth at the Fountain of Rune
+    category: processing
+    inputs:
+      - item_id: 2572
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11980
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 40
+    theoretical_cycles_per_hour: 40
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 90
+      intensity: high
+      description: Active Wilderness route. Each cycle is one 27-ring inventory and the configured 90-second interval represents the Wiki route estimate, not AFK time.
+    requirements:
+      members: true
+      diaries:
+        - Hard Wilderness Diary
+      equipment:
+        - Ring of wealth for the return teleport
+    notes: No quest is required to charge rings of wealth at the Fountain. The guide's route text estimates about 40 inventories/hour, while its result table lists 216 rings and eight Super energy(4) per hour; the configured rate follows the route text and this source discrepancy remains unresolved. One full potion is costed per trip. Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  fountain_recharge_glory_wilderness_sword_4:
+    enabled: true
+    name: Recharge amulets of glory at the Fountain of Rune with Wilderness sword 4
+    category: processing
+    inputs:
+      - item_id: 1704
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11978
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 60
+    theoretical_cycles_per_hour: 72
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 60
+      intensity: high
+      description: Active Wilderness route. Uses the low end of the Wiki's 60-72 inventory trips/hour with Wilderness sword 4; this is not AFK time.
+    requirements:
+      members: true
+      quests:
+        - Heroes' Quest
+      diaries:
+        - Elite Wilderness Diary
+      equipment:
+        - Wilderness sword 4
+        - Ring of wealth for the return teleport
+    notes: The Fountain charges all eligible jewellery in the inventory and equipped slots to six charges. Rate uses the guide's lower-bound 60 inventories/hour with Wilderness sword 4; it does not publish a separate rate for amulets. One full Super energy(4) is costed per trip; Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  fountain_recharge_combat_bracelet_wilderness_sword_4:
+    enabled: true
+    name: Recharge combat bracelets at the Fountain of Rune with Wilderness sword 4
+    category: processing
+    inputs:
+      - item_id: 11126
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11972
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 60
+    theoretical_cycles_per_hour: 72
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 60
+      intensity: high
+      description: Active Wilderness route. Uses the low end of the Wiki's 60-72 inventory trips/hour with Wilderness sword 4; this is not AFK time.
+    requirements:
+      members: true
+      quests:
+        - Legends' Quest
+      diaries:
+        - Elite Wilderness Diary
+      equipment:
+        - Wilderness sword 4
+        - Ring of wealth for the return teleport
+    notes: The Fountain charges all eligible jewellery in the inventory and equipped slots to six charges. Rate uses the guide's lower-bound 60 inventories/hour with Wilderness sword 4; it does not publish a separate rate for combat bracelets. One full Super energy(4) is costed per trip; Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  fountain_recharge_skills_necklace_wilderness_sword_4:
+    enabled: true
+    name: Recharge skills necklaces at the Fountain of Rune with Wilderness sword 4
+    category: processing
+    inputs:
+      - item_id: 11113
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11968
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 60
+    theoretical_cycles_per_hour: 72
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 60
+      intensity: high
+      description: Active Wilderness route. Uses the low end of the Wiki's 60-72 inventory trips/hour with Wilderness sword 4; this is not AFK time.
+    requirements:
+      members: true
+      quests:
+        - Legends' Quest
+      diaries:
+        - Elite Wilderness Diary
+      equipment:
+        - Wilderness sword 4
+        - Ring of wealth for the return teleport
+    notes: The Fountain charges all eligible jewellery in the inventory and equipped slots to six charges. Rate uses the guide's lower-bound 60 inventories/hour with Wilderness sword 4; it does not publish a separate rate for skills necklaces. One full Super energy(4) is costed per trip; Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  fountain_recharge_rings_of_wealth_wilderness_sword_4:
+    enabled: true
+    name: Recharge rings of wealth at the Fountain of Rune with Wilderness sword 4
+    category: processing
+    inputs:
+      - item_id: 2572
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 3016
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 11980
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 60
+    theoretical_cycles_per_hour: 72
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    afk:
+      interval_seconds: 60
+      intensity: high
+      description: Active Wilderness route. Uses the low end of the Wiki's 60-72 inventory trips/hour with Wilderness sword 4; this is not AFK time.
+    requirements:
+      members: true
+      diaries:
+        - Elite Wilderness Diary
+      equipment:
+        - Wilderness sword 4
+        - Ring of wealth for the return teleport
+    notes: No quest is required to charge rings of wealth at the Fountain. Rate uses the guide's lower-bound 60 inventories/hour with Wilderness sword 4, below its stated 60-72 range. One full Super energy(4) is costed per trip; Wilderness death risk and loss are not priced.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+
+  make_pizza_bases:
+    enabled: true
+    name: Make pizza bases
+    category: processing
+    inputs:
+      - item_id: 1937
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 1933
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 2283
+        quantity: 1
+      - item_id: 1935
+        quantity: 1
+      - item_id: 1931
+        quantity: 1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 2400
+    theoretical_cycles_per_hour: 2400
+    planned_hours_per_day: 4
+    method_types: [bankstanding, make-x]
+    afk:
+      interval_seconds: 13.5
+      intensity: low
+      description: Use nine jugs of water on nine pots of flour per inventory, select pizza bases, then bank. The 13.5-second window is derived from the guide's 2,400 bases/hour rate.
+    requirements:
+      members: false
+    notes: Each recipe returns an empty jug and empty pot. The Wiki warns that pizza bases and returned containers can sell slowly, so current margin does not guarantee an instant GE fill.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Making_pizza_bases
+
+  make_pastry_dough:
+    enabled: true
+    name: Make pastry dough
+    category: processing
+    inputs:
+      - item_id: 1937
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 1933
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 1953
+        quantity: 1
+      - item_id: 1935
+        quantity: 1
+      - item_id: 1931
+        quantity: 1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 2160
+    theoretical_cycles_per_hour: 2400
+    planned_hours_per_day: 4
+    method_types: [bankstanding, make-x]
+    afk:
+      interval_seconds: 15
+      intensity: low
+      description: Combine nine jugs of water with nine pots of flour; the Wiki reports about 15 seconds per inventory and up to 2,400 dough/hour.
+    requirements:
+      members: false
+    notes: Working rate is calculated from nine dough per approximately 15-second inventory, or 2,160/hour. The Wiki's 2,400/hour figure is kept as the upper rate. Each recipe returns an empty jug and empty pot.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Making_pastry_dough
+
+  make_pie_shells:
+    enabled: true
+    name: Make pie shells
+    category: processing
+    inputs:
+      - item_id: 1953
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 2313
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 2315
+        quantity: 1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 2450
+    theoretical_cycles_per_hour: 2450
+    planned_hours_per_day: 4
+    method_types: [bankstanding, make-x]
+    afk:
+      interval_seconds: 20.5714286
+      intensity: low
+      description: Combine a 14-item inventory of pastry dough and pie dishes. The configured interval is derived from the guide's 2,450-item batch rate.
+    requirements:
+      members: false
+    notes: The Wiki flags unstable prices and slow GE resale. Pie dishes have a 500-item four-hour GE buy limit, so the catalogue's sustainable rate is constrained by that limit.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Making_pie_shells
+
+  cook_plain_pizzas:
+    enabled: true
+    name: Cook plain pizzas
+    category: processing
+    inputs:
+      - item_id: 2283
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 1982
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 1985
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 2289
+        quantity: 1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1080
+    theoretical_cycles_per_hour: 1080
+    planned_hours_per_day: 4
+    method_types: [bankstanding, make-x]
+    afk:
+      interval_seconds: 30
+      intensity: low
+      description: Combine nine pizza bases, tomatoes and cheese per inventory, then cook them on a range. The Wiki rate is 540 pizzas per 30 minutes.
+    requirements:
+      members: false
+      cooking: 68
+    notes: Level 68 Cooking is used to avoid burns. Throughput is the Wiki guide's 540 pizzas per half-hour; lower Cooking levels introduce burn losses that are not modelled.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Cooking_plain_pizzas
+
+  grind_chocolate_bars:
+    enabled: true
+    name: Grind chocolate bars into chocolate dust
+    category: processing
+    inputs:
+      - item_id: 1973
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 1975
+        quantity: 1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1800
+    theoretical_cycles_per_hour: 9000
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 48.6
+      intensity: very_low
+      description: Use a knife or pestle and mortar on chocolate bars; at the Wiki's idle auto-grind rate, 27 bars take 48.6 seconds.
+    requirements:
+      members: false
+      equipment:
+        - Knife or pestle and mortar
+    notes: The Wiki gives 1,800 bars/hour while idle and up to 9,000/hour with high-intensity manual grinding. The catalogue uses the idle rate; margins and GE liquidity are live-price dependent.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Grinding_chocolate_bars
+
   shop_hop_mixed_hide_bases:
     enabled: true
     name: Buy mixed hide bases from Pellem

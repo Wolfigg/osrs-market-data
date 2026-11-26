@@ -167,6 +167,37 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
         assert purchase["quantity"] * purchase["gp_per_item"] == pytest.approx(expected)
 
 
+def test_fountain_recharge_routes_and_additional_processing_methods_are_audited():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    fountain_ids = [method_id for method_id in methods if method_id.startswith("fountain_recharge_")]
+    assert len(fountain_ids) == 8
+    for method_id in fountain_ids:
+        method = methods[method_id]
+        assert method["method_types"] == ["active-route"]
+        assert method["inputs"][0]["quantity"] == 27
+        assert method["inputs"][1] == {"item_id": 3016, "quantity": 1, "buy_via_ge": True}
+        assert method["outputs"][0]["quantity"] == 27
+        assert method["requirements"]["equipment"]
+        assert "Wilderness death risk" in method["notes"]
+
+    assert methods["fountain_recharge_glory_obelisk_route"]["outputs"][0]["item_id"] == 11978
+    assert methods["fountain_recharge_combat_bracelet_obelisk_route"]["outputs"][0]["item_id"] == 11972
+    assert methods["fountain_recharge_skills_necklace_obelisk_route"]["outputs"][0]["item_id"] == 11968
+    assert methods["fountain_recharge_rings_of_wealth_obelisk_route"]["outputs"][0]["item_id"] == 11980
+    assert methods["fountain_recharge_rings_of_wealth_obelisk_route"]["cycles_per_hour"] == 40
+    assert methods["fountain_recharge_rings_of_wealth_wilderness_sword_4"]["cycles_per_hour"] == 60
+    assert methods["fountain_recharge_rings_of_wealth_wilderness_sword_4"]["theoretical_cycles_per_hour"] == 72
+
+    assert methods["make_pizza_bases"]["outputs"] == [
+        {"item_id": 2283, "quantity": 1}, {"item_id": 1935, "quantity": 1}, {"item_id": 1931, "quantity": 1}
+    ]
+    assert methods["make_pastry_dough"]["cycles_per_hour"] == 2160
+    assert methods["make_pastry_dough"]["theoretical_cycles_per_hour"] == 2400
+    assert methods["make_pie_shells"]["inputs"][1]["item_id"] == 2313
+    assert methods["cook_plain_pizzas"]["requirements"]["cooking"] == 68
+    assert methods["grind_chocolate_bars"]["cycles_per_hour"] == 1800
+
+
 def _public_result(category: str, method_types: list[str]):
     return {
         "methodId": "test",

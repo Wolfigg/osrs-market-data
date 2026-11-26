@@ -278,6 +278,171 @@ methods:
       output_units_per_cycle: 26
     notes: One cast recharges up to 26 eligible items in the inventory to four charges; Skills necklaces additionally require Legends' Quest. The 360 casts/hour working rate is calculated from the Pay-to-play Magic training page's 35,100 Magic XP/hour divided by 97.5 XP per cast; it is an average 10-second batch cadence, not an unattended AFK window. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
 
+  fountain_recharge_glory_obelisk_route:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 40
+      afk_interval_seconds: 90
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: Route rate is the ring guide's approximately 40 inventories/hour with the Wilderness Obelisk; Fountain mechanics and the Heroes' Quest requirement are from the OSRS Wiki Fountain of Rune and Amulet of glory pages. Transfer of the ring route rate to amulets is an explicit estimate. One Super energy(4) is costed per inventory. Wilderness loss risk is not modelled.
+
+  fountain_recharge_combat_bracelet_obelisk_route:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 40
+      afk_interval_seconds: 90
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: Uses the ring guide's approximately 40 inventories/hour with the Wilderness Obelisk as an estimate for bracelet throughput. The Fountain charges all eligible jewellery in inventory to six charges; Legends' Quest is required. One Super energy(4) is costed per inventory. Wilderness loss risk is not modelled.
+
+  fountain_recharge_skills_necklace_obelisk_route:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 40
+      afk_interval_seconds: 90
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: Uses the ring guide's approximately 40 inventories/hour with the Wilderness Obelisk as an estimate for necklace throughput. The Fountain charges all eligible jewellery in inventory to six charges; Legends' Quest is required. One Super energy(4) is costed per inventory. Wilderness loss risk is not modelled.
+
+  fountain_recharge_rings_of_wealth_obelisk_route:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 40
+      afk_interval_seconds: 90
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: The guide result table lists 216 rings and eight Super energy(4) per hour, but route prose says approximately 40 inventories/hour. This entry follows the route prose; the source discrepancy remains visible in the method notes. One full potion is costed per trip. Wilderness loss risk is not modelled.
+
+  fountain_recharge_glory_wilderness_sword_4:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 60
+      theoretical_cycles_per_hour: 72
+      afk_interval_seconds: 60
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: Uses the low end of the guide's 60-72 inventories/hour with Wilderness sword 4. Transfer of the ring route rate to amulets is an explicit estimate. Fountain mechanics and the Heroes' Quest requirement are from the OSRS Wiki Fountain of Rune and Amulet of glory pages. One Super energy(4) is costed per inventory. Wilderness loss risk is not modelled.
+
+  fountain_recharge_combat_bracelet_wilderness_sword_4:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 60
+      theoretical_cycles_per_hour: 72
+      afk_interval_seconds: 60
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: Uses the low end of the guide's 60-72 inventories/hour with Wilderness sword 4 as an estimate for bracelet throughput. The Fountain charges all eligible jewellery to six charges; Legends' Quest is required. One Super energy(4) is costed per inventory. Wilderness loss risk is not modelled.
+
+  fountain_recharge_skills_necklace_wilderness_sword_4:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 60
+      theoretical_cycles_per_hour: 72
+      afk_interval_seconds: 60
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: Uses the low end of the guide's 60-72 inventories/hour with Wilderness sword 4 as an estimate for necklace throughput. The Fountain charges all eligible jewellery to six charges; Legends' Quest is required. One Super energy(4) is costed per inventory. Wilderness loss risk is not modelled.
+
+  fountain_recharge_rings_of_wealth_wilderness_sword_4:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [active-route]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Recharging_rings_of_wealth
+    checks:
+      cycles_per_hour: 60
+      theoretical_cycles_per_hour: 72
+      afk_interval_seconds: 60
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: Uses the low end of the guide's 60-72 inventories/hour with Wilderness sword 4. The result table and route prose disagree on the base rate; the configured 60/hour is the lower bound of the diary-enhanced route text. One full potion is costed per trip. Wilderness loss risk is not modelled.
+
+  make_pizza_bases:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Making_pizza_bases
+    checks:
+      cycles_per_hour: 2400
+      afk_interval_seconds: 13.5
+      input_units_per_cycle: 2
+      output_units_per_cycle: 3
+    notes: One jug of water and one pot of flour produce a pizza base and return an empty jug and pot. The 13.5-second nine-recipe batch interval is derived from 2,400 outputs/hour. The Wiki warns that the output and empty containers can sell slowly.
+
+  make_pastry_dough:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Making_pastry_dough
+    checks:
+      cycles_per_hour: 2160
+      theoretical_cycles_per_hour: 2400
+      afk_interval_seconds: 15
+      input_units_per_cycle: 2
+      output_units_per_cycle: 3
+    notes: Nine recipes take approximately 15 seconds per inventory, yielding the configured 2,160/hour. The guide gives 2,400/hour as an upper figure. Each recipe returns an empty jug and pot.
+
+  make_pie_shells:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Making_pie_shells
+    checks:
+      cycles_per_hour: 2450
+      afk_interval_seconds: 20.5714286
+      input_units_per_cycle: 2
+      output_units_per_cycle: 1
+      batch_units: 14
+      pie_dish_buy_limit_per_four_hours: 500
+    notes: The Wiki batch is 2,450 pie shells with 14 doughs and pie dishes per inventory. The inventory interval is derived from that batch rate. The 500 pie-dish four-hour GE limit constrains sustained throughput; the source warns of unstable prices and slow resale.
+
+  cook_plain_pizzas:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [bankstanding, make-x]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Cooking_plain_pizzas
+    checks:
+      cycles_per_hour: 1080
+      afk_interval_seconds: 30
+      input_units_per_cycle: 3
+      output_units_per_cycle: 1
+      minimum_cooking_for_no_burns: 68
+    notes: The guide gives 540 pizzas per half hour and recommends level 68 Cooking to avoid burns. Nine three-ingredient pizzas occupy a 27-slot inventory; the 30-second interval is derived from the stated rate.
+
+  grind_chocolate_bars:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Grinding_chocolate_bars
+    checks:
+      cycles_per_hour: 1800
+      theoretical_cycles_per_hour: 9000
+      afk_interval_seconds: 48.6
+      input_units_per_cycle: 1
+      output_units_per_cycle: 1
+    notes: The guide gives 1,800 bars/hour for idle automatic grinding and up to 9,000/hour for high-intensity manual grinding. Twenty-seven bars at the idle rate take 48.6 seconds.
+
   shop_hop_mixed_hide_bases:
     status: verified
     verified_at: "2026-11-26"
