@@ -8,7 +8,7 @@ from typing import Any
 
 from .public_models import PUBLIC_SCHEMA_VERSION
 
-PUBLIC_ASSET_VERSION = "20261126-shop-hopping-1"
+PUBLIC_ASSET_VERSION = "20261126-money-maker-expansion-1"
 
 PUBLIC_REQUIRED_FILES = (
     "index.html", "alchemy.html", "assets/app.css", "assets/app.js", "assets/enhancements.js", "assets/cooking_math.js",
@@ -118,13 +118,13 @@ def _afk_page() -> str:
     <label class="field"><span>Category</span><select id="afk-category"><option value="all">All categories</option></select></label>
     <fieldset class="segmented"><legend>Membership</legend><label><input type="radio" name="afk-membership" value="all" checked><span>All</span></label><label><input type="radio" name="afk-membership" value="f2p"><span>F2P</span></label><label><input type="radio" name="afk-membership" value="members"><span>Members</span></label></fieldset>
     <label class="field"><span>Profitability</span><select id="afk-profit"><option value="profitable" selected>Profitable only</option><option value="all">All</option></select></label>
-    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-6h">6H reference GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-6m">6M reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">Interaction interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
+    <label class="field"><span>Sort</span><select id="afk-sort"><option value="recommended">Expected GP/hour</option><option value="sustainability">Market capacity</option><option value="gp-hour">Current GP/hour</option><option value="gp-6h">6H reference GP/hour</option><option value="gp-24h">24H reference GP/hour</option><option value="gp-7d">7D reference GP/hour</option><option value="gp-30d">30D reference GP/hour</option><option value="gp-6m">6M reference GP/hour</option><option value="gp-interaction">GP per interaction</option><option value="afk-interval">Interaction / cycle interval</option><option value="capital">Lowest capital</option><option value="alphabetical">Alphabetical</option></select></label>
   </div>
   <details class="advanced-filters">
     <summary>More filters & skill levels</summary>
     <div class="filter-grid advanced-filter-grid">
-      <label class="field"><span>Interaction class</span><select id="afk-level"><option value="all">All classes</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option><option>Shop hopping</option></select></label>
-      <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option><option value="gathering">Gathering</option><option value="shop-hopping">Shop hopping</option></select></label>
+      <label class="field"><span>Interaction class</span><select id="afk-level"><option value="all">All classes</option><option>Light AFK</option><option>AFK</option><option>Very AFK</option><option>Deep AFK</option><option>Low interaction</option><option>Shop hopping</option><option>Active route</option></select></label>
+      <label class="field"><span>Method type</span><select id="afk-type"><option value="all">All types</option><option value="bankstanding">Bankstanding</option><option value="make-x">Make-X</option><option value="autocast">Autocast</option><option value="gathering">Gathering</option><option value="shop-hopping">Shop hopping</option><option value="active-route">Active route</option></select></label>
       <label class="field"><span>Price stability</span><select id="afk-stability"><option value="all">All states</option><option value="stable">Stable</option><option value="watch">Watch</option><option value="volatile">Volatile</option><option value="thin_market">Thin market</option><option value="stale">Stale</option></select></label>
       <label class="field"><span>Market capacity</span><select id="afk-sustainability"><option value="all">All levels</option><option value="strong">Strong</option><option value="moderate">Moderate</option><option value="watch">Liquidity watch</option><option value="constrained">Constrained</option><option value="thin">Thin market</option><option value="limited">GE limited</option><option value="unknown">Unknown</option></select></label>
       <label class="field"><span>Capital</span><select id="afk-capital">{_capital_options()}</select></label>
@@ -136,7 +136,7 @@ def _afk_page() -> str:
     </div>
   </details>
 </section>
-<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Expected profit is market-capacity aware. Shop-hopping entries identify hop-only rate ceilings in their method notes. Open a method for requirements, recipe and price/liquidity evidence.</p></div>
+<div class="ledger-toolbar"><p id="afk-count">Loading methods...</p><p class="muted">Expected profit is market-capacity aware. Shop-hopping entries identify hop-only rate ceilings. Active-route rates are guide estimates, and Wilderness death risk is not priced. Open a method for requirements, recipe and price/liquidity evidence.</p></div>
 <section id="afk-list" class="ranking-ledger" aria-live="polite"></section>
 """
     return _base("Money Makers", "afk", "afk", main)
