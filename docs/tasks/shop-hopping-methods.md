@@ -1,6 +1,6 @@
 # Shop-hopping methods
 
-Status: in progress
+Status: complete
 
 ## Outcome
 
@@ -28,8 +28,8 @@ The mixed hide method uses the Wiki guide's 1,485 bases/hour. Other methods use 
 
 ## Result
 
-Implementation and validation results will be recorded here before merge.
+Added six shop-hopping methods, NPC shop purchase and sale economics, a Shop hopping filter, audit records, and documentation. The Python CI suite and Chromium/Firefox browser acceptance checks passed on PR #36. PR #36 was squash-merged as `0dbb10350ea0050f7487751c03d955b2e280085f`.
 
 ## Next action
 
-Run focused validation, review the branch diff, then push and merge after required CI passes.
+No further action.
