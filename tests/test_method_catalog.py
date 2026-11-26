@@ -15,7 +15,7 @@ def test_full_catalog_has_structural_guards_and_verified_audit():
             continue
         assert method["cycles_per_hour"] > 0, method_id
         assert method["afk"]["interval_seconds"] > 0, method_id
-        assert method["outputs"], method_id
+        assert method["outputs"] or method.get("shop_sales"), method_id
         assert method["method_types"], method_id
         assert method["reference"].startswith("https://oldschool.runescape.wiki/"), method_id
         assert method["audit"]["status"] == "verified", method_id
@@ -133,6 +133,38 @@ def test_engorged_bloodwood_method_models_the_full_tradeable_arrow_batch():
     assert method["requirements"]["quests"] == ["The Blood Moon Rises"]
     assert method["method_types"] == ["gathering", "make-x"]
     assert method["audit"]["verified_at"] == "2026-11-25"
+
+
+def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    assert len([method for method in methods.values() if "shop-hopping" in method["method_types"]]) == 6
+    mixed = methods["shop_hop_mixed_hide_bases"]
+    assert mixed["cycles_per_hour"] * mixed["outputs"][0]["quantity"] == 1485
+    assert mixed["shop_purchases"][0]["quantity"] * mixed["shop_purchases"][0]["gp_per_item"] * mixed["cycles_per_hour"] == 18803070
+    for method_id in (
+        "shop_hop_baba_yaga_astral_runes",
+        "shop_hop_tal_teklan_cosmic_runes",
+        "shop_hop_pellem_jaguar_fur",
+        "shop_hop_fortis_jaguar_fur",
+    ):
+        method = methods[method_id]
+        assert method["cycles_per_hour"] == pytest.approx(3600 / 7)
+        assert "upper bound" in method["afk"]["description"].lower()
+    warhammer = methods["shop_hop_rune_warhammer_skulgrimen"]
+    assert warhammer["outputs"] == []
+    assert warhammer["shop_sales"][0]["gp_per_item"] == 29050
+    assert warhammer["inputs"][0]["item_id"] == warhammer["shop_sales"][0]["item_id"]
+    assert warhammer["cycles_per_hour"] / warhammer["inputs"][0]["quantity"] > 70 / 4
+    expected_shop_costs = {
+        "shop_hop_baba_yaga_astral_runes": 13940,
+        "shop_hop_tal_teklan_cosmic_runes": 1510,
+        "shop_hop_pellem_jaguar_fur": 209,
+        "shop_hop_fortis_jaguar_fur": 193,
+    }
+    for method_id, expected in expected_shop_costs.items():
+        method = methods[method_id]
+        purchase = method["shop_purchases"][0]
+        assert purchase["quantity"] * purchase["gp_per_item"] == pytest.approx(expected)
 
 
 def _public_result(category: str, method_types: list[str]):
