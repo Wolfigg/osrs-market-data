@@ -129,6 +129,28 @@ def _public_outputs(current: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+def _public_shop_sales(current: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for row in current.get("shopSales") or []:
+        rows.append({
+            "itemId": int(row.get("itemId")), "name": str(row.get("name", "")),
+            "shopName": str(row.get("shopName", "")), "quantity": _intish(row.get("quantity")),
+            "gpPerItem": _number(row.get("gpPerItem")), "proceeds": _number(row.get("proceeds")),
+        })
+    return rows
+
+
+def _public_shop_purchases(current: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for row in current.get("shopPurchases") or []:
+        rows.append({
+            "itemId": int(row.get("itemId")), "name": str(row.get("name", "")),
+            "shopName": str(row.get("shopName", "")), "quantity": _intish(row.get("quantity")),
+            "gpPerItem": _number(row.get("gpPerItem")), "cost": _number(row.get("cost")),
+        })
+    return rows
+
+
 def _public_liquidity(current: dict[str, Any], mechanical_cph: float) -> dict[str, Any]:
     source = current.get("liquidity") or {}
     result: dict[str, Any] = {"inputs": [], "outputs": []}
@@ -290,16 +312,19 @@ def build_public_afk(generated_at: int, afk_results: list[dict[str, Any]]) -> di
             "executionPrices": current.get("executionPrices") or {"inputs": [], "outputs": []},
             "executionEconomics": {"expected": expected_row.get("economics"), "conservative": conservative_row.get("economics")},
             "history": history, "stability": stability, "sustainability": sustainability, "fillConfidence": fill_confidence,
-            "afk": {"classification": classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
+            "afk": {"classification": "Shop hopping" if "shop-hopping" in (current.get("methodTypes") or []) else classify_afk(interval), "intervalSeconds": _intish(interval), "gpPerInteraction": _number(afk.get("gpPerInteractionWindow")) if valid else None, "description": str(afk.get("description") or "")},
             "mechanics": {"cyclesPerHour": mechanical_cph, "cyclesPerHourByBuyLimits": sustainable_cph},
             "economics": {
                 "capitalPerCycle": capital_gp_per_cycle, "capitalOneHour": round(capital_one_hour), "capitalFourHours": round(capital_four_hours),
                 "buyLimitConstrained": buy_limit_constrained, "profitPerCycle": _number(economics.get("profitGpPerCycle")) if valid else None,
-                "inputGpPerCycle": _number(economics.get("inputGpPerCycle")), "fixedCostGpPerCycle": _number(economics.get("fixedCostGpPerCycle")),
+                "inputGpPerCycle": _number(economics.get("inputGpPerCycle")), "shopPurchaseGpPerCycle": _number(economics.get("shopPurchaseGpPerCycle")) or 0.0,
+                "fixedCostGpPerCycle": _number(economics.get("fixedCostGpPerCycle")),
                 "outputGrossGpPerCycle": _number(economics.get("outputGrossGeGpPerCycle")), "geTaxGpPerCycle": _number(economics.get("geTaxGpPerCycle")),
                 "outputNetGpPerCycle": _number(economics.get("outputNetGeGpPerCycle")),
+                "shopSaleGpPerCycle": _number(economics.get("shopSaleGpPerCycle")) or 0.0,
             },
             "liquidity": liquidity, "risk": risk, "inputs": inputs, "outputs": outputs,
+            "shopPurchases": _public_shop_purchases(current), "shopSales": _public_shop_sales(current),
             "priceSource": {
                 "provider": "RuneScape Wiki real-time prices API (prices.runescape.wiki)",
                 "current": "Latest observed high trades for inputs and low trades for outputs, including GE tax on outputs.",

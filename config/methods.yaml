@@ -501,3 +501,191 @@ methods:
         - Water-rune supplying staff
     notes: One Recharge Dragonstone cast recharges all eligible skills necklaces in the inventory to four charges; Legends' Quest is also required. A water-rune staff supplies the spell's four Water runes; each cast consumes one Astral rune and one Soul rune. The rate is 35,100 Magic XP/hour divided by 97.5 XP per cast; no faster bank-processing rate is assumed. This spell does not recharge rings of wealth.
     reference: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
+
+  shop_hop_mixed_hide_bases:
+    enabled: true
+    name: Buy mixed hide bases from Pellem
+    category: shop_hopping
+    inputs:
+      - item_id: 12625
+        quantity: 0.1363636364
+        buy_via_ge: true
+    outputs:
+      - item_id: 29292
+        quantity: 27
+    shop_purchases:
+      - item_id: 29292
+        quantity: 27
+        shop_name: Pellem's Fur Store
+        gp_per_item: 12662
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 55
+    theoretical_cycles_per_hour: 55
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 21.8181818
+      interaction_windows_per_hour: 165
+      intensity: moderate
+      description: The Wiki guide's 1,485 bases/hour rate is represented as 55 batches of 27 bases. Each batch uses three shop visits across worlds, or 165 visits/hour. This is active shop hopping, not AFK.
+    requirements:
+      members: true
+      hunter: 46
+      quests:
+        - Children of the Sun
+    notes: The official guide models 1,485 bases/hour for 18,803,070 coins of shop purchases and 7.5 Stamina potion(4). Shop cost is therefore 341,874 gp per 27-base batch; potion cost is priced from live GE input data. GE sale proceeds use current directional prices and seller tax. The rate is the guide's stated method rate, not a 7-second world-hop estimate.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Buying_mixed_hide_bases
+
+  shop_hop_baba_yaga_astral_runes:
+    enabled: true
+    name: Buy astral runes from Baba Yaga
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 9075
+        quantity: 250
+    shop_purchases:
+      - item_id: 9075
+        quantity: 250
+        shop_name: Baba Yaga's Magic Shop
+        gp_per_item: 55.76
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+    requirements:
+      members: true
+      quests:
+        - Lunar Diplomacy
+      unlocks:
+        - Lunar Isle access; Seal of Passage required unless the Elite Fremennik Diary is complete
+    notes: Models one full 250-rune stock per world at an estimated 13,940 gp total shop cost. The amount is derived from the listed 50 gp normal-stock price and 0.1% price change per item, rounding each item price down. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    reference: https://oldschool.runescape.wiki/w/Astral_rune
+
+  shop_hop_tal_teklan_cosmic_runes:
+    enabled: true
+    name: Buy cosmic runes from Tal Teklan
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 564
+        quantity: 30
+    shop_purchases:
+      - item_id: 564
+        quantity: 30
+        shop_name: Tal Teklan Rune Shop
+        gp_per_item: 50.333333333333336
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+    requirements:
+      members: true
+      quests:
+        - Children of the Sun
+    notes: Models one full 30-rune stock per world at an estimated 1,510 gp total shop cost. The amount is derived from the listed 50 gp normal-stock price and 0.1% price change per item, rounding each item price down. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    reference: https://oldschool.runescape.wiki/w/Tal_Teklan_Rune_Shop
+
+  shop_hop_pellem_jaguar_fur:
+    enabled: true
+    name: Buy jaguar fur from Pellem
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 29218
+        quantity: 2
+    shop_purchases:
+      - item_id: 29218
+        quantity: 2
+        shop_name: Pellem's Fur Store
+        gp_per_item: 104.5
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+    requirements:
+      members: true
+      hunter: 46
+      quests:
+        - Children of the Sun
+    notes: Models both jaguar furs in Pellem's two-item stock for 209 gp total, using the listed 104 gp normal-stock price and the 2% price change per item. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    reference: https://oldschool.runescape.wiki/w/Jaguar_fur
+
+  shop_hop_fortis_jaguar_fur:
+    enabled: true
+    name: Buy jaguar fur from the Fortis Fur Stall
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 29218
+        quantity: 2
+    shop_purchases:
+      - item_id: 29218
+        quantity: 2
+        shop_name: Fortis Fur Stall
+        gp_per_item: 96.5
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+    requirements:
+      members: true
+      quests:
+        - Children of the Sun
+    notes: Models both jaguar furs in Fortis Fur Stall's two-item stock for 193 gp total, using the listed 96 gp normal-stock price and the 2% price change per item. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    reference: https://oldschool.runescape.wiki/w/Jaguar_fur
+
+  shop_hop_rune_warhammer_skulgrimen:
+    enabled: true
+    name: Sell GE rune warhammers to Skulgrimen
+    category: shop_hopping
+    inputs:
+      - item_id: 1347
+        quantity: 1
+        buy_via_ge: true
+    outputs: []
+    shop_sales:
+      - item_id: 1347
+        quantity: 1
+        shop_name: Skulgrimen's Battle Gear
+        gp_per_item: 29050
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, buying the item, travel, banking and GE offer time; the GE buy limit further reduces the sustainable rate.
+    requirements:
+      members: true
+      quests:
+        - The Fremennik Trials
+    notes: Sells one rune warhammer to an empty Skulgrimen stock per world for 29,050 gp. The next sale to that shop would pay less, so this model uses one item per world. Rune warhammers have a 70-per-four-hours GE buy limit, which caps sustained throughput at 17.5 items/hour; NPC proceeds do not incur GE tax. The 7-second world-hop rate excludes shop interaction and banking.
+    reference: https://oldschool.runescape.wiki/w/Rune_warhammer

@@ -92,6 +92,24 @@ def test_public_afk_contains_history_scenarios_confidence_and_breakdown():
     assert "scenario" not in method
 
 
+def test_public_shop_sales_are_separated_from_ge_outputs():
+    row = _afk_result()
+    row["methodTypes"] = ["shop-hopping"]
+    row["outputs"] = []
+    row["liquidity"]["outputs"] = []
+    row["shopPurchases"] = [{"itemId": 1347, "name": "Rune warhammer", "shopName": "Shop", "quantity": 1, "gpPerItem": 1000, "cost": 1000}]
+    row["shopSales"] = [{"itemId": 1347, "name": "Rune warhammer", "shopName": "Skulgrimen's Battle Gear", "quantity": 1, "gpPerItem": 29_050, "proceeds": 29_050}]
+    row["economics"]["shopPurchaseGpPerCycle"] = 1000
+    row["economics"]["shopSaleGpPerCycle"] = 29_050
+    method = build_public_afk(123, [row])["methods"][0]
+    assert method["afk"]["classification"] == "Shop hopping"
+    assert method["outputs"] == []
+    assert method["shopPurchases"][0]["cost"] == 1000
+    assert method["shopSales"][0]["shopName"] == "Skulgrimen's Battle Gear"
+    assert method["economics"]["shopPurchaseGpPerCycle"] == 1000
+    assert method["economics"]["shopSaleGpPerCycle"] == 29_050
+
+
 def test_public_v2_normalises_prices_runescape_source():
     method = build_public_afk_v2(123, [_afk_result()])["methods"][0]
     assert method["priceSource"]["provider"] == "RuneScape Wiki real-time prices API (prices.runescape.wiki)"
@@ -193,6 +211,8 @@ def test_public_site_contains_afk_market_filters_and_no_account_or_planner(tmp_p
     assert "Market capacity" in index
     assert "More filters & skill levels" in index
     assert "High Alch" in index
+    assert "Money Makers" in index
+    assert "Shop hopping" in index
     assert "enhancements.js" in index
 
     alchemy_page = (site / "alchemy.html").read_text(encoding="utf-8")
@@ -220,6 +240,10 @@ def test_client_focuses_afk_scanner_on_market_aware_profit_and_breakdowns():
     assert 'planner-bankroll' not in app
     assert 'My session' not in app
     assert 'function calculationHtml' in app
+    assert 'function shopSalesHtml' in app
+    assert 'function shopPurchasesHtml' in app
+    assert 'NPC shop sales' in app
+    assert 'NPC shop purchases' in app
     assert 'function liquidityHtml' in app
     assert 'm.sustainability?.state' in app
     assert 'marketCapacity' in app

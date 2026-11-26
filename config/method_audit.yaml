@@ -277,3 +277,82 @@ methods:
       input_units_per_cycle: 28
       output_units_per_cycle: 26
     notes: One cast recharges up to 26 eligible items in the inventory to four charges; Skills necklaces additionally require Legends' Quest. The 360 casts/hour working rate is calculated from the Pay-to-play Magic training page's 35,100 Magic XP/hour divided by 97.5 XP per cast; it is an average 10-second batch cadence, not an unattended AFK window. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
+
+  shop_hop_mixed_hide_bases:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Buying_mixed_hide_bases
+    checks:
+      cycles_per_hour: 55
+      output_units_per_cycle: 27
+      output_units_per_hour: 1485
+      shop_cost_gp_per_cycle: 341874
+      shop_visits_per_hour: 165
+    notes: Uses the guide's exact 1,485 bases/hour and 18,803,070 gp shop purchase total, normalized to 55 batches of 27. Each batch covers three shop purchases/worlds. Stamina potion cost is a live GE input.
+
+  shop_hop_baba_yaga_astral_runes:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Astral_rune
+    checks:
+      stock_per_world: 250
+      normal_stock_price_gp: 50
+      price_change_pct_per_item: 0.1
+      shop_cost_gp_per_cycle: 13940
+      hop_only_cycles_per_hour: 514.2857143
+    notes: Full-stock purchase price is calculated item by item from the Wiki shop price and stock-change data. Hourly rate is only the 7-second world-switch ceiling supplied by the user; buy interactions, travel, banking and GE offers are excluded.
+
+  shop_hop_tal_teklan_cosmic_runes:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Tal_Teklan_Rune_Shop
+    checks:
+      stock_per_world: 30
+      normal_stock_price_gp: 50
+      price_change_pct_per_item: 0.1
+      shop_cost_gp_per_cycle: 1510
+      hop_only_cycles_per_hour: 514.2857143
+    notes: Full-stock purchase price is calculated item by item from the Wiki shop price and stock-change data. Hourly rate is only the 7-second world-switch ceiling supplied by the user; buy interactions, travel, banking and GE offers are excluded.
+
+  shop_hop_pellem_jaguar_fur:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Jaguar_fur
+    checks:
+      stock_per_world: 2
+      normal_stock_price_gp: 104
+      price_change_pct_per_item: 2
+      shop_cost_gp_per_cycle: 209
+      hop_only_cycles_per_hour: 514.2857143
+    notes: Purchases both units of Pellem's two-item stock. Hourly rate is only the 7-second world-switch ceiling supplied by the user; buy interactions, travel, banking and GE offers are excluded.
+
+  shop_hop_fortis_jaguar_fur:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Jaguar_fur
+    checks:
+      stock_per_world: 2
+      normal_stock_price_gp: 96
+      price_change_pct_per_item: 2
+      shop_cost_gp_per_cycle: 193
+      hop_only_cycles_per_hour: 514.2857143
+    notes: Purchases both units of Fortis Fur Stall's two-item stock. Hourly rate is only the 7-second world-switch ceiling supplied by the user; buy interactions, travel, banking and GE offers are excluded.
+
+  shop_hop_rune_warhammer_skulgrimen:
+    status: verified
+    verified_at: "2026-11-26"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Rune_warhammer
+    checks:
+      ge_buy_limit_per_four_hours: 70
+      npc_shop_proceeds_gp_per_item: 29050
+      shop_stock_per_world: 0
+      shop_sale_quantity_per_world: 1
+      hop_only_cycles_per_hour: 514.2857143
+      maximum_cycles_per_hour_after_ge_limit: 17.5
+    notes: Models one first-sale item to empty stock per world, with NPC payout separated from GE output tax. The item buy limit, not the hop cadence, sets its sustained maximum at 17.5 items/hour.

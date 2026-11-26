@@ -102,8 +102,8 @@ def validate_catalogue_v2(
 
         for side in ("inputs", "outputs"):
             rows = method.get(side) or []
-            if side == "outputs" and not rows:
-                report.errors.append(f"{method_id}: at least one output required")
+            if side == "outputs" and not rows and not (method.get("shop_sales") or method.get("shopSales")):
+                report.errors.append(f"{method_id}: at least one output or NPC shop sale required")
             for row in rows:
                 quantity = float(row.get("quantity", 0) or 0)
                 if quantity <= 0:

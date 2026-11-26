@@ -47,11 +47,12 @@ def evaluate_method(
     settings: dict[str, Any],
     generated_at: int,
 ) -> list[dict[str, Any]]:
-    """Evaluate one AFK processing method under each market-execution scenario.
+    """Evaluate one method under each market-execution scenario.
 
-    AFK methods always exit through the Grand Exchange. High Level Alchemy is a
-    separate application branch and is intentionally not available as a method
-    output strategy here.
+    Grand Exchange outputs use observed prices and tax. NPC shop purchases in
+    ``shop_purchases`` add fixed per-batch costs; NPC shop sale proceeds in
+    ``shop_sales`` are revenue without GE tax. High Level Alchemy remains a
+    separate application branch.
     """
     if method.get("enabled", True) is False:
         return []
@@ -114,10 +115,14 @@ def _evaluate_scenario(
 
     input_cost = 0.0
     input_details: list[dict[str, Any]] = []
+    shop_purchase_cost = 0.0
+    shop_purchase_details: list[dict[str, Any]] = []
     output_gross = 0.0
     output_tax = 0.0
     output_net = 0.0
     output_details: list[dict[str, Any]] = []
+    shop_sale_revenue = 0.0
+    shop_sale_details: list[dict[str, Any]] = []
     buy_limit_cycle_caps: list[float] = []
 
     for index, entry in enumerate(method.get("inputs", [])):
@@ -159,6 +164,27 @@ def _evaluate_scenario(
             needed_side = "high" if scenario == "CURRENT_INSTANT" else "low"
             _append_current_warning(record, needed_side, warnings)
 
+    for entry in method.get("shop_purchases", []):
+        item_id = int(entry["item_id"])
+        quantity = float(entry.get("quantity", 1))
+        record = item_records.get(item_id)
+        if record is None:
+            missing.append(f"MISSING_ITEM_{item_id}")
+            continue
+        gp_per_item = float(entry["gp_per_item"])
+        cost = quantity * gp_per_item
+        shop_purchase_cost += cost
+        shop_purchase_details.append(
+            {
+                "itemId": item_id,
+                "name": record["item"]["name"],
+                "shopName": str(entry["shop_name"]),
+                "quantity": quantity,
+                "gpPerItem": gp_per_item,
+                "cost": cost,
+            }
+        )
+
     for index, entry in enumerate(method.get("outputs", [])):
         item_id = int(entry["item_id"])
         quantity = float(entry.get("quantity", 1))
@@ -195,13 +221,35 @@ def _evaluate_scenario(
             needed_side = "low" if scenario == "CURRENT_INSTANT" else "high"
             _append_current_warning(record, needed_side, warnings)
 
-    total_cost = input_cost + fixed_cost
-    profit_per_cycle = output_net - total_cost if not missing else None
+    for entry in method.get("shop_sales", []):
+        item_id = int(entry["item_id"])
+        quantity = float(entry.get("quantity", 1))
+        record = item_records.get(item_id)
+        if record is None:
+            missing.append(f"MISSING_ITEM_{item_id}")
+            continue
+        gp_per_item = float(entry["gp_per_item"])
+        proceeds = quantity * gp_per_item
+        shop_sale_revenue += proceeds
+        shop_sale_details.append(
+            {
+                "itemId": item_id,
+                "name": record["item"]["name"],
+                "shopName": str(entry["shop_name"]),
+                "quantity": quantity,
+                "gpPerItem": gp_per_item,
+                "proceeds": proceeds,
+            }
+        )
+
+    total_cost = input_cost + fixed_cost + shop_purchase_cost
+    profit_per_cycle = output_net + shop_sale_revenue - total_cost if not missing else None
     sustainable_cph = min([mechanical_cph, *buy_limit_cycle_caps]) if mechanical_cph > 0 else 0.0
     profit_mechanical = profit_per_cycle * mechanical_cph if profit_per_cycle is not None else None
     profit_sustainable = profit_per_cycle * sustainable_cph if profit_per_cycle is not None else None
 
     output_units_per_cycle = sum(float(entry.get("quantity", 1)) for entry in method.get("outputs", []))
+    output_units_per_cycle += sum(float(entry.get("quantity", 1)) for entry in method.get("shop_sales", []))
     output_units_per_hour = output_units_per_cycle * mechanical_cph
     sustainable_output_units_per_hour = output_units_per_cycle * sustainable_cph
 
@@ -258,11 +306,13 @@ def _evaluate_scenario(
         },
         "economics": {
             "inputGpPerCycle": input_cost,
+            "shopPurchaseGpPerCycle": shop_purchase_cost,
             "fixedCostGpPerCycle": fixed_cost,
             "totalCostGpPerCycle": total_cost,
             "outputGrossGeGpPerCycle": output_gross,
             "geTaxGpPerCycle": output_tax,
             "outputNetGeGpPerCycle": output_net,
+            "shopSaleGpPerCycle": shop_sale_revenue,
             "profitGpPerCycle": reported_profit_per_cycle,
             "profitGpPerHourMechanical": reported_profit_mechanical,
             "profitGpPerHourBuyLimitSustainable": reported_profit_sustainable,
@@ -274,7 +324,9 @@ def _evaluate_scenario(
             for kind in ("inputs", "outputs")
         },
         "inputs": input_details,
+        "shopPurchases": shop_purchase_details,
         "outputs": output_details,
+        "shopSales": shop_sale_details,
         "liquidity": liquidity,
         "sources": {
             "inputPriceBasis": _input_basis(scenario),
