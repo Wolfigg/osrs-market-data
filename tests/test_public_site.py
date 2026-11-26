@@ -110,6 +110,14 @@ def test_public_shop_sales_are_separated_from_ge_outputs():
     assert method["economics"]["shopSaleGpPerCycle"] == 29_050
 
 
+def test_active_route_methods_are_not_classified_as_afk():
+    row = _afk_result()
+    row["methodTypes"] = ["active-route"]
+    method = build_public_afk(123, [row])["methods"][0]
+    assert method["afk"]["classification"] == "Active route"
+    assert "active-route" in method["tags"]
+
+
 def test_public_v2_normalises_prices_runescape_source():
     method = build_public_afk_v2(123, [_afk_result()])["methods"][0]
     assert method["priceSource"]["provider"] == "RuneScape Wiki real-time prices API (prices.runescape.wiki)"
@@ -213,6 +221,8 @@ def test_public_site_contains_afk_market_filters_and_no_account_or_planner(tmp_p
     assert "High Alch" in index
     assert "Money Makers" in index
     assert "Shop hopping" in index
+    assert "Active route" in index
+    assert "Wilderness death risk is not priced" in index
     assert "enhancements.js" in index
 
     alchemy_page = (site / "alchemy.html").read_text(encoding="utf-8")
