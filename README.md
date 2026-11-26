@@ -2,9 +2,9 @@
 
 A Python 3.12 market-analysis pipeline for Old School RuneScape using the OSRS Wiki / RuneLite Real-time Prices API.
 
-The public application intentionally contains two tools:
+The public application contains two tools:
 
-1. **AFK Money Makers**: ranks genuinely AFK or low-interaction processing methods using live prices, 6H/24H/7D/30D/6M historical VWAPs, GE tax, buy limits, liquidity, audited game mechanics, AFK interval metrics and a conservative Expected GP/hour model.
+1. **Money Makers**: ranks AFK processing, gathering and active shop-hopping methods using live prices, 6H/24H/7D/30D/6M historical VWAPs, GE tax, buy limits, liquidity, audited game mechanics and an Expected GP/hour model. NPC shop purchases and sales have separate cost/proceeds rows; NPC sales do not use GE seller tax. Shop-hopping entries that lack measured end-to-end rates identify their hop-only GP/hour as an upper bound.
 2. **High Alch**: a standalone active buy-and-alch scanner with the same historical price horizons. It is deliberately not used as an exit for AFK methods.
 
 There is no public Market Explorer, raw API browser, diagnostics page or dashboard branch.
@@ -50,7 +50,7 @@ Live mode:
 
 - loads cached mapping, falling back to `/mapping` only when needed
 - fetches `/latest`
-- recalculates current AFK profitability
+- recalculates current money-maker profitability
 - reruns the High Alch preliminary scan and current margins
 - combines current values with cached historical metrics
 - refreshes 5m `/timeseries` for method items to estimate execution prices; historical requests are reused within each run
@@ -132,9 +132,9 @@ The timestamp of a site refresh and the timestamp of an item's latest observed t
 
 Historical observed volume is a liquidity proxy, not executable market depth.
 
-## AFK branch
+## Money Makers branch
 
-The AFK branch uses Grand Exchange exits only. High Alchemy is intentionally excluded as an AFK output strategy.
+Money Makers covers AFK processing and gathering as well as active shop hopping. GE output methods include seller tax; NPC shop sales use the configured shop proceeds without GE tax. High Alchemy remains a separate tool.
 
 Public AFK data includes:
 
@@ -143,19 +143,21 @@ Public AFK data includes:
 - weighted historical reference GP/hour
 - 24H, 7D and 30D reference GP/hour
 - stability state and current-vs-history deviations
-- AFK interval
+- interaction interval
 - GP per interaction
 - one-hour and four-hour capital, including fixed coin costs
 - membership
 - method tags
 - requirements
 - risk state
+- NPC shop-purchase costs
+- NPC shop-sale destinations and proceeds
 
 ### Mechanically audited catalogue
 
 Every enabled method must pass structural validation and carry an OSRS Wiki-backed `audit.status: verified`. Collection fails rather than publishing an enabled method without verified audit provenance.
 
-The completion audit covers the generated and hand-tuned families, including cannonballs, bolt tips, dart tips, Plank Make, longbows, cooking, jewellery, glassblowing, battlestaves and gathering methods. Detailed assumptions and corrections are recorded in:
+The completion audit covers the generated and hand-tuned families, including cannonballs, bolt tips, dart tips, Plank Make, longbows, cooking, jewellery, glassblowing, battlestaves, gathering and shop-hopping methods. Shop-hopping entries without an end-to-end rate are marked as hop-only ceilings in their details. Detailed assumptions and corrections are recorded in:
 
 ```text
 config/method_audit.yaml
@@ -221,11 +223,11 @@ Stale / Unavailable:
 
 Negative-profit cases are kept conservative by choosing the lower of current and reference rather than blending a loss upward.
 
-Recommended GP/hour is the default AFK sort, while raw Current GP/hour remains available as an explicit sort option.
+Expected GP/hour is the default Money Makers sort, while raw Current GP/hour remains available as an explicit sort option.
 
 ### Optional eligibility filtering
 
-The AFK page allows users to enter relevant skill levels and enable:
+The Money Makers page allows users to enter relevant skill levels and enable:
 
 ```text
 Only show methods I can do by skill level
@@ -237,7 +239,7 @@ The controls include skills currently used by the catalogue, including Sailing f
 
 Skill matching does not imply that quest or equipment requirements are satisfied. Those remain visible separately.
 
-The frontend also supports preset capital, method-type and stability filtering. AFK rows show stability beside market capacity. An exact one-hour input-capital ceiling is available in the expanded filters and is shareable through the URL.
+The frontend also supports preset capital, method-type and stability filtering. Method rows show stability beside market capacity. An exact one-hour input-capital ceiling is available in the expanded filters and is shareable through the URL.
 
 ## High Alch branch
 
