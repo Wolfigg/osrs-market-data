@@ -95,6 +95,8 @@ def test_public_afk_contains_history_scenarios_confidence_and_breakdown():
 def test_public_shop_sales_are_separated_from_ge_outputs():
     row = _afk_result()
     row["methodTypes"] = ["shop-hopping"]
+    row["outputs"] = []
+    row["liquidity"]["outputs"] = []
     row["shopPurchases"] = [{"itemId": 1347, "name": "Rune warhammer", "shopName": "Shop", "quantity": 1, "gpPerItem": 1000, "cost": 1000}]
     row["shopSales"] = [{"itemId": 1347, "name": "Rune warhammer", "shopName": "Skulgrimen's Battle Gear", "quantity": 1, "gpPerItem": 29_050, "proceeds": 29_050}]
     row["economics"]["shopPurchaseGpPerCycle"] = 1000
