@@ -1,11 +1,11 @@
 ---
-status: in-progress
+status: done
 ---
 # Additional money makers
 
 ## Next action
 
-Run the repository test suite in GitHub Actions, review the PR diff, then merge once required checks pass.
+Treat any future catalogue expansion as a separate task.
 
 ## Outcome and scope
 
@@ -32,7 +32,7 @@ Extend the hand-authored Money Makers catalogue with Fountain of Rune charge rou
 
 ## Results
 
-Implementation is drafted. Local YAML parsing, Python compilation and JavaScript syntax checks passed. The focused pytest command could not start because `pytest` is not installed in this workspace. GitHub Actions validation is pending.
+Merged as PR #37 in commit `06096b82a8b9056bfb72fe338971ca8e7211b11d`. GitHub Actions CI run #210 passed the full pytest suite and Chromium/Firefox browser acceptance on the code head `172ab2653a6cf2d69f0604037b85736452a3836d`. Local YAML parsing and method/audit consistency, Python compilation, and `node --check web/assets/app.js` passed. Local pytest could not run because pytest is not installed in the workspace; the CI test job ran the suite.
 
 ## Sources and rate choices
 
