@@ -46,6 +46,41 @@ def test_tax_exempt_output():
     assert row["outputs"][0]["geTaxPerItem"] == 0
 
 
+def test_npc_shop_sale_is_revenue_without_ge_output_tax():
+    records = base_records()
+    records[4] = record(4, "Rune warhammer", 25_000, 24_900, limit=70)
+    method = {
+        "inputs": [{"item_id": 4, "quantity": 1, "buy_via_ge": True}],
+        "outputs": [],
+        "shop_sales": [{"item_id": 4, "quantity": 1, "shop_name": "Skulgrimen's Battle Gear", "gp_per_item": 29_050}],
+        "cycles_per_hour": 20,
+    }
+    row = evaluate_method("shop-sale", method, records, set(), SETTINGS, 123)[0]
+    assert row["valid"] is True
+    assert row["economics"]["inputGpPerCycle"] == 25_000
+    assert row["economics"]["shopSaleGpPerCycle"] == 29_050
+    assert row["economics"]["outputNetGeGpPerCycle"] == 0
+    assert row["economics"]["geTaxGpPerCycle"] == 0
+    assert row["economics"]["profitGpPerCycle"] == 4_050
+    assert row["shopSales"][0]["proceeds"] == 29_050
+
+
+def test_npc_shop_purchase_cost_is_added_to_profit_and_capital():
+    records = base_records()
+    records[4] = record(4, "Astral rune", 65, 64)
+    method = {
+        "inputs": [],
+        "shop_purchases": [{"item_id": 4, "quantity": 250, "shop_name": "Baba Yaga's Magic Shop", "gp_per_item": 55.76}],
+        "outputs": [{"item_id": 4, "quantity": 250}],
+        "cycles_per_hour": 1,
+    }
+    row = evaluate_method("shop-purchase", method, records, set(), SETTINGS, 123)[0]
+    assert row["economics"]["shopPurchaseGpPerCycle"] == 13_940
+    assert row["economics"]["totalCostGpPerCycle"] == 13_940
+    assert row["shopPurchases"][0]["cost"] == 13_940
+    assert row["economics"]["profitGpPerCycle"] == 1_810
+
+
 def test_buy_limit_bottleneck_is_reported_separately():
     method = {"inputs": [{"item_id": 1, "quantity": 2}], "outputs": [{"item_id": 3}], "cycles_per_hour": 100}
     row = evaluate_method("m", method, base_records(), set(), SETTINGS, 123)[0]
