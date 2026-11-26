@@ -558,7 +558,7 @@ methods:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: Upper-bound hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
     requirements:
       members: true
       quests:
@@ -590,7 +590,7 @@ methods:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: Upper-bound hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
     requirements:
       members: true
       quests:
@@ -620,7 +620,7 @@ methods:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: Upper-bound hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
     requirements:
       members: true
       hunter: 46
@@ -651,7 +651,7 @@ methods:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: Upper-bound hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
     requirements:
       members: true
       quests:
@@ -682,7 +682,7 @@ methods:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: Upper-bound hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, buying the item, travel, banking and GE offer time; the GE buy limit further reduces the sustainable rate.
+      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, buying the item, travel, banking and GE offer time; the GE buy limit further reduces the sustainable rate.
     requirements:
       members: true
       quests:
