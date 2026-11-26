@@ -1,7 +1,7 @@
 # AFK Method Catalogue Audit
 
 Audit baseline: 2026-08-29
-Updated: 2026-11-25
+Updated: 2026-11-26
 Status: complete for the enabled catalogue
 
 This document records the catalogue-quality pass for OSRS Market Board. It is maintainer documentation and is not part of the GitHub Pages public artifact.
@@ -49,6 +49,18 @@ The public capital calculation now includes fixed coin charges, correcting the p
 ### Recharge Dragonstone
 
 The catalogue has separate batch methods for amulets of glory, combat bracelets and skills necklaces. One cast recharges 26 items to four charges. A Water-rune-supplying staff covers the four Water runes; each cast consumes one Astral rune and one Soul rune. The model uses 360 casts/hour, calculated from 35,100 Magic XP/hour divided by 97.5 XP/cast. This is an average 10-second bankstanding cadence, not 10 seconds of unattended AFK time. Casting requires 89 Magic, Lunar Diplomacy and the hard Fremennik Diary; combat bracelets and skills necklaces also require Legends' Quest. The spell does not recharge rings of wealth.
+
+### Fountain of Rune routes
+
+Amulets of glory, combat bracelets and skills necklaces are modelled as six-charge outputs from the Fountain; rings of wealth are modelled as five-charge outputs. The routes use a worn ring of wealth for the return teleport, one full Super energy(4) per trip, and 27-item inventories. Standard routes use the guide's approximately 40 inventories/hour Wilderness Obelisk estimate. Wilderness sword 4 variants use the guide's 60-72 inventory range, with 60/hour as the working rate and 72/hour as the theoretical ceiling. The guide's ring result table lists 216 rings and eight potions, which conflicts with its route text; the ring methods expose the configured rate choice in their notes. The same trip rates are explicit estimates for the other jewellery because the route source does not list separate rates for them. Wilderness death risk is not included in profit.
+
+These are tagged as active routes and displayed separately from AFK methods. Their cycle interval is the route estimate, not an idle window.
+
+### Bankstanding food processing
+
+Pizza bases and pastry dough return their empty jug and pot. Pastry dough uses nine recipes per roughly 15-second inventory, or 2,160/hour, with 2,400/hour retained as the Wiki upper figure. Pizza bases use the guide's 2,400/hour rate. Pie shells use the guide's 2,450-unit batch rate and the 500 pie dish four-hour buy limit is enforced by the calculator. Plain pizzas use the guide's 540-per-half-hour rate and require 68 Cooking in the no-burn model. The Wiki warns that dough, shells and other ingredients can have slow GE resale.
+
+Chocolate bar grinding is included at the Wiki's idle automatic-grinding rate of 1,800 bars/hour, with 9,000/hour recorded as the high-intensity ceiling. The method requires a knife or pestle and mortar and gives no skill experience.
 
 ### Longbow cutting
 
