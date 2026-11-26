@@ -112,9 +112,21 @@ def _validate_method_catalog(methods: dict[str, Any]) -> None:
         if cph <= 0: errors.append(f"{method_id}: cycles_per_hour must be > 0")
         if theoretical is not None and float(theoretical) + 1e-9 < cph: errors.append(f"{method_id}: theoretical_cycles_per_hour is below cycles_per_hour")
         if interval is None or float(interval) <= 0: errors.append(f"{method_id}: afk.interval_seconds must be > 0")
-        if not method.get("outputs"): errors.append(f"{method_id}: at least one output is required")
+        if not method.get("outputs") and not method.get("shop_sales"):
+            errors.append(f"{method_id}: at least one GE output or NPC shop sale is required")
         for side in ("inputs", "outputs"):
             for entry in method.get(side, []): _validate_entry(method_id, side, entry, errors)
+        input_ids = {int(entry["item_id"]) for entry in method.get("inputs", []) if entry.get("item_id") is not None}
+        for entry in method.get("shop_purchases", []):
+            _validate_entry(method_id, "shop_purchases", entry, errors)
+            if float(entry.get("gp_per_item", 0) or 0) <= 0: errors.append(f"{method_id}: shop_purchases gp_per_item must be > 0")
+            if not str(entry.get("shop_name") or "").strip(): errors.append(f"{method_id}: shop_purchases shop_name is required")
+        for entry in method.get("shop_sales", []):
+            _validate_entry(method_id, "shop_sales", entry, errors)
+            if float(entry.get("gp_per_item", 0) or 0) <= 0: errors.append(f"{method_id}: shop_sales gp_per_item must be > 0")
+            if not str(entry.get("shop_name") or "").strip(): errors.append(f"{method_id}: shop_sales shop_name is required")
+            if entry.get("item_id") is not None and int(entry["item_id"]) not in input_ids:
+                errors.append(f"{method_id}: shop_sales item must also be present in inputs")
         for key in ("process_seconds", "bank_seconds", "travel_seconds"):
             value = (method.get("workflow") or {}).get(key)
             if value is not None and float(value) < 0: errors.append(f"{method_id}: workflow.{key} must be >= 0")
