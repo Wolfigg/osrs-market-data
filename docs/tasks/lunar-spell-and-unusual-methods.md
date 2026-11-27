@@ -1,11 +1,11 @@
 ---
-status: in_progress
+status: done
 ---
 # Lunar spell and unusual shop methods
 
 ## Next action
 
-Finish review and merge the follow-up PR adding three unusual shop-hopping methods.
+None. The Lunar money-making entries and unusual shop methods are merged to `master` and published.
 
 ## Scope
 
@@ -25,6 +25,10 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 - PR #38 merged to `master` as `77eb10dcbb4587d406166604da3cf3a0f4044e5c`.
 - CI run 214 passed: 244 tests; Chromium and Firefox browser acceptance passed.
 - The live Pages site loaded with the new Tan Leather, Spin Flax, and Humidify entries.
+- PR #39 added Bandit's brew, Papyrus and Spades; PR #40 fixed YAML formatting required by the publish workflow; PR #41 corrected the Hunter Kit output mapping from item ID 598 to Unlit torch ID 596; PR #42 replaced Papyrus with Limestone because the app had no usable current Papyrus price.
+- PR #42 CI passed the test and browser-acceptance jobs. The master refresh run `46018065761` completed successfully.
+- The published catalogue was checked on 2026-11-27. It shows Bandit's brew, Limestone from Razmire and Spades; the merged Lunar catalogue includes Recharge Dragonstone jewelry and other spell methods.
+- This follow-up corrects the Razmire Wiki URLs and updates the task status.
 
 ## Sources and limitation
 
@@ -38,7 +42,7 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 - [Tynan's Fishing Supplies](https://oldschool.runescape.wiki/w/Tynan%27s_Fishing_Supplies)
 - [Nardok's Bone Weapons](https://oldschool.runescape.wiki/w/Nardok%27s_Bone_Weapons)
 - [The Big Heist Lodge](https://oldschool.runescape.wiki/w/The_Big_Heist_Lodge)
-- [Razmire Builders Merchants](https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants.)
+- [Razmire Builders Merchants](https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants)
 - [Limestone](https://oldschool.runescape.wiki/w/Limestone)
 - [Spade](https://oldschool.runescape.wiki/w/Spade)
 - [User-provided unusual money-making site](https://unusualmoneymaking.com/)

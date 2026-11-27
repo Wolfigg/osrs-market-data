@@ -692,7 +692,7 @@ methods:
     status: verified
     verified_at: "2026-11-27"
     method_types: [shop-hopping]
-    source: https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants.
+    source: https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants
     checks:
       cycles_per_hour: 514.2857143
       theoretical_cycles_per_hour: 514.2857143
