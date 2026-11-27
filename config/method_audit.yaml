@@ -671,7 +671,7 @@ methods:
       hop_only_cycles_per_hour: 514.2857143
     notes: Two bone bolt packs cost 350 and 357 gp at the start of shop stock, yielding 200 bolts for 707 gp. The seven-second per-world ceiling excludes purchase interactions, banking and GE fills; use live output prices and liquidity warnings.
 
-shop_hop_bandits_brew_big_heist_lodge:
+  shop_hop_bandits_brew_big_heist_lodge:
     status: verified
     verified_at: "2026-11-27"
     method_types: [shop-hopping]
