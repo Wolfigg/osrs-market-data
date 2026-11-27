@@ -112,16 +112,17 @@ See `docs/AFK_METHOD_CATALOG_AUDIT.md` and `config/method_audit.yaml`.
 - [x] Independent preliminary scanner over current `/mapping` + `/latest` data.
 - [x] Nature rune cost is included.
 - [x] Fire-rune cost is included when a fire staff is disabled.
-- [x] Current profit/cast and 4H batch profit are exposed when the GE buy limit is known.
+- [x] Current profit/cast and the mechanical/GE four-hour ceiling are exposed when the GE buy limit is known.
+- [x] The primary four-hour estimate is capped by recent six-hour high-price trade volume projected to four hours.
 - [x] 24H, 7D and 30D profit/cast use matching historical item/rune windows.
 - [x] Candidate history can be unavailable without blocking current scanning.
 - [x] Capital filtering uses strict-under semantics.
 - [x] Optional four-hour buy-list budget recalculates affordable quantity, capital and profit.
 - [x] Market-risk label is visible in each High Alch summary row.
 - [x] Missing GE buy limits leave four-hour quantity, batch profit and required capital unknown.
-- [x] Unbudgeted totals are labelled maximum batch estimates and disclose the current-quote assumption.
+- [x] Maximum totals are labelled as a mechanical/GE ceiling; the primary estimate discloses its current-quote and historical-volume-proxy assumptions.
 - [x] Search, membership, profitability, minimum-profit and unavailable filters exist.
-- [x] Current/24H/7D/30D and maximum batch-profit sorting exists.
+- [x] Current/24H/7D/30D profit and volume-based four-hour estimate sorting exists.
 
 ## Freshness and reliability
 

@@ -69,6 +69,8 @@ def public_risk(warnings: list[str] | None, valid: bool = True) -> dict[str, Any
         reasons.append("Current market observations disagree, so this entry needs caution.")
     if "MISSING_BUY_LIMIT" in joined:
         reasons.append("GE buy limit is missing, so four-hour batch quantity and profit cannot be estimated.")
+    if "NO_RECENT_BUY_SIDE_VOLUME" in joined:
+        reasons.append("No high-price trade volume was observed in the last six hours, so the four-hour volume estimate is zero or unavailable.")
     if not reasons and warnings:
         reasons.append("Margin or liquidity deserves attention.")
     labels = {"normal": "Normal market risk", "watch": "Watch market conditions", "high": "High market risk", "unavailable": "Unavailable"}
@@ -373,10 +375,16 @@ def build_public_alchemy(generated_at: int, candidates: list[dict[str, Any]], as
             "buyPrice": _intish(current.get("buyPrice")) if valid else None, "highAlchValue": _intish(row.get("highAlchValue")), "runeCost": _intish(rune_cost) if valid else None,
             "profitPerCast": _number(current.get("profitPerCast")) if valid else None, "roi": _number(current.get("roiPct")) if valid else None, "buyLimit": _intish(row.get("geBuyLimit")),
             "quantity4h": _intish((row.get("capacity4h") or {}).get("maxQuantity")) if valid else None, "profit4h": _number(row.get("profitPer4hGeLimit")) if valid else None,
-            "capitalRequired": _number(row.get("capitalRequired")) if valid else None, "volume24h": _intish(row.get("volume24h")), "freshness": _freshness(row.get("buyPriceAgeSeconds")),
+            "capitalRequired": _number(row.get("capitalRequired")) if valid else None,
+            "marketEstimateQuantity4h": _intish((row.get("capacity4h") or {}).get("marketEstimateQuantity4h")) if valid else None,
+            "marketEstimateProfit4h": _number(row.get("profitPer4hMarketEstimate")) if valid else None,
+            "marketEstimateCapitalRequired": _number(row.get("capitalRequiredMarketEstimate")) if valid else None,
+            "observedBuySideVolume6h": _intish((row.get("capacity4h") or {}).get("observedBuySideVolume6h")),
+            "projectedBuySideVolume4h": _intish((row.get("capacity4h") or {}).get("projectedBuySideVolume4h")),
+            "volume24h": _intish(row.get("volume24h")), "buySideVolume24h": _intish(row.get("buySideVolume24h")), "freshness": _freshness(row.get("buyPriceAgeSeconds")),
             "history": {"6hProfitPerCast": history6, "24hProfitPerCast": history24, "7dProfitPerCast": history7, "30dProfitPerCast": history30, "6mProfitPerCast": history6m}, "history24hProfitPerCast": history24, "risk": risk,
         })
-    items.sort(key=lambda row: row["profit4h"] if row["profit4h"] is not None else float("-inf"), reverse=True)
+    items.sort(key=lambda row: row["marketEstimateProfit4h"] if row["marketEstimateProfit4h"] is not None else float("-inf"), reverse=True)
     return {"schemaVersion": PUBLIC_SCHEMA_VERSION, "generatedAt": generated_at, "assumptions": {"magicLevel": 55, "castsPerHour": int(assumptions.get("castsPerHour", 1200)), "natureRuneCost": next((item["runeCost"] for item in items if item["runeCost"] is not None), None), "fireStaff": use_fire_staff}, "items": items}
 
 

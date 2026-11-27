@@ -100,12 +100,12 @@ async function run(browserType, name) {
     // High Alch filters, strict capital boundary and unavailable visibility.
     await page.goto(`${base}/alchemy.html`, { waitUntil: "networkidle" });
     await waitForCount(page, "#alch-count", "3 candidates");
-    assert.match(await page.locator("#alch-sort").textContent(), /Maximum 4H batch profit/);
-    assert.match(await page.locator(".ledger-toolbar").textContent(), /maximum batch estimates/);
+    assert.match(await page.locator("#alch-sort").textContent(), /Recent-volume 4H estimate/);
+    assert.match(await page.locator(".ledger-toolbar").textContent(), /last six hours.*high-price trade volume projected to four hours/);
     await page.locator("#alch-capital").selectOption("1000000");
     await waitForCount(page, "#alch-count", "1 candidate");
     assert.match(await page.locator("#alch-list").textContent(), /Rune platebody/);
-    assert.doesNotMatch(await page.locator("#alch-list").textContent(), /Exact million item/);
+    assert.doesNotMatch(await page.locator("#alch-list").textContent(), /Over one million item/);
     await page.locator("#alch-profit").selectOption("all");
     await page.locator("#alch-capital").selectOption("all");
     await page.locator("#alch-unavailable").check();
@@ -120,7 +120,7 @@ async function run(browserType, name) {
     await waitForCount(page, "#alch-count", "3 candidates");
     assert.equal(await page.locator("#alch-budget").inputValue(), "500000");
     assert.match(page.url(), /budget=500000/);
-    const exactMillion = page.locator("#alch-list .ledger-record").filter({ hasText: "Exact million item" });
+    const exactMillion = page.locator("#alch-list .ledger-record").filter({ hasText: "Over one million item" });
     const exactMillionText = await exactMillion.innerText();
     assert.match(exactMillionText, /454/);
     assert.match(exactMillionText, /499,400/);

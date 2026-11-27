@@ -226,8 +226,8 @@ def test_public_site_contains_afk_market_filters_and_no_account_or_planner(tmp_p
     assert "enhancements.js" in index
 
     alchemy_page = (site / "alchemy.html").read_text(encoding="utf-8")
-    assert "Maximum 4H batch profit" in alchemy_page
-    assert "Missing GE limits leave batch quantity and profit unknown" in alchemy_page
+    assert "Recent-volume 4H estimate" in alchemy_page
+    assert "last six hours of high-price trade volume projected to four hours" in alchemy_page
     assert "OSRS Market Board" in index
     assert "prices.runescape.wiki" in index
     assert "OSRS Profit Finder" not in index
