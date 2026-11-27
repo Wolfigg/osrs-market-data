@@ -346,7 +346,7 @@ methods:
   superglass_make_giant_seaweed:
     status: verified
     verified_at: "2026-11-27"
-    method_types: [bankstanding]
+    method_types: [bankstanding, probabilistic]
     source: https://oldschool.runescape.wiki/w/Money_making_guide/Casting_Superglass_Make
     checks:
       cycles_per_hour: 600
