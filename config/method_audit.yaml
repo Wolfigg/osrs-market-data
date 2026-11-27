@@ -688,22 +688,22 @@ methods:
       hop_only_cycles_per_hour: 514.2857143
     notes: The lodge stocks 10 bandit's brews and requires completion of Desert Treasure I to buy them. One purchase per world uses the full-stock 650 gp price; GE buy-limit and liquidity conditions remain separate from the shop's hop ceiling.
 
-  shop_hop_papyrus_rasolo:
+  shop_hop_limestone_razmire_builders:
     status: verified
     verified_at: "2026-11-27"
     method_types: [shop-hopping]
-    source: https://oldschool.runescape.wiki/w/Rasolo
+    source: https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants.
     checks:
       cycles_per_hour: 514.2857143
       theoretical_cycles_per_hour: 514.2857143
       afk_interval_seconds: 7
-      stock_per_world: 5
-      normal_stock_price_gp: 20
-      price_change_pct_per_item: 3
-      shop_cost_gp_per_cycle: 20
+      stock_per_world: 1000
+      normal_stock_price_gp: 10
+      price_change_pct_per_item: 4
+      shop_cost_gp_per_cycle: 10
       output_units_per_cycle: 1
       hop_only_cycles_per_hour: 514.2857143
-    notes: One papyrus is purchased from Rasolo per world at the full-stock price. The shop stocks five and has a five-minute restock time; the estimate excludes travel, banking and GE offer time.
+    notes: Razmire Builders Merchants stocks 1,000 limestone at 10 gp each and requires completion of Shades of Mort'ton. One item per world preserves the fully stocked price; the seven-second estimate excludes interaction, travel, banking and GE offer time.
 
   shop_hop_spade_vanessa:
     status: verified
