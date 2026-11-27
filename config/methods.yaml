@@ -1668,3 +1668,55 @@ methods:
       members: true
     notes: "Vanessa's Farming shop stocks 500 spades at 3 gp each when fully stocked, with a 1% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data. The provisional throughput adds one shop-open action and one purchase action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Spade
+
+  gather_snakeweed_make_sanfew_serum:
+    enabled: true
+    name: Gather snake weed and make Sanfew serum(4)
+    category: processing
+    inputs:
+      - item_id: 3024
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 235
+        quantity: 1
+        buy_via_ge: true
+      - item_id: 10937
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 10925
+        quantity: 1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 315.7894737
+    theoretical_cycles_per_hour: 315.7894737
+    planned_hours_per_day: 4
+    method_types: [active-route]
+    sanfew_serum_timing:
+      tick_manipulated_snake_weed_per_hour: 500
+      game_tick_seconds: 0.6
+      snake_weed_gather_seconds: 7.2
+      herb_clean_actions: 1
+      herb_clean_seconds: 0.6
+      manual_ingredient_steps: 3
+      ticks_per_ingredient_step: 2
+      estimated_cycle_seconds: 11.4
+      confidence: provisional
+    afk:
+      interval_seconds: 11.4
+      intensity: high
+      description: "High-attention route. Provisional full-cycle estimate combines 500 tick-manipulated snake weed/hour (7.2s each), one 0.6s herb-cleaning action and three manual 2-tick Sanfew additions: 11.4s per serum, about 315.8/hour. Travel, banking, inventory changes and GE offer time are excluded."
+    requirements:
+      members: true
+      herblore: 65
+      quests:
+        - Zogre Flesh Eaters
+      equipment:
+        - Pestle and mortar
+        - Swamp tar and a clean herb for tick manipulation
+        - Fairy ring access (CKR) or Tai Bwo Wannai teleport
+    notes: "Snake weed is untradeable, so no cash value is assigned to it; its gathering time is included in the cycle. The 500/hour tick-manipulated gathering baseline is a provisional community demonstration rate and is not guaranteed at level 65 Herblore. Sanfew serum requires adding unicorn horn dust, clean snake weed and nail beast nails in that order; the Wiki lists two ticks per addition and no Make-X interface. The estimate excludes travel, banking, inventory changes and GE offer time. Prices for the tradeable ingredients and serum use live GE data."
+    audit:
+      status: verified
+      source: https://oldschool.runescape.wiki/w/Sanfew_serum
+      verified_at: "2026-11-27"
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Making_sanfew_serum%284%29
