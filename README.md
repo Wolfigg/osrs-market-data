@@ -252,13 +252,14 @@ Public High Alch data includes:
 - 7D profit/cast
 - 30D profit/cast
 - ROI
-- modelled maximum four-hour quantity and profit, when the GE buy limit is known
-- capital required
+- a primary four-hour profit and quantity estimate capped by recent high-price trade volume, GE buy limits and modelled casts
+- the maximum four-hour quantity and profit allowed by the GE buy limit and modelled casts, shown as a mechanical ceiling in item details
+- estimated capital for the volume-based quantity
 - membership
 - price freshness
 - recent volume context
 
-Without a budget, four-hour totals show the maximum batch allowed by the known GE buy limit and modelled casting capacity, priced at current quotes. If an item's GE limit is missing, its per-cast margin remains available but its batch quantity, profit and required capital are left unknown. An optional four-hour buy-list budget further caps the batch by item and rune spend. Current quotes are not guaranteed fills, and the High Alch list shows each candidate's market-risk label in its summary.
+The primary four-hour totals use the last six hours of high-price trade volume projected to four hours, capped by known GE limits and modelled casting capacity. Item details also show the maximum mechanical/GE ceiling at current quotes. If an item's GE limit is missing, its per-cast margin remains available but its batch quantity, profit and required capital are left unknown. An optional four-hour buy-list budget further caps the batch by item and rune spend. Recent volume is a liquidity proxy, and current quotes are not guaranteed fills. The High Alch list shows each candidate's market-risk label in its summary.
 
 Historical item and rune prices use matching windows.
 

@@ -35,6 +35,7 @@ def four_hour_capacity(
     casts_per_hour: int = 1200,
     available_gp: int | None = None,
     extra_rune_cost_per_cast: float = 0.0,
+    observed_buy_side_volume_6h: int | None = None,
 ) -> dict[str, int | None]:
     mechanical = casts_per_hour * 4
     capital_per_cast = float(buy_price) + float(nature_rune_price) + float(extra_rune_cost_per_cast)
@@ -47,11 +48,22 @@ def four_hour_capacity(
         if by_capital is not None:
             candidates.append(by_capital)
         max_quantity = max(min(candidates), 0)
+
+    observed_volume = None if observed_buy_side_volume_6h is None else max(int(observed_buy_side_volume_6h), 0)
+    projected_buy_side_volume_4h = math.floor(observed_volume * 4 / 6) if observed_volume is not None else None
+    market_estimate_quantity = (
+        min(max_quantity, projected_buy_side_volume_4h)
+        if max_quantity is not None and projected_buy_side_volume_4h is not None
+        else None
+    )
     return {
         "mechanicalCasts": mechanical,
         "geBuyLimit": ge_buy_limit,
         "maxByCapital": by_capital,
         "maxQuantity": max_quantity,
+        "observedBuySideVolume6h": observed_volume,
+        "projectedBuySideVolume4h": projected_buy_side_volume_4h,
+        "marketEstimateQuantity4h": market_estimate_quantity,
     }
 
 
@@ -207,14 +219,31 @@ def build_alchemy_candidate(
             casts_per_hour=casts_per_hour,
             available_gp=available_gp,
             extra_rune_cost_per_cast=extra_fire_cost,
+            observed_buy_side_volume_6h=windows.get("6h", {}).get("highVolume"),
         )
 
     max_quantity = capacity["maxQuantity"] if capacity else None
+    market_estimate_quantity = capacity["marketEstimateQuantity4h"] if capacity else None
     profit_per_4h = instant["profit"] * max_quantity if instant["profit"] is not None and instant_fresh and max_quantity is not None else None
     capital_required = instant["cost"] * max_quantity if instant["cost"] is not None and instant_fresh and max_quantity is not None else None
+    profit_per_4h_market_estimate = (
+        instant["profit"] * market_estimate_quantity
+        if instant["profit"] is not None and instant_fresh and market_estimate_quantity is not None
+        else None
+    )
+    capital_required_market_estimate = (
+        instant["cost"] * market_estimate_quantity
+        if instant["cost"] is not None and instant_fresh and market_estimate_quantity is not None
+        else None
+    )
     volume_24h = int(windows.get("24h", {}).get("totalVolume") or 0)
+    buy_side_volume_24h = int(windows.get("24h", {}).get("highVolume") or 0)
     volume_7d = int(windows.get("7d", {}).get("totalVolume") or 0)
-    planned_share = max_quantity / volume_24h * 100.0 if volume_24h > 0 and max_quantity is not None and max_quantity > 0 else None
+    planned_share = (
+        market_estimate_quantity / buy_side_volume_24h * 100.0
+        if buy_side_volume_24h > 0 and market_estimate_quantity is not None and market_estimate_quantity > 0
+        else None
+    )
     liquidity_warn = liquidity_warnings(planned_share, liquidity_settings)
 
     age = max(generated_at - latest_item.high_time, 0) if latest_item.high_time is not None else None
@@ -228,6 +257,8 @@ def build_alchemy_candidate(
         warnings.append("CURRENT_PATIENT_PROXY_UNUSABLE")
     if item.limit is None:
         warnings.append("MISSING_BUY_LIMIT")
+    if capacity and (capacity["observedBuySideVolume6h"] is None or capacity["observedBuySideVolume6h"] == 0):
+        warnings.append("NO_RECENT_BUY_SIDE_VOLUME")
     if not use_fire_staff and fire_rune_price is None:
         warnings.append("MISSING_FIRE_RUNE_PRICE")
 
@@ -264,10 +295,13 @@ def build_alchemy_candidate(
         "historicalInstant6m": hist6m,
         "capacity4h": capacity,
         "profitPer4hGeLimit": profit_per_4h,
+        "profitPer4hMarketEstimate": profit_per_4h_market_estimate,
         "capitalRequired": capital_required,
+        "capitalRequiredMarketEstimate": capital_required_market_estimate,
         "magicXpPerHour": casts_per_hour * xp_per_cast,
         "magicXpPer4hBatch": max_quantity * xp_per_cast if max_quantity is not None else None,
         "volume24h": volume_24h,
+        "buySideVolume24h": buy_side_volume_24h,
         "volume7d": volume_7d,
         "highVwap24h": windows.get("24h", {}).get("highVwap"),
         "priceChangePct24h": windows.get("24h", {}).get("changePct"),
