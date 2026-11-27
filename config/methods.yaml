@@ -712,7 +712,7 @@ methods:
     cycles_per_hour: 600
     theoretical_cycles_per_hour: 1000
     planned_hours_per_day: 4
-    method_types: [bankstanding]
+    method_types: [bankstanding, probabilistic]
     afk:
       interval_seconds: 6
       intensity: high
