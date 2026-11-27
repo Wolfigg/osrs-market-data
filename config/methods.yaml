@@ -1569,7 +1569,7 @@ methods:
       quests:
         - Shades of Mort'ton
     notes: Razmire Builders Merchants stocks 1,000 limestone at 10 gp each and changes its selling price by 4% per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
-    reference: https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants.
+    reference: https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants
 
   shop_hop_spade_vanessa:
     enabled: true
