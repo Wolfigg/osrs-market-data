@@ -1,11 +1,11 @@
 ---
-status: done
+status: in_progress
 ---
 # Lunar spell and unusual shop methods
 
 ## Next action
 
-None. The Lunar money-making entries and unusual shop methods are merged to `master` and published.
+Validate the shop-hop cycle-time correction in CI, then merge the follow-up.
 
 ## Scope
 
@@ -19,6 +19,13 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 - Bandit's brew, limestone and spades are added from the live unusual-method list with verified NPC stock, costs, access requirements and hop-only ceiling labels.
 - Each enabled method has a verified OSRS Wiki audit record.
 - The catalogue is validated, CI passes, and the change is merged to `master`.
+
+## Shop-hop cycle timing follow-up
+
+The prior model used the seven-second world-hop interval as the full cycle for ten shop-hopping methods. Their configured rate now includes a provisional 0.6-second tick per shop-open action, transaction action, and pack-opening action. Full-stocking Baba Yaga's 250 astral runes uses five Buy-50 transaction actions. The sandworm cycle has one pack opening; the bone-bolt cycle has two. The estimated cycles/hour are derived as `3600 / estimated_cycle_seconds`. Travel, banking, and GE offer time remain excluded, so these are estimates rather than measured end-to-end rates. The mixed-hide method keeps its guide-based rate.
+
+- Source for tick length and shop batch sizes: [Game tick](https://oldschool.runescape.wiki/w/Game_tick), [Shop](https://oldschool.runescape.wiki/w/Shop).
+- Validation: pending CI for the timing follow-up.
 
 ## Validation
 
@@ -47,4 +54,4 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 - [Spade](https://oldschool.runescape.wiki/w/Spade)
 - [User-provided unusual money-making site](https://unusualmoneymaking.com/)
 
-The live unusual-method page displayed 118 Unusual Methods and 14 Special Methods when reviewed on 2026-11-27. Bandit's brew, limestone and spades were added from that list. OSRS Wiki shop data supplies the configured NPC prices, stock and access requirements; the limestone model buys one item per world at the fully stocked 10 gp price. Market proceeds use the app's live price and liquidity model. The seven-second rate is a hop-only ceiling, not a measured end-to-end rate.
+The live unusual-method page displayed 118 Unusual Methods and 14 Special Methods when reviewed on 2026-11-27. Bandit's brew, limestone and spades were added from that list. OSRS Wiki shop data supplies the configured NPC prices, stock and access requirements; the limestone model buys one item per world at the fully stocked 10 gp price. Market proceeds use the app's live price and liquidity model. The ten methods that previously used the seven-second hop-only ceiling now use a provisional cycle-time estimate. One 0.6-second game tick is budgeted for each shop-open action, purchase or sale transaction, and pack opening. The hop-only ceiling remains 3600 / 7 = 514.3 cycles/hour. The mixed-hide method retains its separate guide-based throughput estimate.
