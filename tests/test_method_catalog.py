@@ -191,6 +191,28 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
     assert warhammer["inputs"][0]["item_id"] == warhammer["shop_sales"][0]["item_id"]
     assert warhammer["cycles_per_hour"] / warhammer["inputs"][0]["quantity"] > 70 / 4
 
+def test_sanfew_serum_route_includes_tick_manipulated_gathering_and_manual_mix_steps():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    method = methods["gather_snakeweed_make_sanfew_serum"]
+    timing = method["sanfew_serum_timing"]
+
+    assert [row["item_id"] for row in method["inputs"]] == [3024, 235, 10937]
+    assert method["outputs"] == [{"item_id": 10925, "quantity": 1}]
+    assert method["requirements"]["herblore"] == 65
+    assert method["requirements"]["quests"] == ["Zogre Flesh Eaters"]
+    assert method["method_types"] == ["active-route"]
+    expected_seconds = 3600 / 500 + 0.6 + (3 * 2 * 0.6)
+    assert expected_seconds == pytest.approx(11.4)
+    assert timing["snake_weed_gather_seconds"] == pytest.approx(3600 / 500)
+    assert timing["herb_clean_seconds"] == pytest.approx(0.6)
+    assert timing["estimated_cycle_seconds"] == pytest.approx(expected_seconds)
+    assert method["afk"]["interval_seconds"] == pytest.approx(expected_seconds)
+    assert method["cycles_per_hour"] == pytest.approx(3600 / expected_seconds)
+    assert method["afk"]["intensity"] == "high"
+    assert "untradeable" in method["notes"].lower()
+    assert "provisional" in method["notes"].lower()
+
+
 def test_fountain_recharge_routes_and_additional_processing_methods_are_audited():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
     fountain_ids = [method_id for method_id in methods if method_id.startswith("fountain_recharge_")]
