@@ -147,7 +147,7 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
         "shop_hop_pellem_jaguar_fur",
         "shop_hop_fortis_jaguar_fur",
         "shop_hop_bandits_brew_big_heist_lodge",
-        "shop_hop_papyrus_rasolo",
+        "shop_hop_limestone_razmire_builders",
         "shop_hop_spade_vanessa",
     ):
         method = methods[method_id]
@@ -164,7 +164,7 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
         "shop_hop_pellem_jaguar_fur": 209,
         "shop_hop_fortis_jaguar_fur": 193,
         "shop_hop_bandits_brew_big_heist_lodge": 650,
-        "shop_hop_papyrus_rasolo": 20,
+        "shop_hop_limestone_razmire_builders": 10,
         "shop_hop_spade_vanessa": 3,
     }
     for method_id, expected in expected_shop_costs.items():
