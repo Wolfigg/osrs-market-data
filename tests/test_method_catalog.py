@@ -137,7 +137,7 @@ def test_engorged_bloodwood_method_models_the_full_tradeable_arrow_batch():
 
 def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
-    assert len([method for method in methods.values() if "shop-hopping" in method["method_types"]]) == 6
+    assert len([method for method in methods.values() if "shop-hopping" in method["method_types"]]) == 8
     mixed = methods["shop_hop_mixed_hide_bases"]
     assert mixed["cycles_per_hour"] * mixed["outputs"][0]["quantity"] == 1485
     assert mixed["shop_purchases"][0]["quantity"] * mixed["shop_purchases"][0]["gp_per_item"] * mixed["cycles_per_hour"] == 18803070
