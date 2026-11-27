@@ -1,7 +1,7 @@
 # AFK Method Catalogue Audit
 
 Audit baseline: 2026-08-29
-Updated: 2026-11-26
+Updated: 2026-11-27
 Status: complete for the enabled catalogue
 
 This document records the catalogue-quality pass for OSRS Market Board. It is maintainer documentation and is not part of the GitHub Pages public artifact.
@@ -132,9 +132,9 @@ The engorged bloodwood method converts one sap bucket and one redwood log into 1
 
 ### Shop hopping
 
-The catalogue includes Pellem's mixed hide base guide, astral runes from Baba Yaga, cosmic runes from Tal Teklan, jaguar fur from Pellem and Fortis, GE rune warhammers sold to Skulgrimen, sandworm packs from Tynan and bone bolt packs from Nardok. Mixed hide bases use the Wiki money-making guide's 1,485 items/hour and exact 18,803,070 gp shop-purchase total, normalized to 55 batches of 27 items at a 12,662 gp average purchase price. Its Stamina potion input is priced from live GE data.
+The catalogue includes Pellem's mixed hide base guide, astral runes from Baba Yaga, cosmic runes from Tal Teklan, jaguar fur from Pellem and Fortis, GE rune warhammers sold to Skulgrimen, sandworm packs from Tynan, bone bolt packs from Nardok, Bandit's brew from the Big Heist Lodge, papyrus from Rasolo, and spades from Vanessa's Farming Shop. Mixed hide bases use the Wiki money-making guide's 1,485 items/hour and exact 18,803,070 gp shop-purchase total, normalized to 55 batches of 27 items at a 12,662 gp average purchase price. Its Stamina potion input is priced from live GE data.
 
-Sandworm packs are normalized as 100 sandworms bought at 90 gp each, one pack per world to preserve the full-stock price. Bone bolt packs are normalized as 200 bolts for the first two pack prices, 350 and 357 gp. Both use the user's seven-second hop interval only as an upper bound; purchases, banking, travel and GE offer time remain excluded. Market volume and live prices determine displayed risk and profitability.
+Sandworm packs are normalized as 100 sandworms bought at 90 gp each, one pack per world to preserve the full-stock price. Bone bolt packs are normalized as 200 bolts for the first two pack prices, 350 and 357 gp. Bandit's brew, papyrus and spades are normalized to one item per world at their fully stocked NPC prices of 650, 20 and 3 gp. Their shop stocks are 10, 5 and 500 respectively; Bandit's brew requires Desert Treasure I. These methods use the user's seven-second hop interval only as an upper bound; purchases, banking, travel and GE offer time remain excluded. Market volume and live prices determine displayed risk and profitability.
 
 Astral runes, cosmic runes and jaguar furs use configured average per-item NPC purchase costs, then use live GE directional prices and seller tax for sale proceeds. These purchase costs are shown as a separate table and included in profit and capital calculations. Rune warhammers instead use live GE purchase costs and fixed NPC proceeds of 29,050 gp for the first item sold to an empty Skulgrimen stock; this NPC payment has no GE seller tax and the item's 70-per-four-hours GE buy limit caps sustained throughput at 17.5 per hour.
 
