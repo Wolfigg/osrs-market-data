@@ -278,6 +278,124 @@ methods:
       output_units_per_cycle: 26
     notes: One cast recharges up to 26 eligible items in the inventory to four charges; Skills necklaces additionally require Legends' Quest. The 360 casts/hour working rate is calculated from the Pay-to-play Magic training page's 35,100 Magic XP/hour divided by 97.5 XP per cast; it is an average 10-second batch cadence, not an unattended AFK window. A water-rune staff supplies the four Water runes; one Astral and one Soul rune are consumed per cast.
 
+  tan_leather_green_dhide:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Tan_Leather
+    checks:
+      cycles_per_hour: 1600
+      theoretical_cycles_per_hour: 2000
+      afk_interval_seconds: 2.25
+      input_units_per_cycle: 8
+      output_units_per_cycle: 5
+    notes: One cast tans up to five green dragonhides. The Wiki's approximately 8,000 hides/hour is normalized to 1,600 casts/hour; a three-tick spell gives a 2,000 casts/hour ceiling. Fire runes are supplied by equipment.
+
+  tan_leather_blue_dhide:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Tan_Leather
+    checks:
+      cycles_per_hour: 1600
+      theoretical_cycles_per_hour: 2000
+      afk_interval_seconds: 2.25
+      input_units_per_cycle: 8
+      output_units_per_cycle: 5
+    notes: One cast tans up to five blue dragonhides. The Wiki's approximately 8,000 hides/hour is normalized to 1,600 casts/hour; a three-tick spell gives a 2,000 casts/hour ceiling. Fire runes are supplied by equipment.
+
+  tan_leather_red_dhide:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Tan_Leather
+    checks:
+      cycles_per_hour: 1600
+      theoretical_cycles_per_hour: 2000
+      afk_interval_seconds: 2.25
+      input_units_per_cycle: 8
+      output_units_per_cycle: 5
+    notes: One cast tans up to five red dragonhides. The Wiki's approximately 8,000 hides/hour is normalized to 1,600 casts/hour; a three-tick spell gives a 2,000 casts/hour ceiling. Fire runes are supplied by equipment.
+
+  tan_leather_black_dhide:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Tan_Leather
+    checks:
+      cycles_per_hour: 1600
+      theoretical_cycles_per_hour: 2000
+      afk_interval_seconds: 2.25
+      input_units_per_cycle: 8
+      output_units_per_cycle: 5
+    notes: One cast tans up to five black dragonhides. The Wiki's approximately 8,000 hides/hour is normalized to 1,600 casts/hour; a three-tick spell gives a 2,000 casts/hour ceiling. Fire runes are supplied by equipment.
+
+  spin_flax_bowstrings:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Spin_Flax
+    checks:
+      cycles_per_hour: 1200
+      theoretical_cycles_per_hour: 1200
+      afk_interval_seconds: 3
+      input_units_per_cycle: 8
+      output_units_per_cycle: 5
+    notes: One five-tick cast consumes five flax, two Nature runes and one Astral rune, then produces five bow strings. An air-rune staff supplies the five Air runes. The Wiki rate of 6,000 bow strings/hour equals 1,200 casts/hour.
+
+  superglass_make_giant_seaweed:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Casting_Superglass_Make
+    checks:
+      cycles_per_hour: 600
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 6
+      input_units_per_cycle: 23
+      output_units_per_cycle: 26.1
+      expected_output_basis: 15660 / 600
+    notes: Each cast consumes 18 buckets of sand, three giant seaweed and two Astral runes. The source guide's 15,660 molten glass over 600 casts gives 26.1 expected glass per cast. The rate is active banking, not AFK.
+
+  humidify_soft_clay:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Humidifying_clay
+    checks:
+      cycles_per_hour: 815
+      theoretical_cycles_per_hour: 815
+      afk_interval_seconds: 4.4171779
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: One cast consumes one Astral rune and converts 27 clay to soft clay; the Steam battlestaff supplies elemental runes. The Wiki guide gives up to 815 batches/hour at high efficiency.
+
+  humidify_buckets_of_water:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Filling_buckets_with_water
+    checks:
+      cycles_per_hour: 815
+      theoretical_cycles_per_hour: 815
+      afk_interval_seconds: 4.4171779
+      input_units_per_cycle: 28
+      output_units_per_cycle: 27
+    notes: One cast consumes one Astral rune and fills 27 buckets; the Steam battlestaff supplies elemental runes. The Wiki guide gives up to 815 batches/hour and describes the method as click-intensive.
+
+  hunter_kit_opening:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [bankstanding]
+    source: https://oldschool.runescape.wiki/w/Money_making_guide/Casting_Hunter_kit
+    checks:
+      cycles_per_hour: 1000
+      theoretical_cycles_per_hour: 1000
+      afk_interval_seconds: 3.6
+      input_units_per_cycle: 2
+      output_units_per_cycle: 8
+    notes: One Hunter Kit cast consumes two Astral runes; an Earth-rune staff supplies the two Earth runes. Each kit gives the eight listed tradeable outputs. Net traps are untradeable and excluded. The Wiki guide uses 1,000 opened kits/hour and its high-intensity rate.
+
   fountain_recharge_glory_obelisk_route:
     status: verified
     verified_at: "2026-11-26"
@@ -521,3 +639,34 @@ methods:
       hop_only_cycles_per_hour: 514.2857143
       maximum_cycles_per_hour_after_ge_limit: 17.5
     notes: Models one first-sale item to empty stock per world, with NPC payout separated from GE output tax. The item buy limit, not the hop cadence, sets its sustained maximum at 17.5 items/hour.
+
+  shop_hop_sandworm_packs_tynan:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Tynan's_Fishing_Supplies
+    checks:
+      stock_per_world_packs: 50
+      pack_size: 100
+      packs_per_cycle: 1
+      normal_pack_price_gp: 9000
+      shop_cost_gp_per_cycle: 9000
+      output_units_per_cycle: 100
+      hop_only_cycles_per_hour: 514.2857143
+    notes: One full-stock Sandworms pack costs 9,000 gp and contains 100 worms. The seven-second per-world ceiling excludes purchase interactions, banking and GE fills; use live output prices and liquidity warnings.
+
+  shop_hop_bone_bolt_packs_nardok:
+    status: verified
+    verified_at: "2026-11-27"
+    method_types: [shop-hopping]
+    source: https://oldschool.runescape.wiki/w/Nardok's_Bone_Weapons
+    checks:
+      stock_per_world_packs: 80
+      pack_size: 100
+      packs_per_cycle: 2
+      normal_pack_price_gp: 350
+      price_change_pct_per_item: 2
+      shop_cost_gp_per_cycle: 707
+      output_units_per_cycle: 200
+      hop_only_cycles_per_hour: 514.2857143
+    notes: Two bone bolt packs cost 350 and 357 gp at the start of shop stock, yielding 200 bolts for 707 gp. The seven-second per-world ceiling excludes purchase interactions, banking and GE fills; use live output prices and liquidity warnings.

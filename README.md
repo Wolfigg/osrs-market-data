@@ -157,7 +157,7 @@ Public AFK data includes:
 
 Every enabled method must pass structural validation and carry an OSRS Wiki-backed `audit.status: verified`. Collection fails rather than publishing an enabled method without verified audit provenance.
 
-The completion audit covers the generated and hand-tuned families, including cannonballs, bolt tips, dart tips, Plank Make, longbows, cooking, jewellery, glassblowing, battlestaves, gathering and shop-hopping methods. Shop-hopping entries without an end-to-end rate are marked as hop-only ceilings in their details. Detailed assumptions and corrections are recorded in:
+The completion audit covers the generated and hand-tuned families, including cannonballs, bolt tips, dart tips, Plank Make, Lunar spell processing, longbows, cooking, jewellery, glassblowing, battlestaves, gathering and shop-hopping methods. Shop-hopping entries without an end-to-end rate are marked as hop-only ceilings in their details. Detailed assumptions and corrections are recorded in:
 
 ```text
 config/method_audit.yaml

@@ -46,6 +46,18 @@ Autocast processes one plank every 3.6 seconds. The catalogue uses 833 casts/hou
 
 The public capital calculation now includes fixed coin charges, correcting the previous understatement for Plank Make.
 
+### Lunar spell processing
+
+Tan Leather has separate green, blue, red and black dragonhide conversions. Each cycle consumes five hides, two Astral runes and one Nature rune; a Fire-rune-supplying staff provides the spell's five Fire runes. The working rate is 1,600 casts/hour, derived from the Wiki's approximately 8,000 hides/hour, with 2,000 casts/hour as the three-tick ceiling. The Hard Fremennik Diary and 78 Magic are required.
+
+Spin Flax converts five flax into five bow strings per cast, consuming two Nature runes and one Astral rune. An air-rune staff supplies the five Air runes. The Wiki's 6,000 strings/hour rate maps to 1,200 casts/hour; level 76 Magic, 61 Crafting and Lunar Diplomacy are required.
+
+Superglass Make uses 18 buckets of sand, three giant seaweed and two Astral runes per cast. Its expected 26.1 glass output is the Wiki guide's 15,660 molten glass divided by 600 casts, not a guaranteed yield. The working rate is 600 casts/hour; 1,000/hour is kept as the peak. A Smoke battlestaff or a Tome of Fire with an air-rune staff supplies the elemental runes.
+
+Humidify methods convert 27 clay to soft clay or fill 27 empty buckets per cast. One Astral rune is consumed; a Steam battlestaff supplies Fire and Water runes. Both use the Wiki guide's upper rate of 815 casts/hour, and are marked as click-intensive bankstanding.
+
+Hunter Kit converts two Astral runes per cast, with an Earth-rune-supplying staff, into eight guaranteed tradeable Hunter items when the kit is opened. The model follows the Wiki guide's 1,000 kits opened/hour. The untradeable net trap is excluded from revenue.
+
 ### Recharge Dragonstone
 
 The catalogue has separate batch methods for amulets of glory, combat bracelets and skills necklaces. One cast recharges 26 items to four charges. A Water-rune-supplying staff covers the four Water runes; each cast consumes one Astral rune and one Soul rune. The model uses 360 casts/hour, calculated from 35,100 Magic XP/hour divided by 97.5 XP/cast. This is an average 10-second bankstanding cadence, not 10 seconds of unattended AFK time. Casting requires 89 Magic, Lunar Diplomacy and the hard Fremennik Diary; combat bracelets and skills necklaces also require Legends' Quest. The spell does not recharge rings of wealth.
@@ -120,7 +132,9 @@ The engorged bloodwood method converts one sap bucket and one redwood log into 1
 
 ### Shop hopping
 
-The catalogue includes Pellem's mixed hide base guide, astral runes from Baba Yaga, cosmic runes from Tal Teklan, jaguar fur from Pellem and Fortis, and GE rune warhammers sold to Skulgrimen. Mixed hide bases use the Wiki money-making guide's 1,485 items/hour and exact 18,803,070 gp shop-purchase total, normalized to 55 batches of 27 items at a 12,662 gp average purchase price. Its Stamina potion input is priced from live GE data.
+The catalogue includes Pellem's mixed hide base guide, astral runes from Baba Yaga, cosmic runes from Tal Teklan, jaguar fur from Pellem and Fortis, GE rune warhammers sold to Skulgrimen, sandworm packs from Tynan and bone bolt packs from Nardok. Mixed hide bases use the Wiki money-making guide's 1,485 items/hour and exact 18,803,070 gp shop-purchase total, normalized to 55 batches of 27 items at a 12,662 gp average purchase price. Its Stamina potion input is priced from live GE data.
+
+Sandworm packs are normalized as 100 sandworms bought at 90 gp each, one pack per world to preserve the full-stock price. Bone bolt packs are normalized as 200 bolts for the first two pack prices, 350 and 357 gp. Both use the user's seven-second hop interval only as an upper bound; purchases, banking, travel and GE offer time remain excluded. Market volume and live prices determine displayed risk and profitability.
 
 Astral runes, cosmic runes and jaguar furs use configured average per-item NPC purchase costs, then use live GE directional prices and seller tax for sale proceeds. These purchase costs are shown as a separate table and included in profit and capital calculations. Rune warhammers instead use live GE purchase costs and fixed NPC proceeds of 29,050 gp for the first item sold to an empty Skulgrimen stock; this NPC payment has no GE seller tax and the item's 70-per-four-hours GE buy limit caps sustained throughput at 17.5 per hour.
 

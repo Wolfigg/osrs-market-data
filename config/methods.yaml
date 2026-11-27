@@ -502,6 +502,344 @@ methods:
     notes: One Recharge Dragonstone cast recharges all eligible skills necklaces in the inventory to four charges; Legends' Quest is also required. A water-rune staff supplies the spell's four Water runes; each cast consumes one Astral rune and one Soul rune. The rate is 35,100 Magic XP/hour divided by 97.5 XP per cast; no faster bank-processing rate is assumed. This spell does not recharge rings of wealth.
     reference: https://oldschool.runescape.wiki/w/Recharge_Dragonstone
 
+  tan_leather_green_dhide:
+    enabled: true
+    name: Tan green dragonhide
+    category: bankstanding/magic
+    inputs:
+      - item_id: 1753
+        quantity: 5
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+      - item_id: 561
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 1745
+        quantity: 5
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1600
+    theoretical_cycles_per_hour: 2000
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 2.25
+      intensity: high
+      description: Manually cast Tan Leather once for each batch of five hides. The 1,600-cast working rate follows the Wiki's approximately 8,000 hides per hour; this is active bankstanding, not AFK.
+    requirements:
+      members: true
+      magic: 78
+      quests:
+        - Lunar Diplomacy
+      diaries:
+        - Hard Fremennik Diary
+      equipment:
+        - Fire-rune supplying staff
+    notes: A staff supplies the spell's five Fire runes. One cast consumes two Astral runes and one Nature rune and tans up to five green dragonhides. The working rate is 8,000 hides/hour divided by five; 2,000 casts/hour is the three-tick casting ceiling.
+    reference: https://oldschool.runescape.wiki/w/Tan_Leather
+
+  tan_leather_blue_dhide:
+    enabled: true
+    name: Tan blue dragonhide
+    category: bankstanding/magic
+    inputs:
+      - item_id: 1751
+        quantity: 5
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+      - item_id: 561
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 2505
+        quantity: 5
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1600
+    theoretical_cycles_per_hour: 2000
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 2.25
+      intensity: high
+      description: Manually cast Tan Leather once for each batch of five hides. The 1,600-cast working rate follows the Wiki's approximately 8,000 hides per hour; this is active bankstanding, not AFK.
+    requirements:
+      members: true
+      magic: 78
+      quests:
+        - Lunar Diplomacy
+      diaries:
+        - Hard Fremennik Diary
+      equipment:
+        - Fire-rune supplying staff
+    notes: A staff supplies the spell's five Fire runes. One cast consumes two Astral runes and one Nature rune and tans up to five blue dragonhides. The working rate is 8,000 hides/hour divided by five; 2,000 casts/hour is the three-tick casting ceiling.
+    reference: https://oldschool.runescape.wiki/w/Tan_Leather
+
+  tan_leather_red_dhide:
+    enabled: true
+    name: Tan red dragonhide
+    category: bankstanding/magic
+    inputs:
+      - item_id: 1749
+        quantity: 5
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+      - item_id: 561
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 2507
+        quantity: 5
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1600
+    theoretical_cycles_per_hour: 2000
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 2.25
+      intensity: high
+      description: Manually cast Tan Leather once for each batch of five hides. The 1,600-cast working rate follows the Wiki's approximately 8,000 hides per hour; this is active bankstanding, not AFK.
+    requirements:
+      members: true
+      magic: 78
+      quests:
+        - Lunar Diplomacy
+      diaries:
+        - Hard Fremennik Diary
+      equipment:
+        - Fire-rune supplying staff
+    notes: A staff supplies the spell's five Fire runes. One cast consumes two Astral runes and one Nature rune and tans up to five red dragonhides. The working rate is 8,000 hides/hour divided by five; 2,000 casts/hour is the three-tick casting ceiling.
+    reference: https://oldschool.runescape.wiki/w/Tan_Leather
+
+  tan_leather_black_dhide:
+    enabled: true
+    name: Tan black dragonhide
+    category: bankstanding/magic
+    inputs:
+      - item_id: 1747
+        quantity: 5
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+      - item_id: 561
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 2509
+        quantity: 5
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1600
+    theoretical_cycles_per_hour: 2000
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 2.25
+      intensity: high
+      description: Manually cast Tan Leather once for each batch of five hides. The 1,600-cast working rate follows the Wiki's approximately 8,000 hides per hour; this is active bankstanding, not AFK.
+    requirements:
+      members: true
+      magic: 78
+      quests:
+        - Lunar Diplomacy
+      diaries:
+        - Hard Fremennik Diary
+      equipment:
+        - Fire-rune supplying staff
+    notes: A staff supplies the spell's five Fire runes. One cast consumes two Astral runes and one Nature rune and tans up to five black dragonhides. The working rate is 8,000 hides/hour divided by five; 2,000 casts/hour is the three-tick casting ceiling.
+    reference: https://oldschool.runescape.wiki/w/Tan_Leather
+
+  spin_flax_bowstrings:
+    enabled: true
+    name: Spin flax into bow strings
+    category: bankstanding/magic
+    inputs:
+      - item_id: 1779
+        quantity: 5
+        buy_via_ge: true
+      - item_id: 561
+        quantity: 2
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 1777
+        quantity: 5
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1200
+    theoretical_cycles_per_hour: 1200
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 3
+      intensity: high
+      description: Cast Spin Flax once per five flax. The spell has a five-tick cycle and the Wiki gives up to 6,000 bow strings per hour; this is active bankstanding, not AFK.
+    requirements:
+      members: true
+      magic: 76
+      crafting: 61
+      quests:
+        - Lunar Diplomacy
+      equipment:
+        - Air-rune supplying staff
+    notes: One cast makes five bow strings, consuming two Nature runes and one Astral rune. An air-rune staff supplies the five Air runes.
+    reference: https://oldschool.runescape.wiki/w/Spin_Flax
+
+  superglass_make_giant_seaweed:
+    enabled: true
+    name: Superglass Make with giant seaweed
+    category: bankstanding/magic
+    inputs:
+      - item_id: 1783
+        quantity: 18
+        buy_via_ge: true
+      - item_id: 21504
+        quantity: 3
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+    outputs:
+      - item_id: 1775
+        quantity: 26.1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 600
+    theoretical_cycles_per_hour: 1000
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 6
+      intensity: high
+      description: Cast once on 18 buckets of sand and three giant seaweed, then bank the expected glass output. The Wiki guide uses 600 casts per hour and gives 1,000 per hour as an attainable peak; this is active bankstanding, not AFK.
+    requirements:
+      members: true
+      magic: 77
+      quests:
+        - Lunar Diplomacy
+      equipment:
+        - Smoke battlestaff or Tome of Fire with an air-rune staff
+    notes: The output is the Wiki guide's expected 26.1 molten glass per cast, calculated from 15,660 glass over 600 casts. Two Astral runes are consumed per cast; the equipment supplies Air and Fire runes. Random glass yield is represented as its expected quantity.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Casting_Superglass_Make
+
+  humidify_soft_clay:
+    enabled: true
+    name: Humidify clay into soft clay
+    category: bankstanding/magic
+    inputs:
+      - item_id: 434
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 1761
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 815
+    theoretical_cycles_per_hour: 815
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 4.4171779
+      intensity: high
+      description: Cast Humidify on 27 clay and bank the soft clay. The Wiki guide gives up to 815 batches per hour at high efficiency; this is active, click-intensive bankstanding.
+    requirements:
+      members: true
+      magic: 68
+      quests:
+        - Lunar Diplomacy
+        - Dream Mentor
+      equipment:
+        - Steam battlestaff
+    notes: A steam battlestaff supplies the spell's Fire and Water runes. Each cast consumes one Astral rune and converts all 27 clay to soft clay.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Humidifying_clay
+
+  humidify_buckets_of_water:
+    enabled: true
+    name: Humidify buckets of water
+    category: bankstanding/magic
+    inputs:
+      - item_id: 1925
+        quantity: 27
+        buy_via_ge: true
+      - item_id: 9075
+        quantity: 1
+        buy_via_ge: true
+    outputs:
+      - item_id: 1929
+        quantity: 27
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 815
+    theoretical_cycles_per_hour: 815
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 4.4171779
+      intensity: high
+      description: Cast Humidify on 27 empty buckets and bank the filled buckets. The Wiki guide gives up to 815 batches per hour at high efficiency; this is active, click-intensive bankstanding.
+    requirements:
+      members: true
+      magic: 68
+      quests:
+        - Lunar Diplomacy
+        - Dream Mentor
+      equipment:
+        - Steam battlestaff
+    notes: A steam battlestaff supplies the spell's Fire and Water runes. Each cast consumes one Astral rune and fills 27 buckets. The Wiki warns that the method is click-intensive.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Filling_buckets_with_water
+
+  hunter_kit_opening:
+    enabled: true
+    name: Cast and open Hunter kits
+    category: bankstanding/magic
+    inputs:
+      - item_id: 9075
+        quantity: 2
+        buy_via_ge: true
+    outputs:
+      - item_id: 10150
+        quantity: 1
+      - item_id: 10010
+        quantity: 1
+      - item_id: 10006
+        quantity: 1
+      - item_id: 10031
+        quantity: 1
+      - item_id: 10093
+        quantity: 1
+      - item_id: 598
+        quantity: 1
+      - item_id: 11260
+        quantity: 1
+      - item_id: 10008
+        quantity: 1
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 1000
+    theoretical_cycles_per_hour: 1000
+    planned_hours_per_day: 4
+    method_types: [bankstanding]
+    afk:
+      interval_seconds: 3.6
+      intensity: high
+      description: Cast Hunter Kit, deposit and open its guaranteed tradeable contents. The Wiki money-making guide assumes 1,000 kits per hour; this is active bankstanding, not AFK.
+    requirements:
+      members: true
+      magic: 71
+      quests:
+        - Lunar Diplomacy
+        - Dream Mentor
+      equipment:
+        - Earth-rune supplying staff
+    notes: One cast consumes two Astral runes; an Earth-rune staff supplies the two Earth runes. Each kit always gives one of the eight listed tradeable items. The untradeable net trap is excluded from GE revenue.
+    reference: https://oldschool.runescape.wiki/w/Money_making_guide/Casting_Hunter_kit
+
   fountain_recharge_glory_obelisk_route:
     enabled: true
     name: Recharge amulets of glory at the Fountain of Rune
@@ -1112,3 +1450,63 @@ methods:
         - The Fremennik Trials
     notes: Sells one rune warhammer to an empty Skulgrimen stock per world for 29,050 gp. The next sale to that shop would pay less, so this model uses one item per world. Rune warhammers have a 70-per-four-hours GE buy limit, which caps sustained throughput at 17.5 items/hour; NPC proceeds do not incur GE tax. The 7-second world-hop rate excludes shop interaction and banking.
     reference: https://oldschool.runescape.wiki/w/Rune_warhammer
+
+  shop_hop_sandworm_packs_tynan:
+    enabled: true
+    name: Buy sandworm packs from Tynan
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 13431
+        quantity: 100
+    shop_purchases:
+      - item_id: 13431
+        quantity: 100
+        shop_name: Tynan's Fishing Supplies (one sandworm pack)
+        gp_per_item: 90
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: One shop pack supplies 100 sandworms. The rate is only the user's seven-second world-hop ceiling; it excludes purchases, travel, banking and GE offer time, so GP/hour is not a measured end-to-end rate.
+    requirements:
+      members: true
+      unlocks:
+        - Port Piscarilius access
+    notes: A pack costs 9,000 coins at full stock and opens into 100 sandworms, a 90 gp shop cost per worm. The model buys one pack per world to retain the base price; it sells the worms to the GE with live prices and tax. The 7-second world-hop rate is an upper bound, not a measured method rate.
+    reference: https://oldschool.runescape.wiki/w/Tynan's_Fishing_Supplies
+
+  shop_hop_bone_bolt_packs_nardok:
+    enabled: true
+    name: Buy bone bolt packs from Nardok
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 8882
+        quantity: 200
+    shop_purchases:
+      - item_id: 8882
+        quantity: 200
+        shop_name: Nardok's Bone Weapons (two bone bolt packs)
+        gp_per_item: 3.535
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: Two shop packs supply 200 bone bolts. The rate is only the user's seven-second world-hop ceiling; it excludes purchases, travel, banking and GE offer time, so GP/hour is not a measured end-to-end rate.
+    requirements:
+      members: true
+      quests:
+        - The Lost Tribe
+    notes: The first two packs cost 350 and 357 coins, or 707 gp for 200 bolts. The purchase is normalized to a 3.535 gp cost per bolt; the output is sold to the GE using live prices and tax. The 7-second world-hop rate is an upper bound, not a measured method rate.
+    reference: https://oldschool.runescape.wiki/w/Nardok's_Bone_Weapons
