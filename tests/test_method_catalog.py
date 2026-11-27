@@ -141,23 +141,7 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
     mixed = methods["shop_hop_mixed_hide_bases"]
     assert mixed["cycles_per_hour"] * mixed["outputs"][0]["quantity"] == 1485
     assert mixed["shop_purchases"][0]["quantity"] * mixed["shop_purchases"][0]["gp_per_item"] * mixed["cycles_per_hour"] == 18803070
-    for method_id in (
-        "shop_hop_baba_yaga_astral_runes",
-        "shop_hop_tal_teklan_cosmic_runes",
-        "shop_hop_pellem_jaguar_fur",
-        "shop_hop_fortis_jaguar_fur",
-        "shop_hop_bandits_brew_big_heist_lodge",
-        "shop_hop_limestone_razmire_builders",
-        "shop_hop_spade_vanessa",
-    ):
-        method = methods[method_id]
-        assert method["cycles_per_hour"] == pytest.approx(3600 / 7)
-        assert "upper bound" in method["afk"]["description"].lower()
-    warhammer = methods["shop_hop_rune_warhammer_skulgrimen"]
-    assert warhammer["outputs"] == []
-    assert warhammer["shop_sales"][0]["gp_per_item"] == 29050
-    assert warhammer["inputs"][0]["item_id"] == warhammer["shop_sales"][0]["item_id"]
-    assert warhammer["cycles_per_hour"] / warhammer["inputs"][0]["quantity"] > 70 / 4
+
     expected_shop_costs = {
         "shop_hop_baba_yaga_astral_runes": 13940,
         "shop_hop_tal_teklan_cosmic_runes": 1510,
@@ -172,6 +156,40 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
         purchase = method["shop_purchases"][0]
         assert purchase["quantity"] * purchase["gp_per_item"] == pytest.approx(expected)
 
+    expected_actions = {
+        "shop_hop_baba_yaga_astral_runes": (5, 0),
+        "shop_hop_tal_teklan_cosmic_runes": (1, 0),
+        "shop_hop_pellem_jaguar_fur": (1, 0),
+        "shop_hop_fortis_jaguar_fur": (1, 0),
+        "shop_hop_rune_warhammer_skulgrimen": (1, 0),
+        "shop_hop_sandworm_packs_tynan": (1, 1),
+        "shop_hop_bone_bolt_packs_nardok": (1, 2),
+        "shop_hop_bandits_brew_big_heist_lodge": (1, 0),
+        "shop_hop_limestone_razmire_builders": (1, 0),
+        "shop_hop_spade_vanessa": (1, 0),
+    }
+    for method_id, (transaction_actions, pack_open_actions) in expected_actions.items():
+        method = methods[method_id]
+        timing = method["shop_hopping_timing"]
+        assert timing["world_hop_seconds"] == 7
+        assert timing["game_tick_seconds"] == pytest.approx(0.6)
+        assert timing["shop_open_actions"] == 1
+        actions = timing["shop_open_actions"] + transaction_actions + pack_open_actions
+        cycle_seconds = timing["world_hop_seconds"] + actions * timing["game_tick_seconds"]
+        assert timing["shop_transaction_actions"] == transaction_actions
+        assert timing["pack_open_actions"] == pack_open_actions
+        assert timing["estimated_cycle_seconds"] == pytest.approx(cycle_seconds)
+        assert method["afk"]["interval_seconds"] == pytest.approx(cycle_seconds)
+        assert method["cycles_per_hour"] == pytest.approx(3600 / cycle_seconds)
+        assert method["afk"]["interaction_windows_per_hour"] == pytest.approx(method["cycles_per_hour"])
+        assert method["theoretical_cycles_per_hour"] == pytest.approx(3600 / timing["world_hop_seconds"])
+        assert "provisional" in method["afk"]["description"].lower()
+
+    warhammer = methods["shop_hop_rune_warhammer_skulgrimen"]
+    assert warhammer["outputs"] == []
+    assert warhammer["shop_sales"][0]["gp_per_item"] == 29050
+    assert warhammer["inputs"][0]["item_id"] == warhammer["shop_sales"][0]["item_id"]
+    assert warhammer["cycles_per_hour"] / warhammer["inputs"][0]["quantity"] > 70 / 4
 
 def test_fountain_recharge_routes_and_additional_processing_methods_are_audited():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]

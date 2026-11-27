@@ -1311,22 +1311,29 @@ methods:
         shop_name: Baba Yaga's Magic Shop
         gp_per_item: 55.76
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 339.6226415
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 5
+      pack_open_actions: 0
+      estimated_cycle_seconds: 10.6
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 10.6
+      interaction_windows_per_hour: 339.6226415
       intensity: moderate
-      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + five Buy-50 transactions at 0.6s each = 10.6s, about 339.6 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       quests:
         - Lunar Diplomacy
       unlocks:
         - Lunar Isle access; Seal of Passage required unless the Elite Fremennik Diary is complete
-    notes: Models one full 250-rune stock per world at an estimated 13,940 gp total shop cost. The amount is derived from the listed 50 gp normal-stock price and 0.1% price change per item, rounding each item price down. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    notes: "Models one full 250-rune stock per world at an estimated 13,940 gp total shop cost. The amount is derived from the listed 50 gp normal-stock price and 0.1% price change per item, rounding each item price down. Output is sold on the GE at live directional prices and incurs seller tax. The provisional throughput adds one shop-open action and five Buy-50 transaction actions at 0.6 seconds per action to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Astral_rune
 
   shop_hop_tal_teklan_cosmic_runes:
@@ -1343,20 +1350,27 @@ methods:
         shop_name: Tal Teklan Rune Shop
         gp_per_item: 50.333333333333336
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 439.0243902
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 0
+      estimated_cycle_seconds: 8.2
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.2
+      interaction_windows_per_hour: 439.0243902
       intensity: moderate
-      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + one purchase action at 0.6s each = 8.2s, about 439.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       quests:
         - Children of the Sun
-    notes: Models one full 30-rune stock per world at an estimated 1,510 gp total shop cost. The amount is derived from the listed 50 gp normal-stock price and 0.1% price change per item, rounding each item price down. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    notes: "Models one full 30-rune stock per world at an estimated 1,510 gp total shop cost. The amount is derived from the listed 50 gp normal-stock price and 0.1% price change per item, rounding each item price down. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded. The provisional throughput adds one shop-open action and one purchase action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Tal_Teklan_Rune_Shop
 
   shop_hop_pellem_jaguar_fur:
@@ -1373,21 +1387,28 @@ methods:
         shop_name: Pellem's Fur Store
         gp_per_item: 104.5
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 439.0243902
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 0
+      estimated_cycle_seconds: 8.2
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.2
+      interaction_windows_per_hour: 439.0243902
       intensity: moderate
-      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + one purchase action at 0.6s each = 8.2s, about 439.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       hunter: 46
       quests:
         - Children of the Sun
-    notes: Models both jaguar furs in Pellem's two-item stock for 209 gp total, using the listed 104 gp normal-stock price and the 2% price change per item. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    notes: "Models both jaguar furs in Pellem's two-item stock for 209 gp total, using the listed 104 gp normal-stock price and the 2% price change per item. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded. The provisional throughput adds one shop-open action and one purchase action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Jaguar_fur
 
   shop_hop_fortis_jaguar_fur:
@@ -1404,20 +1425,27 @@ methods:
         shop_name: Fortis Fur Stall
         gp_per_item: 96.5
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 439.0243902
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 0
+      estimated_cycle_seconds: 8.2
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.2
+      interaction_windows_per_hour: 439.0243902
       intensity: moderate
-      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, batch purchases, travel, banking and GE offer time; the resulting GP/hour is not a measured end-to-end rate.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + one purchase action at 0.6s each = 8.2s, about 439.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       quests:
         - Children of the Sun
-    notes: Models both jaguar furs in Fortis Fur Stall's two-item stock for 193 gp total, using the listed 96 gp normal-stock price and the 2% price change per item. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded.
+    notes: "Models both jaguar furs in Fortis Fur Stall's two-item stock for 193 gp total, using the listed 96 gp normal-stock price and the 2% price change per item. Output is sold on the GE at live directional prices and incurs seller tax. The 7-second world-hop rate is only an upper bound because purchase interactions and banking time are excluded. The provisional throughput adds one shop-open action and one purchase action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Jaguar_fur
 
   shop_hop_rune_warhammer_skulgrimen:
@@ -1435,20 +1463,27 @@ methods:
         shop_name: Skulgrimen's Battle Gear
         gp_per_item: 29050
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 439.0243902
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 0
+      estimated_cycle_seconds: 8.2
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.2
+      interaction_windows_per_hour: 439.0243902
       intensity: moderate
-      description: Upper bound for hop cadence only, using the user's 7-second world switch. It excludes shop dialogue, buying the item, travel, banking and GE offer time; the GE buy limit further reduces the sustainable rate.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + one shop-sale action at 0.6s each = 8.2s, about 439.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       quests:
         - The Fremennik Trials
-    notes: Sells one rune warhammer to an empty Skulgrimen stock per world for 29,050 gp. The next sale to that shop would pay less, so this model uses one item per world. Rune warhammers have a 70-per-four-hours GE buy limit, which caps sustained throughput at 17.5 items/hour; NPC proceeds do not incur GE tax. The 7-second world-hop rate excludes shop interaction and banking.
+    notes: "Sells one rune warhammer to an empty Skulgrimen stock per world for 29,050 gp. The next sale to that shop would pay less, so this model uses one item per world. Rune warhammers have a 70-per-four-hours GE buy limit, which caps sustained throughput at 17.5 items/hour; NPC proceeds do not incur GE tax. The provisional throughput adds one shop-open action and one sale action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Rune_warhammer
 
   shop_hop_sandworm_packs_tynan:
@@ -1465,20 +1500,27 @@ methods:
         shop_name: Tynan's Fishing Supplies (one sandworm pack)
         gp_per_item: 90
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 409.0909091
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 1
+      estimated_cycle_seconds: 8.8
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.8
+      interaction_windows_per_hour: 409.0909091
       intensity: moderate
-      description: One shop pack supplies 100 sandworms. The rate is only the user's seven-second world-hop ceiling; it excludes purchases, travel, banking and GE offer time, so GP/hour is not a measured end-to-end rate.
+      description: "One pack yields 100 sandworms. Provisional full-cycle estimate: 7s hop + one shop-open, one pack-purchase and one pack-open action at 0.6s each = 8.8s, about 409.1 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       unlocks:
         - Port Piscarilius access
-    notes: A pack costs 9,000 coins at full stock and opens into 100 sandworms, a 90 gp shop cost per worm. The model buys one pack per world to retain the base price; it sells the worms to the GE with live prices and tax. The 7-second world-hop rate is an upper bound, not a measured method rate.
+    notes: "A pack costs 9,000 coins at full stock and opens into 100 sandworms, a 90 gp shop cost per worm. The model buys one pack per world to retain the base price; it sells the worms to the GE with live prices and tax. The provisional throughput adds shop access, one pack purchase and one pack-opening action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Tynan's_Fishing_Supplies
 
   shop_hop_bone_bolt_packs_nardok:
@@ -1495,20 +1537,27 @@ methods:
         shop_name: Nardok's Bone Weapons (two bone bolt packs)
         gp_per_item: 3.535
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 382.9787234
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 2
+      estimated_cycle_seconds: 9.4
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 9.4
+      interaction_windows_per_hour: 382.9787234
       intensity: moderate
-      description: Two shop packs supply 200 bone bolts. The rate is only the user's seven-second world-hop ceiling; it excludes purchases, travel, banking and GE offer time, so GP/hour is not a measured end-to-end rate.
+      description: "Two packs yield 200 bone bolts. Provisional full-cycle estimate: 7s hop + one shop-open, one purchase and two pack-open actions at 0.6s each = 9.4s, about 383.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       quests:
         - The Lost Tribe
-    notes: The first two packs cost 350 and 357 coins, or 707 gp for 200 bolts. The purchase is normalized to a 3.535 gp cost per bolt; the output is sold to the GE using live prices and tax. The 7-second world-hop rate is an upper bound, not a measured method rate.
+    notes: "The first two packs cost 350 and 357 coins, or 707 gp for 200 bolts. The purchase is normalized to a 3.535 gp cost per bolt; the output is sold to the GE using live prices and tax. The 7-second world-hop rate is an upper bound, not a measured method rate. The provisional throughput adds shop access, one purchase action and two pack-opening actions at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Nardok's_Bone_Weapons
 
   shop_hop_bandits_brew_big_heist_lodge:
@@ -1525,20 +1574,27 @@ methods:
         shop_name: The Big Heist Lodge
         gp_per_item: 650
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 439.0243902
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 0
+      estimated_cycle_seconds: 8.2
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.2
+      interaction_windows_per_hour: 439.0243902
       intensity: moderate
-      description: One Bandit's brew per world at full stock. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + one purchase action at 0.6s each = 8.2s, about 439.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       quests:
         - Desert Treasure I
-    notes: The Big Heist Lodge stocks 10 brews at 650 gp each when fully stocked, with a 3% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
+    notes: "The Big Heist Lodge stocks 10 brews at 650 gp each when fully stocked, with a 3% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data. The provisional throughput adds one shop-open action and one purchase action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/The_Big_Heist_Lodge
 
   shop_hop_limestone_razmire_builders:
@@ -1555,20 +1611,27 @@ methods:
         shop_name: Razmire Builders Merchants
         gp_per_item: 10
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 439.0243902
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 0
+      estimated_cycle_seconds: 8.2
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.2
+      interaction_windows_per_hour: 439.0243902
       intensity: moderate
-      description: One limestone per world at the fully stocked price. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + one purchase action at 0.6s each = 8.2s, about 439.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
       quests:
         - Shades of Mort'ton
-    notes: Razmire Builders Merchants stocks 1,000 limestone at 10 gp each and changes its selling price by 4% per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
+    notes: "Razmire Builders Merchants stocks 1,000 limestone at 10 gp each and changes its selling price by 4% per item. Buying one per world keeps the base price; GE sale price and tax use live market data. The provisional throughput adds one shop-open action and one purchase action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants
 
   shop_hop_spade_vanessa:
@@ -1585,16 +1648,23 @@ methods:
         shop_name: Vanessa's Farming shop
         gp_per_item: 3
     fixed_cost_gp_per_cycle: 0
-    cycles_per_hour: 514.2857143
+    cycles_per_hour: 439.0243902
     theoretical_cycles_per_hour: 514.2857143
     planned_hours_per_day: 4
     method_types: [shop-hopping]
+    shop_hopping_timing:
+      world_hop_seconds: 7
+      game_tick_seconds: 0.6
+      shop_open_actions: 1
+      shop_transaction_actions: 1
+      pack_open_actions: 0
+      estimated_cycle_seconds: 8.2
     afk:
-      interval_seconds: 7
-      interaction_windows_per_hour: 514.2857143
+      interval_seconds: 8.2
+      interaction_windows_per_hour: 439.0243902
       intensity: moderate
-      description: One spade per world at full stock. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
+      description: "Provisional full-cycle estimate: 7s hop + one shop-open action + one purchase action at 0.6s each = 8.2s, about 439.0 cycles/hour. This is unmeasured and excludes travel, banking and GE offer time. Hop-only ceiling: 514.3 cycles/hour."
     requirements:
       members: true
-    notes: Vanessa's Farming shop stocks 500 spades at 3 gp each when fully stocked, with a 1% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
+    notes: "Vanessa's Farming shop stocks 500 spades at 3 gp each when fully stocked, with a 1% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data. The provisional throughput adds one shop-open action and one purchase action at 0.6 seconds each to the seven-second hop. Travel, banking and GE offer time remain excluded; the rate is not measured."
     reference: https://oldschool.runescape.wiki/w/Spade
