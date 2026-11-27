@@ -1,11 +1,11 @@
 ---
-status: done
+status: in_progress
 ---
 # Lunar spell and unusual shop methods
 
 ## Next action
 
-None. The change is merged to `master` and the public Pages site shows the added methods.
+Finish review and merge the follow-up PR adding three unusual shop-hopping methods.
 
 ## Scope
 
@@ -16,6 +16,7 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 - Tan Leather, Spin Flax, Superglass Make, Humidify, and Hunter Kit use verified mechanics, sourced rates, item IDs, requirements and runes.
 - Expected Superglass Make yield is modelled as an average, not a guaranteed integer output.
 - Sandworm and bone bolt shop packs have separate NPC purchase costs, output items, requirements, and hop-only ceiling labels.
+- Bandit's brew, papyrus and spades are added from the live unusual-method list with verified NPC stock, costs, access requirements and hop-only ceiling labels.
 - Each enabled method has a verified OSRS Wiki audit record.
 - The catalogue is validated, CI passes, and the change is merged to `master`.
 
@@ -36,6 +37,9 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 - [Hunter kit](https://oldschool.runescape.wiki/w/Money_making_guide/Casting_Hunter_kit)
 - [Tynan's Fishing Supplies](https://oldschool.runescape.wiki/w/Tynan%27s_Fishing_Supplies)
 - [Nardok's Bone Weapons](https://oldschool.runescape.wiki/w/Nardok%27s_Bone_Weapons)
+- [The Big Heist Lodge](https://oldschool.runescape.wiki/w/The_Big_Heist_Lodge)
+- [Rasolo](https://oldschool.runescape.wiki/w/Rasolo)
+- [Spade](https://oldschool.runescape.wiki/w/Spade)
 - [User-provided unusual money-making site](https://unusualmoneymaking.com/)
 
-The unusual money-making page returned a database-load error and no method rows when checked on 2026-11-27. Sandworm packs and bone bolt packs are included as previously discussed shop-hopping candidates; their game mechanics and shop prices are verified against the OSRS Wiki. The seven-second rate is a hop-only ceiling, not a measured end-to-end rate.
+The live unusual-method page displayed 118 Unusual Methods and 14 Special Methods when reviewed on 2026-11-27. Bandit's brew, papyrus and spades were added from that list. OSRS Wiki shop data supplies the configured NPC prices, stock and access requirements; market proceeds continue to use the app's live price and liquidity model. The seven-second rate is a hop-only ceiling, not a measured end-to-end rate.

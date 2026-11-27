@@ -137,7 +137,7 @@ def test_engorged_bloodwood_method_models_the_full_tradeable_arrow_batch():
 
 def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
     methods = load_yaml(Path("config/methods.yaml"))["methods"]
-    assert len([method for method in methods.values() if "shop-hopping" in method["method_types"]]) == 8
+    assert len([method for method in methods.values() if "shop-hopping" in method["method_types"]]) == 11
     mixed = methods["shop_hop_mixed_hide_bases"]
     assert mixed["cycles_per_hour"] * mixed["outputs"][0]["quantity"] == 1485
     assert mixed["shop_purchases"][0]["quantity"] * mixed["shop_purchases"][0]["gp_per_item"] * mixed["cycles_per_hour"] == 18803070
@@ -146,6 +146,9 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
         "shop_hop_tal_teklan_cosmic_runes",
         "shop_hop_pellem_jaguar_fur",
         "shop_hop_fortis_jaguar_fur",
+        "shop_hop_bandits_brew_big_heist_lodge",
+        "shop_hop_papyrus_rasolo",
+        "shop_hop_spade_vanessa",
     ):
         method = methods[method_id]
         assert method["cycles_per_hour"] == pytest.approx(3600 / 7)
@@ -160,6 +163,9 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
         "shop_hop_tal_teklan_cosmic_runes": 1510,
         "shop_hop_pellem_jaguar_fur": 209,
         "shop_hop_fortis_jaguar_fur": 193,
+        "shop_hop_bandits_brew_big_heist_lodge": 650,
+        "shop_hop_papyrus_rasolo": 20,
+        "shop_hop_spade_vanessa": 3,
     }
     for method_id, expected in expected_shop_costs.items():
         method = methods[method_id]
