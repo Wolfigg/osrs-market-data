@@ -36,7 +36,7 @@ The prior model used the seven-second world-hop interval as the full cycle for t
 - PR #39 added Bandit's brew, Papyrus and Spades; PR #40 fixed YAML formatting required by the publish workflow; PR #41 corrected the Hunter Kit output mapping from item ID 598 to Unlit torch ID 596; PR #42 replaced Papyrus with Limestone because the app had no usable current Papyrus price.
 - PR #42 CI passed the test and browser-acceptance jobs. The master refresh run `46018065761` completed successfully.
 - The published catalogue was checked on 2026-11-27. It shows Bandit's brew, Limestone from Razmire and Spades; the merged Lunar catalogue includes Recharge Dragonstone jewelry and other spell methods.
-- This follow-up corrects the Razmire Wiki URLs and updates the task status.
+- PR #44 corrected shop-hop throughput to include shop interactions and pack openings; the current rate model remains provisional until an end-to-end loop is measured.
 
 ## Sources and limitation
 
