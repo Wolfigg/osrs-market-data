@@ -204,6 +204,13 @@ def test_fountain_recharge_routes_and_additional_processing_methods_are_audited(
     assert methods["grind_chocolate_bars"]["cycles_per_hour"] == 1800
 
 
+
+def test_hunter_kit_outputs_tradeable_contents_with_correct_torch_id():
+    methods = load_yaml(Path("config/methods.yaml"))["methods"]
+    output_ids = {item["item_id"] for item in methods["hunter_kit_opening"]["outputs"]}
+    assert output_ids == {10150, 10010, 10006, 10031, 10093, 596, 11260, 10008}
+    assert 598 not in output_ids
+
 def _public_result(category: str, method_types: list[str]):
     return {
         "methodId": "test",
