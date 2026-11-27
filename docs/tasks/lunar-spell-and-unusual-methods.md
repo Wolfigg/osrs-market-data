@@ -15,8 +15,8 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 
 - Tan Leather, Spin Flax, Superglass Make, Humidify, and Hunter Kit use verified mechanics, sourced rates, item IDs, requirements and runes.
 - Expected Superglass Make yield is modelled as an average, not a guaranteed integer output.
-- Sandworm and bone bolt shop packs have separate NPC purchase costs, output items, requirements, and hop-only ceiling labels.
-- Bandit's brew, limestone and spades are added from the live unusual-method list with verified NPC stock, costs, access requirements and hop-only ceiling labels.
+- Sandworm and bone bolt shop packs have separate NPC purchase costs, output items and requirements, with provisional cycle estimates that count pack purchases and openings and retain a distinct hop-only ceiling.
+- Bandit's brew, limestone and spades are added from the live unusual-method list with verified NPC stock, costs and access requirements, plus provisional cycle estimates and a separate hop-only ceiling.
 - Each enabled method has a verified OSRS Wiki audit record.
 - The catalogue is validated, CI passes, and the change is merged to `master`.
 
