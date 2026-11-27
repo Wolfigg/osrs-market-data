@@ -1,11 +1,11 @@
 ---
-status: in_progress
+status: done
 ---
 # Lunar spell and unusual shop methods
 
 ## Next action
 
-Validate the shop-hop cycle-time correction in CI, then merge the follow-up.
+None. The timing correction is merged to `master`.
 
 ## Scope
 
@@ -22,10 +22,11 @@ Add profitable Lunar spell methods that are absent from the catalogue and add sh
 
 ## Shop-hop cycle timing follow-up
 
-The prior model used the seven-second world-hop interval as the full cycle for ten shop-hopping methods. Their configured rate now includes a provisional 0.6-second tick per shop-open action, transaction action, and pack-opening action. Full-stocking Baba Yaga's 250 astral runes uses five Buy-50 transaction actions. The sandworm cycle has one pack opening; the bone-bolt cycle has two. The estimated cycles/hour are derived as `3600 / estimated_cycle_seconds`. Travel, banking, and GE offer time remain excluded, so these are estimates rather than measured end-to-end rates. The mixed-hide method keeps its guide-based rate.
+The prior model used the seven-second world-hop interval as the full cycle for ten shop-hopping methods. Their configured rate now includes a provisional 0.6-second tick per shop-open action, transaction action, and pack-opening action. Full-stocking Baba Yaga's 250 astral runes uses five Buy-50 transaction actions. The sandworm cycle has one pack opening; the bone-bolt cycle has two. The estimated cycles/hour are derived as `3600 / estimated_cycle_seconds`: 339.6 for Baba Yaga, 409.1 for sandworm packs, 383.0 for bone bolt packs, and 439.0 for the other one-transaction methods. Travel, banking, and GE offer time remain excluded, so these are estimates rather than measured end-to-end rates. The mixed-hide method keeps its guide-based rate.
 
 - Source for tick length and shop batch sizes: [Game tick](https://oldschool.runescape.wiki/w/Game_tick), [Shop](https://oldschool.runescape.wiki/w/Shop).
-- Validation: pending CI for the timing follow-up.
+- PR #44 merged to `master` as `30ce7d66406c80bc86ab568deb59e1cc820a4d1b`.
+- CI run 227 passed: catalogue test job and Chromium/Firefox browser acceptance.
 
 ## Validation
 
