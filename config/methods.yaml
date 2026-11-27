@@ -1541,19 +1541,19 @@ methods:
     notes: The Big Heist Lodge stocks 10 brews at 650 gp each when fully stocked, with a 3% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
     reference: https://oldschool.runescape.wiki/w/The_Big_Heist_Lodge
 
-  shop_hop_papyrus_rasolo:
+  shop_hop_limestone_razmire_builders:
     enabled: true
-    name: Buy papyrus from Rasolo
+    name: Buy limestone from Razmire
     category: shop_hopping
     inputs: []
     outputs:
-      - item_id: 970
+      - item_id: 3211
         quantity: 1
     shop_purchases:
-      - item_id: 970
+      - item_id: 3211
         quantity: 1
-        shop_name: Rasolo's shop
-        gp_per_item: 20
+        shop_name: Razmire Builders Merchants
+        gp_per_item: 10
     fixed_cost_gp_per_cycle: 0
     cycles_per_hour: 514.2857143
     theoretical_cycles_per_hour: 514.2857143
@@ -1563,11 +1563,13 @@ methods:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: One papyrus per world at full stock. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
+      description: One limestone per world at the fully stocked price. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
     requirements:
       members: true
-    notes: Rasolo's shop stocks five papyrus at 20 gp each when fully stocked, with a 3% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
-    reference: https://oldschool.runescape.wiki/w/Rasolo
+      quests:
+        - Shades of Mort'ton
+    notes: Razmire Builders Merchants stocks 1,000 limestone at 10 gp each and changes its selling price by 4% per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
+    reference: https://oldschool.runescape.wiki/w/Razmire_Builders_Merchants.
 
   shop_hop_spade_vanessa:
     enabled: true
