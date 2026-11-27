@@ -171,6 +171,9 @@ def test_shop_hopping_catalogue_records_stock_costs_and_rate_limits():
     for method_id, (transaction_actions, pack_open_actions) in expected_actions.items():
         method = methods[method_id]
         timing = method["shop_hopping_timing"]
+        assert timing["world_hop_seconds"] == 7
+        assert timing["game_tick_seconds"] == pytest.approx(0.6)
+        assert timing["shop_open_actions"] == 1
         actions = timing["shop_open_actions"] + transaction_actions + pack_open_actions
         cycle_seconds = timing["world_hop_seconds"] + actions * timing["game_tick_seconds"]
         assert timing["shop_transaction_actions"] == transaction_actions
