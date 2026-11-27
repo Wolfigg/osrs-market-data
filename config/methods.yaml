@@ -1510,3 +1510,89 @@ methods:
         - The Lost Tribe
     notes: The first two packs cost 350 and 357 coins, or 707 gp for 200 bolts. The purchase is normalized to a 3.535 gp cost per bolt; the output is sold to the GE using live prices and tax. The 7-second world-hop rate is an upper bound, not a measured method rate.
     reference: https://oldschool.runescape.wiki/w/Nardok's_Bone_Weapons
+
+shop_hop_bandits_brew_big_heist_lodge:
+    enabled: true
+    name: Buy Bandit's brew from the Bandit Camp
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 4627
+        quantity: 1
+    shop_purchases:
+      - item_id: 4627
+        quantity: 1
+        shop_name: The Big Heist Lodge
+        gp_per_item: 650
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: One Bandit's brew per world at full stock. The 7-second hop ceiling excludes shop interaction, travel, banking and GE offer time.
+    requirements:
+      members: true
+      quests:
+        - Desert Treasure I
+    notes: The Big Heist Lodge stocks 10 brews at 650 gp each when fully stocked, with a 3% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
+    reference: https://oldschool.runescape.wiki/w/The_Big_Heist_Lodge
+
+  shop_hop_papyrus_rasolo:
+    enabled: true
+    name: Buy papyrus from Rasolo
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 970
+        quantity: 1
+    shop_purchases:
+      - item_id: 970
+        quantity: 1
+        shop_name: Rasolo's shop
+        gp_per_item: 20
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: One papyrus per world at full stock. The 7-second hop ceiling excludes shop interaction, travel, banking and GE offer time.
+    requirements:
+      members: true
+    notes: Rasolo's shop stocks five papyrus at 20 gp each when fully stocked, with a 3% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
+    reference: https://oldschool.runescape.wiki/w/Rasolo
+
+  shop_hop_spade_vanessa:
+    enabled: true
+    name: Buy spades from Vanessa's Farming shop
+    category: shop_hopping
+    inputs: []
+    outputs:
+      - item_id: 952
+        quantity: 1
+    shop_purchases:
+      - item_id: 952
+        quantity: 1
+        shop_name: Vanessa's Farming shop
+        gp_per_item: 3
+    fixed_cost_gp_per_cycle: 0
+    cycles_per_hour: 514.2857143
+    theoretical_cycles_per_hour: 514.2857143
+    planned_hours_per_day: 4
+    method_types: [shop-hopping]
+    afk:
+      interval_seconds: 7
+      interaction_windows_per_hour: 514.2857143
+      intensity: moderate
+      description: One spade per world at full stock. The 7-second hop ceiling excludes shop interaction, travel, banking and GE offer time.
+    requirements:
+      members: true
+    notes: Vanessa's Farming shop stocks 500 spades at 3 gp each when fully stocked, with a 1% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
+    reference: https://oldschool.runescape.wiki/w/Spade
