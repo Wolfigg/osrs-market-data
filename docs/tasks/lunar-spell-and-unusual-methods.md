@@ -5,7 +5,7 @@ status: done
 
 ## Next action
 
-None. The timing correction is merged to `master`.
+Measure the full tick-manipulated snake-weed and Sanfew-serum route in game to replace the provisional gathering and action-time assumptions.
 
 ## Scope
 
@@ -56,3 +56,13 @@ The prior model used the seven-second world-hop interval as the full cycle for t
 - [User-provided unusual money-making site](https://unusualmoneymaking.com/)
 
 The live unusual-method page displayed 118 Unusual Methods and 14 Special Methods when reviewed on 2026-11-27. Bandit's brew, limestone and spades were added from that list. OSRS Wiki shop data supplies the configured NPC prices, stock and access requirements; the limestone model buys one item per world at the fully stocked 10 gp price. Market proceeds use the app's live price and liquidity model. The ten methods that previously used the seven-second hop-only ceiling now use a provisional cycle-time estimate. One 0.6-second game tick is budgeted for each shop-open action, purchase or sale transaction, and pack opening. The hop-only ceiling remains 3600 / 7 = 514.3 cycles/hour. The mixed-hide method retains its separate guide-based throughput estimate.
+
+
+## Tick-manipulated snake weed and Sanfew serum
+
+Snake weed cannot be sold on the Grand Exchange, so it is included as a gathered input in one combined Sanfew-serum method rather than shown as a standalone cash-making row. The method uses live GE prices for Super restore(4), unicorn horn dust, nail beast nails and Sanfew serum(4).
+
+The provisional rate combines 500 snake weed per hour from a community tick-manipulation demonstration with one herb-clean action and three manual potion additions. The Sanfew Wiki page lists two ticks per addition, at 0.6 seconds per tick. The resulting estimate is 7.2 seconds gathering + 0.6 seconds cleaning + 3 × 1.2 seconds additions = 11.4 seconds per serum, or about 315.8 per hour. This is an estimate, not a measured route rate; Herblore level affects snake-weed gathering success, and travel, banking, inventory changes and GE offers are excluded.
+
+- Requirements: 65 Herblore and Zogre Flesh Eaters.
+- Sources: [Snake weed](https://oldschool.runescape.wiki/w/Snake_Weed), [Sanfew serum](https://oldschool.runescape.wiki/w/Sanfew_serum), [Making Sanfew serum(4)](https://oldschool.runescape.wiki/w/Money_making_guide/Making_sanfew_serum%284%29), [Tick manipulation](https://oldschool.runescape.wiki/w/Tick_manipulation), [500+/hour community demonstration](https://www.youtube.com/watch?v=Sy1RDhrw9WQ).
