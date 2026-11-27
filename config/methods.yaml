@@ -1533,7 +1533,7 @@ shop_hop_bandits_brew_big_heist_lodge:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: One Bandit's brew per world at full stock. The 7-second hop ceiling excludes shop interaction, travel, banking and GE offer time.
+      description: One Bandit's brew per world at full stock. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
     requirements:
       members: true
       quests:
@@ -1563,7 +1563,7 @@ shop_hop_bandits_brew_big_heist_lodge:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: One papyrus per world at full stock. The 7-second hop ceiling excludes shop interaction, travel, banking and GE offer time.
+      description: One papyrus per world at full stock. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
     requirements:
       members: true
     notes: Rasolo's shop stocks five papyrus at 20 gp each when fully stocked, with a 3% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
@@ -1591,7 +1591,7 @@ shop_hop_bandits_brew_big_heist_lodge:
       interval_seconds: 7
       interaction_windows_per_hour: 514.2857143
       intensity: moderate
-      description: One spade per world at full stock. The 7-second hop ceiling excludes shop interaction, travel, banking and GE offer time.
+      description: One spade per world at full stock. The 7-second hop-only rate is an upper bound; it excludes shop interaction, travel, banking and GE offer time.
     requirements:
       members: true
     notes: Vanessa's Farming shop stocks 500 spades at 3 gp each when fully stocked, with a 1% price change per item. Buying one per world keeps the base price; GE sale price and tax use live market data.
