@@ -1715,4 +1715,8 @@ methods:
         - Swamp tar and a clean herb for tick manipulation
         - Fairy ring access (CKR) or Tai Bwo Wannai teleport
     notes: "Snake weed is untradeable, so no cash value is assigned to it; its gathering time is included in the cycle. The 500/hour tick-manipulated gathering baseline is a provisional community demonstration rate and is not guaranteed at level 65 Herblore. Sanfew serum requires adding unicorn horn dust, clean snake weed and nail beast nails in that order; the Wiki lists two ticks per addition and no Make-X interface. The estimate excludes travel, banking, inventory changes and GE offer time. Prices for the tradeable ingredients and serum use live GE data."
+    audit:
+      status: verified
+      source: https://oldschool.runescape.wiki/w/Sanfew_serum
+      verified_at: "2026-11-27"
     reference: https://oldschool.runescape.wiki/w/Money_making_guide/Making_sanfew_serum%284%29
