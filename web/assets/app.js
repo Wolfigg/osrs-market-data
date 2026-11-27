@@ -288,16 +288,13 @@
           const estimatedQuantity = Math.min(Number(i.marketEstimateQuantity4h), maximumQuantity);
           return {
             ...i,
-            quantity4h: maximumQuantity,
-            profit4h: maximumQuantity * Number(i.profitPerCast),
-            capitalRequired: maximumQuantity * costPerCast,
             marketEstimateQuantity4h: estimatedQuantity,
             marketEstimateProfit4h: estimatedQuantity * Number(i.profitPerCast),
             marketEstimateCapitalRequired: estimatedQuantity * costPerCast,
           };
         });
         renderAlchemyOverview(data, budgetRows);
-        let rows = budgetRows.filter(i => !(search && !i.name.toLowerCase().includes(search)) && !(members === "f2p" && i.members) && !(members === "members" && !i.members) && !(!showUnavailable && i.profitPerCast == null) && !(profitability === "profitable" && !(Number(i.profitPerCast) > 0)) && !(i.profitPerCast != null && Number(i.profitPerCast) < min) && !(budget != null && i.quantity4h != null && Number(i.quantity4h) <= 0) && !(capitalLimit != null && (i.marketEstimateCapitalRequired == null || Number(i.marketEstimateCapitalRequired) >= capitalLimit)));
+        let rows = budgetRows.filter(i => !(search && !i.name.toLowerCase().includes(search)) && !(members === "f2p" && i.members) && !(members === "members" && !i.members) && !(!showUnavailable && i.profitPerCast == null) && !(profitability === "profitable" && !(Number(i.profitPerCast) > 0)) && !(i.profitPerCast != null && Number(i.profitPerCast) < min) && !(budget != null && i.marketEstimateQuantity4h != null && Number(i.marketEstimateQuantity4h) <= 0) && !(capitalLimit != null && (i.marketEstimateCapitalRequired == null || Number(i.marketEstimateCapitalRequired) >= capitalLimit)));
         const val = (i, key) => ({ "profit-4h": i.marketEstimateProfit4h, "profit-cast": i.profitPerCast, "profit-6h": i.history?.["6hProfitPerCast"], "profit-24h": i.history?.["24hProfitPerCast"], "profit-7d": i.history?.["7dProfitPerCast"], "profit-30d": i.history?.["30dProfitPerCast"], "profit-6m": i.history?.["6mProfitPerCast"], roi: i.roi, capital: i.marketEstimateCapitalRequired, volume: i.buySideVolume24h })[key];
         rows.sort((a, b) => sort === "capital" ? (val(a, sort) ?? Infinity) - (val(b, sort) ?? Infinity) : (val(b, sort) ?? -Infinity) - (val(a, sort) ?? -Infinity));
         document.querySelector("#alch-count").textContent = `${rows.length} candidate${rows.length === 1 ? "" : "s"}`;
